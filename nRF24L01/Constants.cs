@@ -7,6 +7,10 @@
         internal static string[] PowerLevelStrings = { "PA_MIN", "PA_LOW", "PA_HIGH", "PA_MAX", "PA_ERROR" };
         internal static string[] RadioModelStrings = { "nRF24L01", "nRF24L01+" };
 
+        internal static byte[] ChildPipes = { RX_ADDR_P0, RX_ADDR_P1, RX_ADDR_P2, RX_ADDR_P3, RX_ADDR_P4, RX_ADDR_P5 };
+        internal static byte[] ChildPayloadSizes = { RX_PW_P0, RX_PW_P1, RX_PW_P2, RX_PW_P3, RX_PW_P4, RX_PW_P5 };
+        internal static byte[] ChildPipeEnable = { ERX_P0, ERX_P1, ERX_P2, ERX_P3, ERX_P4, ERX_P5 };
+
         internal const byte MaxChannel = 127;
         internal const byte MaxPayloadSize = 32;
 
