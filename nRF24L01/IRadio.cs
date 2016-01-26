@@ -4,6 +4,9 @@ namespace nRF24L01
     {
         byte PayloadSize { get; set; }
         bool IsAckPayloadAvailable { get; }
+        DataRates DataRate { get; set; }
+        CrcLengths CrcLength { get; set; }
+        PowerLevels PowerLevel { get; set; }
         RadioModels RadioModel { get; }
         string RadioModelName { get; }
         bool IsDataAvailable { get; }
@@ -31,12 +34,6 @@ namespace nRF24L01
         string GetDetails();
         void SetAutoAck(bool enable);
         void SetAutoAck(byte pipe, bool enable);
-        DataRates GetDataRate();
-        bool SetDataRate(DataRates dataRate);
-        CrcLengths GetCrcLength();
-        void SetCrcLength(CrcLengths crcLength);
-        PowerLevels GetPowerLevel();
-        void SetPowerLevel(PowerLevels powerLevel);
         void SetRetries(byte delay, byte count);
     }
 }

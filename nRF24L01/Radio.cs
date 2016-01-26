@@ -38,6 +38,141 @@ namespace nRF24L01
             }
         }
 
+        public DataRates DataRate
+        {
+            get { return GetDataRate(); }
+            set { SetDataRate(value); }
+        }
+        private DataRates GetDataRate()
+        {
+            DataRates dataRate = DataRates.DataRate250Kbps;
+            byte setup = (byte)(ReadRegister(Constants.RF_SETUP) & (1 << Constants.RF_DR_LOW | 1 << Constants.RF_DR_HIGH));
+            if (setup == _BV(Constants.RF_DR_LOW))
+                dataRate = DataRates.DataRate250Kbps;
+            else if (setup == _BV(Constants.RF_DR_HIGH))
+                dataRate = DataRates.DataRate2Mbps;
+            else
+                dataRate = DataRates.DataRate1Mbps;
+            return dataRate;
+        }
+
+        private bool SetDataRate(DataRates dataRate)
+        {
+            bool success = false;
+            byte setup = ReadRegister(Constants.RF_SETUP);
+            // HIGH and LOW '00' is 1Mbs - our default
+            _isWideBand = false;
+            setup &= (byte)(~(_BV(Constants.RF_DR_LOW) | _BV(Constants.RF_DR_HIGH)));
+            if (dataRate == DataRates.DataRate250Kbps)
+            {
+                // Must set the RF_DR_LOW to 1; RF_DR_HIGH (used to be RF_DR) is already 0
+                // Making it '10'.
+                _isWideBand = false;
+                setup |= _BV(Constants.RF_DR_LOW);
+            }
+            else
+            {
+                // Set 2Mbs, RF_DR (RF_DR_HIGH) is set 1
+                // Making it '01'
+                if (dataRate == DataRates.DataRate2Mbps)
+                {
+                    _isWideBand = true;
+                    setup |= _BV(Constants.RF_DR_HIGH);
+                }
+                else
+                {
+                    // 1Mbs
+                    _isWideBand = false;
+                }
+            }
+            WriteRegister(Constants.RF_SETUP, setup);
+
+            // Verify Results
+            if (ReadRegister(Constants.RF_SETUP) == setup)
+                success = true;
+            else
+                _isWideBand = false;
+
+            return success;
+        }
+
+        public CrcLengths CrcLength
+        {
+            get { return GetCrcLength(); }
+            set { SetCrcLength(value); }
+        }
+
+        private CrcLengths GetCrcLength()
+        {
+            CrcLengths crcLength = CrcLengths.CrcDisabled;
+            byte config = (byte)(ReadRegister(Constants.CONFIG) & (_BV(Constants.CRCO) | _BV(Constants.EN_CRC)));
+            if ((config & _BV(Constants.EN_CRC)) == 1)
+                crcLength = (config & _BV(Constants.CRCO)) == 1 ? CrcLengths.Crc16Bit : CrcLengths.Crc8Bit;
+
+            return crcLength;
+        }
+
+        private void SetCrcLength(CrcLengths crcLength)
+        {
+            byte config = (byte)(ReadRegister(Constants.CONFIG) & ~(_BV(Constants.CRCO) | _BV(Constants.CRCO)));
+            if (crcLength == CrcLengths.CrcDisabled)
+            {
+                config = (byte)(ReadRegister(Constants.CONFIG) & ~_BV(Constants.EN_CRC));
+            }
+            else if (crcLength == CrcLengths.Crc8Bit)
+            {
+                config |= _BV(Constants.EN_CRC);
+            }
+            else
+            {
+                config |= _BV(Constants.EN_CRC);
+                config |= _BV(Constants.CRCO);
+            }
+
+            WriteRegister(Constants.CONFIG, config);
+        }
+
+        public PowerLevels PowerLevel
+        {
+            get { return GetPowerLevel(); }
+            set { SetPowerLevel(value); }
+        }
+
+        private PowerLevels GetPowerLevel()
+        {
+            PowerLevels powerLevel = PowerLevels.PowerLevelError;
+            byte setup = (byte)(ReadRegister(Constants.RF_SETUP) & (_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH)));
+            if (setup == (_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH)))
+                powerLevel = PowerLevels.PowerLevelMax;
+            else if (setup == _BV(Constants.RF_PWR_HIGH))
+                powerLevel = PowerLevels.PowerLevelHigh;
+            else if (setup == _BV(Constants.RF_PWR_LOW))
+                powerLevel = PowerLevels.PowerLevelLow;
+            else
+                powerLevel = PowerLevels.PowerLevelMin;
+            return powerLevel;
+        }
+
+        private void SetPowerLevel(PowerLevels powerLevel)
+        {
+            byte setup = ReadRegister(Constants.RF_SETUP);
+            setup &= (byte)(~(_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH)));
+            if (powerLevel == PowerLevels.PowerLevelMax)
+                setup |= (byte)(_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH));
+            else if (powerLevel == PowerLevels.PowerLevelHigh)
+                setup |= _BV(Constants.RF_PWR_HIGH);
+            else if (powerLevel == PowerLevels.PowerLevelLow)
+                setup |= _BV(Constants.RF_PWR_LOW);
+            else if (powerLevel == PowerLevels.PowerLevelMin)
+            {
+                // nothing
+            }
+            else if (powerLevel == PowerLevels.PowerLevelError)
+                setup |= (byte)(_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH));
+
+            WriteRegister(Constants.RF_SETUP, setup);
+        }
+
         private bool _isPlusModel;
         public RadioModels RadioModel => _isPlusModel ? RadioModels.nRF24L01P : RadioModels.nRF24L01;
         public string RadioModelName => Constants.RadioModelStrings[(int)RadioModel];
@@ -202,24 +337,24 @@ namespace nRF24L01
             SetRetries(0x04, 0x0F);
 
             // Set payload sizes
-            WriteRegister(Constants.RX_PW_P0, PayloadSize);
-            WriteRegister(Constants.RX_PW_P1, PayloadSize);
+            //WriteRegister(Constants.RX_PW_P0, PayloadSize);
+            //WriteRegister(Constants.RX_PW_P1, PayloadSize);
 
             // Disable auto acknowledgement 
             SetAutoAck(false);
 
             // Restore our default PA level
-            SetPowerLevel(PowerLevels.PowerLevelMax);
+            PowerLevel = PowerLevels.PowerLevelMax;
 
             // Determine if this is a p or non-p RF24 module and then reset our data rate back to default 
             // value. This works because a non-P variant won't allow the data rate to be set to 250Kbps.
             _isPlusModel = SetDataRate(DataRates.DataRate250Kbps);
 
             // Then set the data rate to the slowest (and most reliable) speed supported by all hardware.
-            SetDataRate(DataRates.DataRate1Mbps);
+            DataRate = DataRates.DataRate1Mbps;
 
             // Initialize CRC and request 2-byte (16bit) CRC
-            SetCrcLength(CrcLengths.Crc16Bit);
+            CrcLength = CrcLengths.Crc16Bit;
 
             // Disable dynamic payloads, to match dynamic_payloads_enabled setting
             WriteRegister(Constants.DYNPD, 0);
@@ -234,8 +369,6 @@ namespace nRF24L01
 
             FlushTransmitBuffer();
             FlushReceiveBuffer();
-
-            //OperationalMode = OperationalModes.Receive;
         }
 
         public void StartListening()
@@ -554,124 +687,7 @@ namespace nRF24L01
             WriteRegister(Constants.EN_AA, enAa);
         }
 
-        public DataRates GetDataRate()
-        {
-            DataRates dataRate = DataRates.DataRate250Kbps;
-            byte setup = (byte)(ReadRegister(Constants.RF_SETUP) & (1 << Constants.RF_DR_LOW | 1 << Constants.RF_DR_HIGH));
-            if (setup == _BV(Constants.RF_DR_LOW))
-                dataRate = DataRates.DataRate250Kbps;
-            else if (setup == _BV(Constants.RF_DR_HIGH))
-                dataRate = DataRates.DataRate2Mbps;
-            else
-                dataRate = DataRates.DataRate1Mbps;
-            return dataRate;
-        }
-
-        public bool SetDataRate(DataRates dataRate)
-        {
-            bool success = false;
-            byte setup = ReadRegister(Constants.RF_SETUP);
-            // HIGH and LOW '00' is 1Mbs - our default
-            _isWideBand = false;
-            setup &= (byte)(~(_BV(Constants.RF_DR_LOW) | _BV(Constants.RF_DR_HIGH)));
-            if (dataRate == DataRates.DataRate250Kbps)
-            {
-                // Must set the RF_DR_LOW to 1; RF_DR_HIGH (used to be RF_DR) is already 0
-                // Making it '10'.
-                _isWideBand = false;
-                setup |= _BV(Constants.RF_DR_LOW);
-            }
-            else
-            {
-                // Set 2Mbs, RF_DR (RF_DR_HIGH) is set 1
-                // Making it '01'
-                if (dataRate == DataRates.DataRate2Mbps)
-                {
-                    _isWideBand = true;
-                    setup |= _BV(Constants.RF_DR_HIGH);
-                }
-                else
-                {
-                    // 1Mbs
-                    _isWideBand = false;
-                }
-            }
-            WriteRegister(Constants.RF_SETUP, setup);
-
-            // Verify Results
-            if (ReadRegister(Constants.RF_SETUP) == setup)
-                success = true;
-            else
-                _isWideBand = false;
-
-            return success;
-        }
-
-        public CrcLengths GetCrcLength()
-        {
-            CrcLengths crcLength = CrcLengths.CrcDisabled;
-            byte config = (byte)(ReadRegister(Constants.CONFIG) & (_BV(Constants.CRCO) | _BV(Constants.EN_CRC)));
-            if ((config & _BV(Constants.EN_CRC)) == 1)
-                crcLength = (config & _BV(Constants.CRCO)) == 1 ? CrcLengths.Crc16Bit : CrcLengths.Crc8Bit;
-
-            return crcLength;
-        }
-
-        public void SetCrcLength(CrcLengths crcLength)
-        {
-            byte config = (byte)(ReadRegister(Constants.CONFIG) & ~(_BV(Constants.CRCO) | _BV(Constants.CRCO)));
-            if (crcLength == CrcLengths.CrcDisabled)
-            {
-                config = (byte)(ReadRegister(Constants.CONFIG) & ~_BV(Constants.EN_CRC));
-            }
-            else if (crcLength == CrcLengths.Crc8Bit)
-            {
-                config |= _BV(Constants.EN_CRC);
-            }
-            else
-            {
-                config |= _BV(Constants.EN_CRC);
-                config |= _BV(Constants.CRCO);
-            }
-
-            WriteRegister(Constants.CONFIG, config);
-        }
-
-        public PowerLevels GetPowerLevel()
-        {
-            PowerLevels powerLevel = PowerLevels.PowerLevelError;
-            byte setup = (byte)(ReadRegister(Constants.RF_SETUP) & (_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH)));
-            if (setup == (_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH)))
-                powerLevel = PowerLevels.PowerLevelMax;
-            else if (setup == _BV(Constants.RF_PWR_HIGH))
-                powerLevel = PowerLevels.PowerLevelHigh;
-            else if (setup == _BV(Constants.RF_PWR_LOW))
-                powerLevel = PowerLevels.PowerLevelLow;
-            else
-                powerLevel = PowerLevels.PowerLevelMin;
-            return powerLevel;
-        }
-
-        public void SetPowerLevel(PowerLevels powerLevel)
-        {
-            byte setup = ReadRegister(Constants.RF_SETUP);
-            setup &= (byte)(~(_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH)));
-            if (powerLevel == PowerLevels.PowerLevelMax)
-                setup |= (byte)(_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH));
-            else if (powerLevel == PowerLevels.PowerLevelHigh)
-                setup |= _BV(Constants.RF_PWR_HIGH);
-            else if (powerLevel == PowerLevels.PowerLevelLow)
-                setup |= _BV(Constants.RF_PWR_LOW);
-            else if (powerLevel == PowerLevels.PowerLevelMin)
-            {
-                // nothing
-            }
-            else if (powerLevel == PowerLevels.PowerLevelError)
-                setup |= (byte)(_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH));
-
-            WriteRegister(Constants.RF_SETUP, setup);
-        }
-
+       
         public void SetRetries(byte delay, byte count)
         {
             WriteRegister(Constants.SETUP_RETR, (byte)((delay & 0xf) << Constants.ARD | (count & 0xf) << Constants.ARC));
