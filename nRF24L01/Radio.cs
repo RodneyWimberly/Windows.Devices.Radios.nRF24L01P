@@ -10,12 +10,11 @@ namespace nRF24L01
     /// <summary>
     /// Driver for nRF24L01(+) 2.4GHz Wireless Transceiver
     /// </summary>
-    public class Radio
+    public class Radio : IRadio
     {
         private bool _isWideBand;
 
         private bool _dynamicPayloadEnabled;
-        private int _ackPayloadLength;
         private long _pipe0ReadingAddress;
 
         private readonly GpioPin _cePin;
@@ -61,18 +60,19 @@ namespace nRF24L01
 
         protected byte ReadRegister(byte register)
         {
-            return ReadRegisters(register, 1)[0];
+            return ReadRegisters(register)[0];
         }
 
-        protected byte[] ReadRegisters(byte register, int length)
+        protected byte[] ReadRegisters(byte register, int length = 0)
         {
-            byte[] readBuffer = new byte[length];
-            _spiDevice.TransferFullDuplex(new[]
-            {
-                (byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)),
-                Constants.NOP
-            },
-            readBuffer);
+            byte[] readBuffer = new byte[length + 1],
+                writeBuffer = new byte[length + 1];
+
+            writeBuffer[0] = (byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register));
+            for (int index = 1; index <= length; index++)
+                writeBuffer[index] = Constants.NOP;
+
+            _spiDevice.TransferFullDuplex(writeBuffer, readBuffer);
 
             return readBuffer;
         }
@@ -265,6 +265,218 @@ namespace nRF24L01
             FlushReceiveBuffer();
         }
 
+        public bool Write(byte[] data)
+        {
+            bool result = false;
+
+            // Begin the write
+            StartWrite(data);
+
+            // ------------
+            // At this point we could return from a non-blocking write, and then call
+            // the rest after an interrupt
+
+            // Instead, we are going to block here until we get TX_DS (transmission completed and ack'd)
+            // or MAX_RT (maximum retries, transmission failed).  Also, we'll timeout in case the radio
+            // is flaky and we get neither.
+
+            // IN the end, the send should be blocking.  It comes back in 60ms worst case, or much faster
+            // if I tighted up the retry logic.  (Default settings will be 1500us.
+            // Monitor the send
+
+            byte[] observeTx;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            do
+            {
+                observeTx = ReadRegisters(Constants.OBSERVE_TX, 1);
+                //string observeTxDisplay = FormatObserveTx(observeTx[1]);
+            } while ((observeTx[0] & (_BV(Constants.TX_DS) | _BV(Constants.MAX_RT))) != 1 && (stopwatch.ElapsedMilliseconds < 500));
+
+            // The part above is what you could recreate with your own interrupt handler,
+            // and then call this when you got an interrupt
+            // ------------
+
+            // Call this when you get an interrupt
+            // The status tells us three things
+            // * The send was successful (TX_DS)
+            // * The send failed, too many retries (MAX_RT)
+            // * There is an ack packet waiting (RX_DR)
+            bool txOk, txFail;
+            WhatHappened(out txOk, out txFail, out _isAckPayloadAvailable);
+            result = txOk;
+
+            // Handle the ack packet
+            if (_isAckPayloadAvailable)
+            {
+                byte ackPayloadLength = GetDynamicPayloadSize();
+            }
+
+            PowerDown();
+            FlushTransmitBuffer();
+
+            return result;
+        }
+
+        public void StartWrite(byte[] data)
+        {
+            WriteRegister(Constants.CONFIG, (byte)(ReadRegister(Constants.CONFIG) | _BV(Constants.PWR_UP) & ~_BV(Constants.PRIM_RX)));
+            DelayMicroseconds(150);
+
+            WritePayload(data);
+
+            ChipEnable(true);
+            DelayMicroseconds(15);
+            ChipEnable(false);
+        }
+
+        private string FormatObserveTx(byte value)
+        {
+            return string.Format("OBSERVE_TX={0:X2}: POLS_CNT={1} ARC_CNT={2}",
+                value,
+                (value >> Constants.PLOS_CNT) & 0xF,
+                (value >> Constants.ARC_CNT) & 0xF);
+        }
+
+        public byte GetDynamicPayloadSize()
+        {
+            byte[] result = new byte[1];
+
+            _spiDevice.TransferFullDuplex(new[] { Constants.R_RX_PL_WID, Constants.NOP }, result);
+            return result[0];
+        }
+
+        public bool Available()
+        {
+            return Available(null);
+        }
+
+        public bool Available(byte[] pipes)
+        {
+            byte status = GetStatus();
+            bool result = (status & _BV(Constants.RX_DR)) == 1;
+            if (result)
+            {
+                // If the caller wants the pipe number, include that
+                if (pipes != null)
+                    pipes[0] = (byte)((status >> Constants.RX_P_NO) & 0x7);
+
+                // Clear the status bit
+
+                // ??? Should this REALLY be cleared now?  Or wait until we
+                // actually READ the payload?
+                WriteRegister(Constants.STATUS, _BV(Constants.RX_DR));
+
+                // Handle ack payload receipt
+                if ((status & _BV(Constants.TX_DS)) == 1)
+                    WriteRegister(Constants.STATUS, _BV(Constants.TX_DS));
+            }
+
+            return result;
+        }
+
+        public bool Read(byte[] readBuffer, int length)
+        {
+            // Fetch the payload
+            ReadPayload(readBuffer, length);
+
+            // was this the last of the data available?
+            return (ReadRegister(Constants.FIFO_STATUS) & _BV(Constants.RX_EMPTY)) == 1;
+        }
+
+        public void WhatHappened(out bool txOk, out bool txFail, out bool rxReady)
+        {
+            byte status = ReadRegister(Constants.STATUS);
+            WriteRegister(Constants.STATUS, (byte)(_BV(Constants.RX_DR) | _BV(Constants.TX_DS) | _BV(Constants.MAX_RT)));
+
+            txOk = (status & _BV(Constants.TX_DS)) == 1;
+            txFail = (status & _BV(Constants.MAX_RT)) == 1;
+            rxReady = (status & _BV(Constants.RX_DR)) == 1;
+        }
+
+        public void OpenWritingPipe(long value)
+        {
+            WriteRegisters(Constants.RX_ADDR_P0, BitConverter.GetBytes(value), 5);
+            WriteRegisters(Constants.TX_ADDR, BitConverter.GetBytes(value), 5);
+            WriteRegister(Constants.RX_PW_P0, PayloadSize);
+        }
+
+        public void OpenReadingPipe(byte child, long address)
+        {
+            if (child == 0)
+                _pipe0ReadingAddress = address;
+            if (child <= 6)
+            {
+                // For pipes 2-5, only write the LSB
+                if (child < 2)
+                    WriteRegisters(Constants.ChildPipes[child], BitConverter.GetBytes(address), 5);
+                else
+                    WriteRegisters(Constants.ChildPipes[child], BitConverter.GetBytes(address), 1);
+
+                WriteRegister(Constants.ChildPayloadSizes[child], PayloadSize);
+
+                // Note it would be more efficient to set all of the bits for all open
+                // pipes at once.  However, I thought it would make the calling code
+                // more simple to do it this way.
+                WriteRegister(Constants.EN_RXADDR, (byte)(ReadRegister(Constants.EN_RXADDR) | _BV(Constants.ChildPipeEnable[child])));
+            }
+        }
+
+        public void EnableDynamicPayloads()
+        {
+            // Enable dynamic payload throughout the system
+            WriteRegister(Constants.FEATURE, (byte)(ReadRegister(Constants.FEATURE) | _BV(Constants.EN_DPL)));
+
+            // If it didn't work, the features are not enabled
+            if (ReadRegister(Constants.FEATURE) != 1)
+            {
+                // So enable them and try again
+                ToggleFeatures();
+                WriteRegister(Constants.FEATURE, (byte)(ReadRegister(Constants.FEATURE) | _BV(Constants.EN_DPL)));
+            }
+
+            // Enable dynamic payload on all pipes
+            // Not sure the use case of only having dynamic payload on certain pipes, so the library does not support it.
+            WriteRegister(Constants.DYNPD, (byte)(ReadRegister(Constants.DYNPD) | _BV(Constants.DPL_P5) | _BV(Constants.DPL_P4)
+                | _BV(Constants.DPL_P3) | _BV(Constants.DPL_P2) | _BV(Constants.DPL_P1) | _BV(Constants.DPL_P0)));
+            _dynamicPayloadEnabled = true;
+        }
+
+        public void EnableAckPayload()
+        {
+            // Enable ack payload and dynamic payload features
+            WriteRegister(Constants.FEATURE, (byte)(ReadRegister(Constants.FEATURE) | _BV(Constants.EN_ACK_PAY) | _BV(Constants.EN_DPL)));
+
+            // If it didn't work, the features are not enabled
+            if (ReadRegister(Constants.FEATURE) != 1)
+            {
+                // So enable them and try again
+                ToggleFeatures();
+                WriteRegister(Constants.FEATURE, (byte)(ReadRegister(Constants.FEATURE) | _BV(Constants.EN_ACK_PAY) | _BV(Constants.EN_DPL)));
+            }
+
+            //
+            // Enable dynamic payload on pipes 0 & 1
+            //
+            WriteRegister(Constants.DYNPD, (byte)(ReadRegister(Constants.DYNPD) | _BV(Constants.DPL_P1) | _BV(Constants.DPL_P0)));
+
+        }
+
+        public void WriteAckPayload(byte pipe, byte[] data, int length)
+        {
+            _spiDevice.Write(new[] { (byte)(Constants.W_ACK_PAYLOAD | (pipe & 0x7)) });
+            int payloadSize = Math.Min(length, Constants.MaxPayloadSize);
+            if (data.Length > payloadSize)
+                Array.Resize(ref data, payloadSize);
+            _spiDevice.Write(data);
+        }
+
+        public void ToggleFeatures()
+        {
+            _spiDevice.Write(new byte[] { Constants.ACTIVATE, 0x73 });
+
+        }
+
         public void PowerDown()
         {
             WriteRegister(Constants.CONFIG, (byte)(ReadRegister(Constants.CONFIG) & ~_BV(Constants.PWR_UP)));
@@ -410,7 +622,7 @@ namespace nRF24L01
             byte config = (byte)(ReadRegister(Constants.CONFIG) & ~(_BV(Constants.CRCO) | _BV(Constants.CRCO)));
             if (crcLength == CrcLengths.CrcDisabled)
             {
-                // Do nothing, we turned it off above. 
+                config = (byte)(ReadRegister(Constants.CONFIG) & ~_BV(Constants.EN_CRC));
             }
             else if (crcLength == CrcLengths.Crc8Bit)
             {
@@ -423,12 +635,6 @@ namespace nRF24L01
             }
 
             WriteRegister(Constants.CONFIG, config);
-        }
-
-        public void DisableCrc()
-        {
-            byte disable = (byte)(ReadRegister(Constants.CONFIG) & ~_BV(Constants.EN_CRC));
-            WriteRegister(Constants.CONFIG, disable);
         }
 
         public PowerLevels GetPowerLevel()
@@ -474,6 +680,12 @@ namespace nRF24L01
         private static byte _BV(byte mask)
         {
             return (byte)(1 << mask);
+        }
+
+        private static void DelayMicroseconds(int microSeconds)
+        {
+            // We will assume that 10 ticks = 1 microsecond
+            Task.Delay(new TimeSpan(10 * microSeconds)).Wait();
         }
     }
 }
