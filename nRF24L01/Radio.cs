@@ -10,13 +10,11 @@ namespace Windows.Devices.Radios.nRF24L01
     /// <summary>
     /// Driver for nRF24L01(+) 2.4GHz Wireless Transceiver
     /// </summary>
-    public class Radio
+    public class Radio : IRadio
     {
         public RadioKind RadioKind => RadioKind.Other;
 
         public RadioState RadioState { get; set; }
-
-        private bool _isWideBand;
 
         private bool _dynamicPayloadEnabled;
         private long _pipe0ReadingAddress;
@@ -36,7 +34,7 @@ namespace Windows.Devices.Radios.nRF24L01
         {
             get
             {
-                 
+
                 bool isAckPayloadAvailable = _isAckPayloadAvailable;
                 _isAckPayloadAvailable = false;
                 return isAckPayloadAvailable;
@@ -66,13 +64,11 @@ namespace Windows.Devices.Radios.nRF24L01
             bool success = false;
             byte setup = ReadRegister(Constants.RF_SETUP);
             // HIGH and LOW '00' is 1Mbs - our default
-            _isWideBand = false;
             setup &= (byte)(~(_BV(Constants.RF_DR_LOW) | _BV(Constants.RF_DR_HIGH)));
             if (dataRate == DataRates.DataRate250Kbps)
             {
                 // Must set the RF_DR_LOW to 1; RF_DR_HIGH (used to be RF_DR) is already 0
                 // Making it '10'.
-                _isWideBand = false;
                 setup |= _BV(Constants.RF_DR_LOW);
             }
             else
@@ -81,13 +77,11 @@ namespace Windows.Devices.Radios.nRF24L01
                 // Making it '01'
                 if (dataRate == DataRates.DataRate2Mbps)
                 {
-                    _isWideBand = true;
                     setup |= _BV(Constants.RF_DR_HIGH);
                 }
                 else
                 {
                     // 1Mbs
-                    _isWideBand = false;
                 }
             }
             WriteRegister(Constants.RF_SETUP, setup);
@@ -95,8 +89,6 @@ namespace Windows.Devices.Radios.nRF24L01
             // Verify Results
             if (ReadRegister(Constants.RF_SETUP) == setup)
                 success = true;
-            else
-                _isWideBand = false;
 
             return success;
         }
@@ -178,6 +170,17 @@ namespace Windows.Devices.Radios.nRF24L01
             WriteRegister(Constants.RF_SETUP, setup);
         }
 
+        private byte _channel;
+        public byte Channel
+        {
+            get { return _channel; }
+            set
+            {
+                _channel = Math.Min(value, Constants.MaxChannel);
+                WriteRegister(Constants.RF_CH, _channel);
+            }
+        }
+
         private bool _isPlusModel;
         public RadioModels RadioModel => _isPlusModel ? RadioModels.nRF24L01P : RadioModels.nRF24L01;
         public string Name => Constants.RadioModelStrings[(int)RadioModel];
@@ -187,7 +190,6 @@ namespace Windows.Devices.Radios.nRF24L01
         public Radio(GpioPin cePin, SpiDevice spiDevice)
         {
             _isPlusModel = false;
-            _isWideBand = true;
             _payloadSize = Constants.MaxPayloadSize;
             _isAckPayloadAvailable = false;
             _dynamicPayloadEnabled = false;
@@ -370,7 +372,7 @@ namespace Windows.Devices.Radios.nRF24L01
 
             // Set up default configuration.  Callers can always change it later.
             // This channel should be universally safe and not bleed over into adjacent spectrum.
-            SetChannel(76);
+            Channel = 76;
 
             FlushTransmitBuffer();
             FlushReceiveBuffer();
@@ -627,12 +629,6 @@ namespace Windows.Devices.Radios.nRF24L01
             RadioState = RadioState.On;
         }
 
-        public void SetChannel(byte channel)
-        {
-            // TODO: This method could take advantage of the 'wide_band' calculation
-            // done in setChannel() to require certain channel spacing.
-            WriteRegister(Constants.RF_CH, Math.Min(channel, Constants.MaxChannel));
-        }
 
         public bool TestCarrier()
         {
@@ -694,7 +690,7 @@ namespace Windows.Devices.Radios.nRF24L01
             WriteRegister(Constants.EN_AA, enAa);
         }
 
-       
+
         public void SetRetries(byte delay, byte count)
         {
             WriteRegister(Constants.SETUP_RETR, (byte)((delay & 0xf) << Constants.ARD | (count & 0xf) << Constants.ARC));

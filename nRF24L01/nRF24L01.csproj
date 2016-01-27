@@ -107,6 +107,7 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IRadio.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RadioModels.cs" />
     <Compile Include="Radio.cs" />

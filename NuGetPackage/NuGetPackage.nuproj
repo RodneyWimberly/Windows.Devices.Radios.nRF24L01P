@@ -27,12 +27,12 @@
     <Description>nRF24L01 Driver for Window 10 IoT Core</Description>
     <ReleaseNotes>
     </ReleaseNotes>
-    <ProjectUrl>
-    </ProjectUrl>
+    <ProjectUrl>https://github.com/RodneyWimberly/Windows.Devices.Radios.nRF24L01</ProjectUrl>
     <LicenseUrl>
     </LicenseUrl>
     <Copyright>Copyright © Rodney Wimberly</Copyright>
     <Tags>nRF24L01, Window 10 IoT Core</Tags>
+    <IconUrl>$(SolutionDir)wireless.png</IconUrl>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="Readme.txt" />
