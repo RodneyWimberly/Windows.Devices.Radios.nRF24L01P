@@ -202,33 +202,52 @@ namespace Windows.Devices.Radios.nRF24L01
 
         protected byte ReadRegister(byte register)
         {
-            return ReadRegisters(register)[0];
+            _spiDevice.Transfer((byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)));
+            byte result = _spiDevice.Transfer(Constants.NOP);
+            return result;
+            //return ReadRegisters(register)[0];
         }
 
-        protected byte[] ReadRegisters(byte register, int length = 0)
+        protected byte ReadRegister(byte register, byte[] buffer, int length = 0)
         {
-            byte[] readBuffer = new byte[length + 1],
-                writeBuffer = new byte[length + 1];
+            byte status = _spiDevice.Transfer((byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)));
+            buffer = new byte[length];
+            for (int index = 0; index < length; index++)
+                buffer[index] = _spiDevice.Transfer(Constants.NOP);
+            return status;
 
-            writeBuffer[0] = (byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register));
-            for (int index = 1; index <= length; index++)
-                writeBuffer[index] = Constants.NOP;
+            //    byte[] readBuffer = new byte[length + 1],
+            //    writeBuffer = new byte[length + 1];
 
-            _spiDevice.TransferFullDuplex(writeBuffer, readBuffer);
+            //writeBuffer[0] = (byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register));
+            //for (int index = 1; index <= length; index++)
+            //    writeBuffer[index] = Constants.NOP;
 
-            return readBuffer;
+            //_spiDevice.TransferFullDuplex(writeBuffer, readBuffer);
+
+            //return readBuffer;
         }
 
-        protected void WriteRegister(byte register, byte value)
+        protected byte WriteRegister(byte register, byte value)
         {
-            _spiDevice.Write(new[] { (byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)), value });
+            byte status = _spiDevice.Transfer((byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)));
+            _spiDevice.Transfer(value);
+
+            return status;
+
+            // _spiDevice.Write(new[] { (byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)), value });
         }
 
-        protected void WriteRegisters(byte register, byte[] values, int length)
+        protected byte WriteRegister(byte register, byte[] values, int length)
         {
-            Array.Resize(ref values, length);
-            _spiDevice.Write(new[] { (byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)) });
-            _spiDevice.Write(values);
+            byte status = _spiDevice.Transfer((byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)));
+            for (int index = 0; index < length; index++)
+                 _spiDevice.Transfer(values[index]);
+            return status;
+
+            //Array.Resize(ref values, length);
+            //_spiDevice.Write(new[] { (byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)) });
+            //_spiDevice.Write(values);
         }
 
         protected void ChipEnable(bool enabled)
@@ -246,7 +265,7 @@ namespace Windows.Devices.Radios.nRF24L01
             ChipEnable(false);
             _spiDevice.TransferFullDuplex(new[] { Constants.W_TX_PAYLOAD }, status);
             _spiDevice.Write(payload);
-            for (int index = 0; index <= blankLength; index++)
+            for (int index = 0; index < blankLength; index++)
                 _spiDevice.Write(new byte[] { 0 });
             ChipEnable(true);
 
@@ -264,7 +283,7 @@ namespace Windows.Devices.Radios.nRF24L01
             _spiDevice.TransferFullDuplex(new[] { Constants.R_RX_PAYLOAD }, status);
 
             byte[] request = new byte[payloadSize];
-            for (int index = 0; index <= payloadSize; index++)
+            for (int index = 0; index < payloadSize; index++)
                 request[index] = Constants.NOP;
             payload = new byte[payloadSize];
             _spiDevice.TransferFullDuplex(request, payload);
@@ -296,20 +315,28 @@ namespace Windows.Devices.Radios.nRF24L01
 
         protected byte GetStatus()
         {
-            byte[] readBuffer = new byte[1];
-            _spiDevice.TransferFullDuplex(new[] { Constants.NOP }, readBuffer);
+            byte status = _spiDevice.Transfer(Constants.NOP);
+            //byte[] readBuffer = new byte[1];
+            //_spiDevice.TransferFullDuplex(new[] { Constants.NOP }, readBuffer);
 
-            return readBuffer[0];
+            return status;
         }
 
         protected string GetAddressRegister(string name, byte register, int quantity)
         {
             string registerValue = "\t" + name + (name.Length < 8 ? "\t" : "") + " = ";
-            while (quantity-- >= 0)
+            for(int index = 0; index < quantity; index++)
             {
-                byte[] values = ReadRegisters(register++, 5);
-                registerValue += " 0x" + BitConverter.ToString(values).Replace("-", string.Empty);
+                byte[] buffer = new byte[5];
+                ReadRegister(register++, buffer, buffer.Length);
+                registerValue += " 0x" + BitConverter.ToString(buffer).Replace("-", string.Empty);
             }
+
+            //while (quantity-- >= 0)
+            //{
+            //    byte[] values = ReadRegister(register++, 5);
+            //    registerValue += " 0x" + BitConverter.ToString(values).Replace("-", string.Empty);
+            //}
 
             return registerValue;
         }
@@ -317,11 +344,14 @@ namespace Windows.Devices.Radios.nRF24L01
         protected string GetByteRegister(string name, byte register, int quantity)
         {
             string registerValue = "\t" + name + (name.Length < 8 ? "\t" : "") + " = ";
-            while (quantity-- >= 0)
-            {
-                byte[] values = ReadRegisters(register++, 1);
-                registerValue += " 0x" + BitConverter.ToString(values).Replace("-", string.Empty);
-            }
+            for (int index = 0; index < quantity; index++)
+                registerValue += " 0x" + ReadRegister(register++); 
+
+            //while (quantity-- >= 0)
+            //{
+            //    byte[] values = ReadRegister(register++, 1);
+            //    registerValue += " 0x" + BitConverter.ToString(values).Replace("-", string.Empty);
+            //}
 
             return registerValue;
         }
@@ -385,7 +415,7 @@ namespace Windows.Devices.Radios.nRF24L01
 
             // Restore the pipe0 address, if exists
             if (_pipe0ReadingAddress > 0)
-                WriteRegisters(Constants.RX_ADDR_P0, BitConverter.GetBytes(_pipe0ReadingAddress), 5);
+                WriteRegister(Constants.RX_ADDR_P0, BitConverter.GetBytes(_pipe0ReadingAddress), 5);
 
             // Flush buffers
             FlushReceiveBuffer();
@@ -424,14 +454,15 @@ namespace Windows.Devices.Radios.nRF24L01
             // if I tighted up the retry logic.  (Default settings will be 1500us.
             // Monitor the send
 
-            byte[] observeTx;
+            byte[] observeTx = new byte[1];
+            byte status;
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             do
             {
-                observeTx = ReadRegisters(Constants.OBSERVE_TX, 1);
+                status = ReadRegister(Constants.OBSERVE_TX, observeTx, 1);
                 //string observeTxDisplay = FormatObserveTx(observeTx[1]);
-            } while ((observeTx[0] & (_BV(Constants.TX_DS) | _BV(Constants.MAX_RT))) != 1 && (stopwatch.ElapsedMilliseconds < 500));
+            } while ((status & (_BV(Constants.TX_DS) | _BV(Constants.MAX_RT))) != 1 && (stopwatch.ElapsedMilliseconds < 500));
 
             // The part above is what you could recreate with your own interrupt handler,
             // and then call this when you got an interrupt
@@ -536,8 +567,8 @@ namespace Windows.Devices.Radios.nRF24L01
 
         public void OpenWritingPipe(long value)
         {
-            WriteRegisters(Constants.RX_ADDR_P0, BitConverter.GetBytes(value), 5);
-            WriteRegisters(Constants.TX_ADDR, BitConverter.GetBytes(value), 5);
+            WriteRegister(Constants.RX_ADDR_P0, BitConverter.GetBytes(value), 5);
+            WriteRegister(Constants.TX_ADDR, BitConverter.GetBytes(value), 5);
             WriteRegister(Constants.RX_PW_P0, PayloadSize);
         }
 
@@ -549,9 +580,9 @@ namespace Windows.Devices.Radios.nRF24L01
             {
                 // For pipes 2-5, only write the LSB
                 if (child < 2)
-                    WriteRegisters(Constants.ChildPipes[child], BitConverter.GetBytes(address), 5);
+                    WriteRegister(Constants.ChildPipes[child], BitConverter.GetBytes(address), 5);
                 else
-                    WriteRegisters(Constants.ChildPipes[child], BitConverter.GetBytes(address), 1);
+                    WriteRegister(Constants.ChildPipes[child], BitConverter.GetBytes(address), 1);
 
                 WriteRegister(Constants.ChildPayloadSizes[child], PayloadSize);
 
