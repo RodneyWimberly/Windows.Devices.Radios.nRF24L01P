@@ -1,4 +1,4 @@
-namespace nRF24L01
+namespace Windows.Devices.Radios.nRF24L01
 {
     public enum CrcLengths
     {

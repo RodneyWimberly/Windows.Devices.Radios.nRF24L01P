@@ -5,13 +5,17 @@ using System.Threading.Tasks;
 using Windows.Devices.Gpio;
 using Windows.Devices.Spi;
 
-namespace nRF24L01
+namespace Windows.Devices.Radios.nRF24L01
 {
     /// <summary>
     /// Driver for nRF24L01(+) 2.4GHz Wireless Transceiver
     /// </summary>
-    public class Radio : IRadio
+    public class Radio
     {
+        public RadioKind RadioKind => RadioKind.Other;
+
+        public RadioState RadioState { get; set; }
+
         private bool _isWideBand;
 
         private bool _dynamicPayloadEnabled;
@@ -32,6 +36,7 @@ namespace nRF24L01
         {
             get
             {
+                 
                 bool isAckPayloadAvailable = _isAckPayloadAvailable;
                 _isAckPayloadAvailable = false;
                 return isAckPayloadAvailable;
@@ -175,7 +180,7 @@ namespace nRF24L01
 
         private bool _isPlusModel;
         public RadioModels RadioModel => _isPlusModel ? RadioModels.nRF24L01P : RadioModels.nRF24L01;
-        public string RadioModelName => Constants.RadioModelStrings[(int)RadioModel];
+        public string Name => Constants.RadioModelStrings[(int)RadioModel];
 
         public bool IsDataAvailable => (GetStatus() & (_BV(Constants.MASK_RX_DR))) > 0;
 
@@ -227,7 +232,7 @@ namespace nRF24L01
         protected void ChipEnable(bool enabled)
         {
             _cePin.Write(enabled ? GpioPinValue.High : GpioPinValue.Low);
-            Task.Delay(50).Wait();
+            DelayMicroseconds(50);
         }
 
         protected byte WritePayload(byte[] payload)
@@ -329,12 +334,12 @@ namespace nRF24L01
             // Enabling 16b CRC is by far the most obvious case if the wrong timing is used - or skipped.
             // Technically we require 4.5ms + 14us as a worst case. We'll just call it 5ms for good measure.
             // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
-            Task.Delay(5).Wait();
+            DelayMicroseconds(5000);
 
             // Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make testing a little easier
             // WARNING: If this is ever lowered, either 250KBS mode with AA is broken or maximum packet
             // sizes must never be used. See documentation for a more complete explanation.
-            SetRetries(0x04, 0x0F);
+            SetRetries(4, 15);
 
             // Set payload sizes
             //WriteRegister(Constants.RX_PW_P0, PayloadSize);
@@ -388,7 +393,7 @@ namespace nRF24L01
             ChipEnable(true);
 
             // wait for the radio to come up (130us actually only needed)
-            Task.Delay(1).Wait();
+            DelayMicroseconds(130);
         }
 
         public void StopListening()
@@ -613,11 +618,13 @@ namespace nRF24L01
         public void PowerDown()
         {
             WriteRegister(Constants.CONFIG, (byte)(ReadRegister(Constants.CONFIG) & ~_BV(Constants.PWR_UP)));
+            RadioState = RadioState.Off;
         }
 
         public void PowerUp()
         {
             WriteRegister(Constants.CONFIG, (byte)(ReadRegister(Constants.CONFIG) | _BV(Constants.PWR_UP)));
+            RadioState = RadioState.On;
         }
 
         public void SetChannel(byte channel)
@@ -663,7 +670,7 @@ namespace nRF24L01
             sb.AppendLine(GetByteRegister("DYNPD/FEATURE", Constants.DYNPD, 2));
 
             sb.AppendLine("Data Rate\t = " + Constants.DataRateStrings[(int)GetDataRate()]);
-            sb.AppendLine("Model\t\t = " + RadioModelName);
+            sb.AppendLine("Model\t\t = " + Name);
             sb.AppendLine("CRC Length\t = " + Constants.CrcLengthStrings[(int)GetCrcLength()]);
             sb.AppendLine("PA Power\t = " + Constants.PowerLevelStrings[(int)GetPowerLevel()]);
 
