@@ -3,16 +3,17 @@
     internal static class Constants
     {
         internal static string[] DataRateStrings = { "1 Mbps", "2 Mbps", "250 Kbps" };
-        internal static string[] CrcLengthStrings = { "Disabled", "8 Bits", "16 Bits" };
+        internal static string[] CrcEncodingSchemeStrings = { "Single Byte", "Double Byte" };
         internal static string[] PowerLevelStrings = { "PA_MIN", "PA_LOW", "PA_HIGH", "PA_MAX", "PA_ERROR" };
         internal static string[] RadioModelStrings = { "nRF24L01", "nRF24L01+" };
 
-        internal static byte[] ChildPipes = { RX_ADDR_P0, RX_ADDR_P1, RX_ADDR_P2, RX_ADDR_P3, RX_ADDR_P4, RX_ADDR_P5 };
-        internal static byte[] ChildPayloadSizes = { RX_PW_P0, RX_PW_P1, RX_PW_P2, RX_PW_P3, RX_PW_P4, RX_PW_P5 };
-        internal static byte[] ChildPipeEnable = { ERX_P0, ERX_P1, ERX_P2, ERX_P3, ERX_P4, ERX_P5 };
+        internal static byte[] ReceivePipeAddress = { RX_ADDR_P0, RX_ADDR_P1, RX_ADDR_P2, RX_ADDR_P3, RX_ADDR_P4, RX_ADDR_P5 };
+        internal static byte[] ReceivePipePayloadWidth = { RX_PW_P0, RX_PW_P1, RX_PW_P2, RX_PW_P3, RX_PW_P4, RX_PW_P5 };
+        internal static byte[] ReceivePipeEnable = { ERX_P0, ERX_P1, ERX_P2, ERX_P3, ERX_P4, ERX_P5 };
 
         internal const byte MaxChannel = 127;
         internal const byte MaxPayloadSize = 32;
+        public const byte EMPTY_ADDRESS = 0x00;
 
         //CONFIG register bitwise definitions
         internal const byte CONFIG_RESERVED = 0x80;
@@ -28,6 +29,7 @@
         internal const byte STATUS_RX_DR = 0x40;
 
         /* Memory Map */
+        internal const byte CONT_WAVE = 0x80;
         internal const byte CONFIG = 0x00;
         internal const byte EN_AA = 0x01;
         internal const byte EN_RXADDR = 0x02;
@@ -75,7 +77,7 @@
         internal const byte ERX_P2 = 2;
         internal const byte ERX_P1 = 1;
         internal const byte ERX_P0 = 0;
-        internal const byte AW = 0;
+        internal const byte ARDAW = 0;
         internal const byte ARD = 4;
         internal const byte ARC = 0;
         internal const byte PLL_LOCK = 4;

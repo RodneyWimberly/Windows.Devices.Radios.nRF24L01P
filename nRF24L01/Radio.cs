@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.Devices.Gpio;
+using Windows.Devices.Radios.nRF24L01.Enums;
 using Windows.Devices.Spi;
 
 namespace Windows.Devices.Radios.nRF24L01
@@ -10,263 +9,103 @@ namespace Windows.Devices.Radios.nRF24L01
     /// <summary>
     /// Driver for nRF24L01(+) 2.4GHz Wireless Transceiver
     /// </summary>
-    public class Radio : IRadio
+    public class Radio
     {
-        public RadioKind RadioKind => RadioKind.Other;
-
-        public RadioState RadioState { get; set; }
-
-        private bool _dynamicPayloadEnabled;
         private long _pipe0ReadingAddress;
-
+        private readonly object _spiLock;
         private readonly GpioPin _cePin;
         private readonly SpiDevice _spiDevice;
+        private bool _checkStatus;
 
-        private byte _payloadSize;
-        public byte PayloadSize
-        {
-            get { return _payloadSize; }
-            set { _payloadSize = Math.Min(value, Constants.MaxPayloadSize); }
-        }
+        public RadioConfig Configuration { get; private set; }
+        public TransmitPipe TransmitPipe { get; private set; }
+
+        public ReceivePipeCollection ReceivePipes { get; private set; }
 
         private bool _isAckPayloadAvailable;
         public bool IsAckPayloadAvailable
         {
             get
             {
-
                 bool isAckPayloadAvailable = _isAckPayloadAvailable;
                 _isAckPayloadAvailable = false;
                 return isAckPayloadAvailable;
             }
         }
 
-        public DataRates DataRate
-        {
-            get { return GetDataRate(); }
-            set { SetDataRate(value); }
-        }
-        private DataRates GetDataRate()
-        {
-            DataRates dataRate = DataRates.DataRate250Kbps;
-            byte setup = (byte)(ReadRegister(Constants.RF_SETUP) & (1 << Constants.RF_DR_LOW | 1 << Constants.RF_DR_HIGH));
-            if (setup == _BV(Constants.RF_DR_LOW))
-                dataRate = DataRates.DataRate250Kbps;
-            else if (setup == _BV(Constants.RF_DR_HIGH))
-                dataRate = DataRates.DataRate2Mbps;
-            else
-                dataRate = DataRates.DataRate1Mbps;
-            return dataRate;
-        }
+        public string Name => Constants.RadioModelStrings[(int)Configuration.RadioModel];
 
-        private bool SetDataRate(DataRates dataRate)
-        {
-            bool success = false;
-            byte setup = ReadRegister(Constants.RF_SETUP);
-            // HIGH and LOW '00' is 1Mbs - our default
-            setup &= (byte)(~(_BV(Constants.RF_DR_LOW) | _BV(Constants.RF_DR_HIGH)));
-            if (dataRate == DataRates.DataRate250Kbps)
-            {
-                // Must set the RF_DR_LOW to 1; RF_DR_HIGH (used to be RF_DR) is already 0
-                // Making it '10'.
-                setup |= _BV(Constants.RF_DR_LOW);
-            }
-            else
-            {
-                // Set 2Mbs, RF_DR (RF_DR_HIGH) is set 1
-                // Making it '01'
-                if (dataRate == DataRates.DataRate2Mbps)
-                {
-                    setup |= _BV(Constants.RF_DR_HIGH);
-                }
-                else
-                {
-                    // 1Mbs
-                }
-            }
-            WriteRegister(Constants.RF_SETUP, setup);
-
-            // Verify Results
-            if (ReadRegister(Constants.RF_SETUP) == setup)
-                success = true;
-
-            return success;
-        }
-
-        public CrcLengths CrcLength
-        {
-            get { return GetCrcLength(); }
-            set { SetCrcLength(value); }
-        }
-
-        private CrcLengths GetCrcLength()
-        {
-            CrcLengths crcLength = CrcLengths.CrcDisabled;
-            byte config = (byte)(ReadRegister(Constants.CONFIG) & (_BV(Constants.CRCO) | _BV(Constants.EN_CRC)));
-            if ((config & _BV(Constants.EN_CRC)) == 1)
-                crcLength = (config & _BV(Constants.CRCO)) == 1 ? CrcLengths.Crc16Bit : CrcLengths.Crc8Bit;
-
-            return crcLength;
-        }
-
-        private void SetCrcLength(CrcLengths crcLength)
-        {
-            byte config = (byte)(ReadRegister(Constants.CONFIG) & ~(_BV(Constants.CRCO) | _BV(Constants.CRCO)));
-            if (crcLength == CrcLengths.CrcDisabled)
-            {
-                config = (byte)(ReadRegister(Constants.CONFIG) & ~_BV(Constants.EN_CRC));
-            }
-            else if (crcLength == CrcLengths.Crc8Bit)
-            {
-                config |= _BV(Constants.EN_CRC);
-            }
-            else
-            {
-                config |= _BV(Constants.EN_CRC);
-                config |= _BV(Constants.CRCO);
-            }
-
-            WriteRegister(Constants.CONFIG, config);
-        }
-
-        public PowerLevels PowerLevel
-        {
-            get { return GetPowerLevel(); }
-            set { SetPowerLevel(value); }
-        }
-
-        private PowerLevels GetPowerLevel()
-        {
-            PowerLevels powerLevel = PowerLevels.PowerLevelError;
-            byte setup = (byte)(ReadRegister(Constants.RF_SETUP) & (_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH)));
-            if (setup == (_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH)))
-                powerLevel = PowerLevels.PowerLevelMax;
-            else if (setup == _BV(Constants.RF_PWR_HIGH))
-                powerLevel = PowerLevels.PowerLevelHigh;
-            else if (setup == _BV(Constants.RF_PWR_LOW))
-                powerLevel = PowerLevels.PowerLevelLow;
-            else
-                powerLevel = PowerLevels.PowerLevelMin;
-            return powerLevel;
-        }
-
-        private void SetPowerLevel(PowerLevels powerLevel)
-        {
-            byte setup = ReadRegister(Constants.RF_SETUP);
-            setup &= (byte)(~(_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH)));
-            if (powerLevel == PowerLevels.PowerLevelMax)
-                setup |= (byte)(_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH));
-            else if (powerLevel == PowerLevels.PowerLevelHigh)
-                setup |= _BV(Constants.RF_PWR_HIGH);
-            else if (powerLevel == PowerLevels.PowerLevelLow)
-                setup |= _BV(Constants.RF_PWR_LOW);
-            else if (powerLevel == PowerLevels.PowerLevelMin)
-            {
-                // nothing
-            }
-            else if (powerLevel == PowerLevels.PowerLevelError)
-                setup |= (byte)(_BV(Constants.RF_PWR_LOW) | _BV(Constants.RF_PWR_HIGH));
-
-            WriteRegister(Constants.RF_SETUP, setup);
-        }
-
-        private byte _channel;
-        public byte Channel
-        {
-            get { return _channel; }
-            set
-            {
-                _channel = Math.Min(value, Constants.MaxChannel);
-                WriteRegister(Constants.RF_CH, _channel);
-            }
-        }
-
-        private bool _isPlusModel;
-        public RadioModels RadioModel => _isPlusModel ? RadioModels.nRF24L01P : RadioModels.nRF24L01;
-        public string Name => Constants.RadioModelStrings[(int)RadioModel];
-
-        public bool IsDataAvailable => (GetStatus() & (_BV(Constants.MASK_RX_DR))) > 0;
+        public bool IsDataAvailable => (Configuration.GetStatus() & (Utilities.BitValue(Constants.MASK_RX_DR))) > 0;
 
         public Radio(GpioPin cePin, SpiDevice spiDevice)
         {
-            _isPlusModel = false;
-            _payloadSize = Constants.MaxPayloadSize;
+            _checkStatus = false;
             _isAckPayloadAvailable = false;
-            _dynamicPayloadEnabled = false;
             _pipe0ReadingAddress = 0;
+            _spiLock = new object();
 
             _spiDevice = spiDevice;
             _cePin = cePin;
             _cePin.SetDriveMode(GpioPinDriveMode.Output);
+
+            Configuration = new RadioConfig(this);
+            TransmitPipe = new TransmitPipe(this);
+            ReceivePipes = new ReceivePipeCollection(this);
         }
 
-        protected byte ReadRegister(byte register)
+        public byte Transfer(byte request)
         {
-            _spiDevice.Transfer((byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)));
-            byte result = _spiDevice.Transfer(Constants.NOP);
-            return result;
-            //return ReadRegisters(register)[0];
+            if (_checkStatus && (request == Constants.W_REGISTER && !(_status == DeviceStatus.StandBy || _status == DeviceStatus.PowerDown)))
+                throw new InvalidOperationException("Writing register should only be in Standby or PowerDown mode");
+            byte[] response = new byte[1];
+            lock (_spiLock)
+            {
+                _spiDevice.TransferFullDuplex(new[] { request }, response);
+            }
+            return response[0];
         }
 
-        protected byte ReadRegister(byte register, byte[] buffer, int length = 0)
+        public byte[] Transfer(byte[] request)
         {
-            byte status = _spiDevice.Transfer((byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)));
-            buffer = new byte[length];
-            for (int index = 0; index < length; index++)
-                buffer[index] = _spiDevice.Transfer(Constants.NOP);
-            return status;
+            if (_checkStatus && (request[0] == Constants.W_REGISTER && !(_status == DeviceStatus.StandBy || _status == DeviceStatus.PowerDown)))
+                throw new InvalidOperationException("Writing register should only be in Standby or PowerDown mode");
+            int length = request.Length;
 
-            //    byte[] readBuffer = new byte[length + 1],
-            //    writeBuffer = new byte[length + 1];
+            byte[] response = new byte[length],
+                buffer = new byte[length];
+            buffer[0] = request[0];
+            for (int i = 1; i < request.Length; i++)
+                buffer[length - i] = request[i];
+            //Array.Reverse();
+            lock (_spiLock)
+            {
+                _spiDevice.TransferFullDuplex(buffer, response);
+            }
 
-            //writeBuffer[0] = (byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register));
-            //for (int index = 1; index <= length; index++)
-            //    writeBuffer[index] = Constants.NOP;
+            for (int i = 0; i < request.Length; i++)
+                buffer[(length - 1) - i] = response[i];
 
-            //_spiDevice.TransferFullDuplex(writeBuffer, readBuffer);
-
-            //return readBuffer;
+            return buffer;
         }
 
-        protected byte WriteRegister(byte register, byte value)
-        {
-            byte status = _spiDevice.Transfer((byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)));
-            _spiDevice.Transfer(value);
-
-            return status;
-
-            // _spiDevice.Write(new[] { (byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)), value });
-        }
-
-        protected byte WriteRegister(byte register, byte[] values, int length)
-        {
-            byte status = _spiDevice.Transfer((byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)));
-            for (int index = 0; index < length; index++)
-                 _spiDevice.Transfer(values[index]);
-            return status;
-
-            //Array.Resize(ref values, length);
-            //_spiDevice.Write(new[] { (byte)(Constants.W_REGISTER | (Constants.REGISTER_MASK & register)) });
-            //_spiDevice.Write(values);
-        }
-
-        protected void ChipEnable(bool enabled)
+        public void ChipEnable(bool enabled)
         {
             _cePin.Write(enabled ? GpioPinValue.High : GpioPinValue.Low);
-            DelayMicroseconds(50);
+            Utilities.DelayMicroseconds(50);
         }
 
         protected byte WritePayload(byte[] payload)
         {
-            int payloadSize = Math.Min(payload.Length, _payloadSize);
-            int blankLength = _dynamicPayloadEnabled ? 0 : _payloadSize - payloadSize;
+            int payloadSize = Math.Min(payload.Length, Configuration.PayloadSize);
+            int blankLength = Configuration.DynamicPayloadLengthEnabled ? 0 : Configuration.PayloadSize - payloadSize;
             byte[] status = new byte[1];
 
             ChipEnable(false);
-            _spiDevice.TransferFullDuplex(new[] { Constants.W_TX_PAYLOAD }, status);
-            _spiDevice.Write(payload);
+            status = Transfer(new[] { Constants.W_TX_PAYLOAD });
+
+            Transfer(payload);
             for (int index = 0; index < blankLength; index++)
-                _spiDevice.Write(new byte[] { 0 });
+                Transfer(new byte[] { 0 });
             ChipEnable(true);
 
             return status[0];
@@ -274,90 +113,30 @@ namespace Windows.Devices.Radios.nRF24L01
 
         protected byte ReadPayload(byte[] payload, int length)
         {
-            int payloadSize = Math.Min(length, _payloadSize);
-            int blankLength = _dynamicPayloadEnabled ? 0 : _payloadSize - payloadSize;
+            int payloadSize = Math.Min(length, Configuration.PayloadSize);
+            int blankLength = Configuration.DynamicPayloadLengthEnabled ? 0 : Configuration.PayloadSize - payloadSize;
 
             ChipEnable(false);
 
-            byte[] status = new byte[1];
-            _spiDevice.TransferFullDuplex(new[] { Constants.R_RX_PAYLOAD }, status);
+            byte[] status = Transfer(new[] { Constants.R_RX_PAYLOAD });
 
             byte[] request = new byte[payloadSize];
             for (int index = 0; index < payloadSize; index++)
                 request[index] = Constants.NOP;
-            payload = new byte[payloadSize];
-            _spiDevice.TransferFullDuplex(request, payload);
-
-            //byte[] response = new byte[1];
-            //payload = new byte[payloadSize];
-            //for (int index = 0; index <= payloadSize; index++)
-            //{
-            //    _spiDevice.TransferFullDuplex(new[] {Constants.NOP}, response);
-            //    payload[index] = response[0];
-            //}
+            payload = Transfer(request);
 
             for (int index = 0; index <= blankLength; index++)
-                _spiDevice.Write(new byte[] { Constants.NOP });
+                Transfer(new byte[] { Constants.NOP });
+
             ChipEnable(true);
 
             return status[0];
         }
 
-        protected void FlushTransmitBuffer()
-        {
-            _spiDevice.Write(new[] { Constants.FLUSH_TX });
-        }
-
-        protected void FlushReceiveBuffer()
-        {
-            _spiDevice.Write(new[] { Constants.FLUSH_RX });
-        }
-
-        protected byte GetStatus()
-        {
-            byte status = _spiDevice.Transfer(Constants.NOP);
-            //byte[] readBuffer = new byte[1];
-            //_spiDevice.TransferFullDuplex(new[] { Constants.NOP }, readBuffer);
-
-            return status;
-        }
-
-        protected string GetAddressRegister(string name, byte register, int quantity)
-        {
-            string registerValue = "\t" + name + (name.Length < 8 ? "\t" : "") + " = ";
-            for(int index = 0; index < quantity; index++)
-            {
-                byte[] buffer = new byte[5];
-                ReadRegister(register++, buffer, buffer.Length);
-                registerValue += " 0x" + BitConverter.ToString(buffer).Replace("-", string.Empty);
-            }
-
-            //while (quantity-- >= 0)
-            //{
-            //    byte[] values = ReadRegister(register++, 5);
-            //    registerValue += " 0x" + BitConverter.ToString(values).Replace("-", string.Empty);
-            //}
-
-            return registerValue;
-        }
-
-        protected string GetByteRegister(string name, byte register, int quantity)
-        {
-            string registerValue = "\t" + name + (name.Length < 8 ? "\t" : "") + " = ";
-            for (int index = 0; index < quantity; index++)
-                registerValue += " 0x" + ReadRegister(register++); 
-
-            //while (quantity-- >= 0)
-            //{
-            //    byte[] values = ReadRegister(register++, 1);
-            //    registerValue += " 0x" + BitConverter.ToString(values).Replace("-", string.Empty);
-            //}
-
-            return registerValue;
-        }
-
         public void Begin()
         {
+            Registers.RegisterCollection registers = Configuration.Registers;
+
             ChipEnable(false);
 
             // Must allow the radio time to settle else configuration bits will not necessarily stick.
@@ -366,73 +145,87 @@ namespace Windows.Devices.Radios.nRF24L01
             // Enabling 16b CRC is by far the most obvious case if the wrong timing is used - or skipped.
             // Technically we require 4.5ms + 14us as a worst case. We'll just call it 5ms for good measure.
             // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
-            DelayMicroseconds(5000);
+            Utilities.DelayMicroseconds(5000);
 
             // Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make testing a little easier
             // WARNING: If this is ever lowered, either 250KBS mode with AA is broken or maximum packet
             // sizes must never be used. See documentation for a more complete explanation.
-            SetRetries(4, 15);
-
-            // Set payload sizes
-            //WriteRegister(Constants.RX_PW_P0, PayloadSize);
-            //WriteRegister(Constants.RX_PW_P1, PayloadSize);
+            Configuration.AutoRetransmitDelay = AutoRetransmitDelay.Delay1500uS;
+            Configuration.AutoRetransmitCount = 15;
 
             // Disable auto acknowledgement 
-            SetAutoAck(false);
+            Registers.AutoAckRegister autoAckRegister = registers.AutoAckRegister;
+            autoAckRegister.EN_AA = false;
+            autoAckRegister.Save();
+
+            // Attempt to set DataRate to 250Kbps to determine if this is a plus model
+            Configuration.DataRate = DataRates.DataRate250Kbps;
+            Configuration.IsPlusModel = Configuration.DataRate == DataRates.DataRate250Kbps;
 
             // Restore our default PA level
-            PowerLevel = PowerLevels.PowerLevelMax;
-
-            // Determine if this is a p or non-p RF24 module and then reset our data rate back to default 
-            // value. This works because a non-P variant won't allow the data rate to be set to 250Kbps.
-            _isPlusModel = SetDataRate(DataRates.DataRate250Kbps);
-
-            // Then set the data rate to the slowest (and most reliable) speed supported by all hardware.
-            DataRate = DataRates.DataRate1Mbps;
+            Configuration.PowerLevel = PowerLevels.PowerLevelMax;
 
             // Initialize CRC and request 2-byte (16bit) CRC
-            CrcLength = CrcLengths.Crc16Bit;
+            Configuration.CrcEncodingScheme = CrcEncodingSchemes.DualBytes;
+            Configuration.CrcEnabled = true;
 
             // Disable dynamic payloads, to match dynamic_payloads_enabled setting
-            WriteRegister(Constants.DYNPD, 0);
-
-            // Reset current status
-            // Notice reset and flush is the last thing we do
-            WriteRegister(Constants.STATUS, (byte)(_BV(Constants.RX_DR) | _BV(Constants.TX_DS) | _BV(Constants.MAX_RT)));
+            Configuration.DynamicPayloadLengthEnabled = false;
 
             // Set up default configuration.  Callers can always change it later.
             // This channel should be universally safe and not bleed over into adjacent spectrum.
-            Channel = 76;
+            Configuration.Channel = 76;
 
-            FlushTransmitBuffer();
-            FlushReceiveBuffer();
+            // Then set the data rate to the slowest (and most reliable) speed supported by all hardware.
+            Configuration.DataRate = DataRates.DataRate1Mbps;
+
+            // Reset current status
+            // Notice reset and flush is the last thing we do
+            Registers.StatusRegister statusRegister = registers.StatusRegister;
+            statusRegister.RX_DR = true;
+            statusRegister.TX_DS = true;
+            statusRegister.MAX_RT = true;
+            statusRegister.Save();
+
+            TransmitPipe.FlushBuffer();
+            ReceivePipes.FlushBuffer();
         }
 
         public void StartListening()
         {
-            WriteRegister(Constants.CONFIG, (byte)(ReadRegister(Constants.CONFIG) | _BV(Constants.PWR_UP) | _BV(Constants.PRIM_RX)));
-            WriteRegister(Constants.STATUS, (byte)(_BV(Constants.RX_DR) | _BV(Constants.TX_DS) | _BV(Constants.MAX_RT)));
+            Registers.ConfigRegister configRegister = Configuration.Registers.ConfigRegister;
+            configRegister.PWR_UP = true;
+            configRegister.PRIM_RX = true;
+            configRegister.Save();
+
+            Registers.StatusRegister statusRegister = Configuration.Registers.StatusRegister;
+            statusRegister.RX_DR = true;
+            statusRegister.TX_DS = true;
+            statusRegister.MAX_RT = true;
+            statusRegister.Save();
 
             // Restore the pipe0 address, if exists
             if (_pipe0ReadingAddress > 0)
-                WriteRegister(Constants.RX_ADDR_P0, BitConverter.GetBytes(_pipe0ReadingAddress), 5);
+            {
+                Registers.ReceivePipe0AddressRegister receivePipe0AddressRegister =
+                    Configuration.Registers.ReceivePipe0AddressRegister;
+                receivePipe0AddressRegister.RX_ADDR_P0 = BitConverter.GetBytes(_pipe0ReadingAddress);
+                receivePipe0AddressRegister.Save();
+            }
 
-            // Flush buffers
-            FlushReceiveBuffer();
-            FlushTransmitBuffer();
+            TransmitPipe.FlushBuffer();
+            ReceivePipes.FlushBuffer();
 
-            // Go!
             ChipEnable(true);
 
-            // wait for the radio to come up (130us actually only needed)
-            DelayMicroseconds(130);
+            Utilities.DelayMicroseconds(130);
         }
 
         public void StopListening()
         {
             ChipEnable(false);
-            FlushTransmitBuffer();
-            FlushReceiveBuffer();
+            TransmitPipe.FlushBuffer();
+            ReceivePipes.FlushBuffer();
         }
 
         public bool Write(byte[] data)
@@ -460,9 +253,9 @@ namespace Windows.Devices.Radios.nRF24L01
             stopwatch.Start();
             do
             {
-                status = ReadRegister(Constants.OBSERVE_TX, observeTx, 1);
+                status = Configuration.ReadRegister(Constants.OBSERVE_TX, ref observeTx, 1);
                 //string observeTxDisplay = FormatObserveTx(observeTx[1]);
-            } while ((status & (_BV(Constants.TX_DS) | _BV(Constants.MAX_RT))) != 1 && (stopwatch.ElapsedMilliseconds < 500));
+            } while ((status & (Utilities.BitValue(Constants.TX_DS) | Utilities.BitValue(Constants.MAX_RT))) != 1 && (stopwatch.ElapsedMilliseconds < 500));
 
             // The part above is what you could recreate with your own interrupt handler,
             // and then call this when you got an interrupt
@@ -480,42 +273,31 @@ namespace Windows.Devices.Radios.nRF24L01
             // Handle the ack packet
             if (_isAckPayloadAvailable)
             {
-                byte ackPayloadLength = GetDynamicPayloadSize();
+                byte ackPayloadLength = Configuration.DynamicPayloadSize;
             }
 
-            PowerDown();
-            FlushTransmitBuffer();
+            Status = DeviceStatus.PowerDown;
+            TransmitPipe.FlushBuffer();
 
             return result;
         }
 
         public void StartWrite(byte[] data)
         {
-            WriteRegister(Constants.CONFIG, (byte)(ReadRegister(Constants.CONFIG) | _BV(Constants.PWR_UP) & ~_BV(Constants.PRIM_RX)));
-            DelayMicroseconds(150);
+            Registers.ConfigRegister configRegister = Configuration.Registers.ConfigRegister;
+            configRegister.PWR_UP = true;
+            configRegister.PRIM_RX = false;
+            configRegister.Save();
+
+            Utilities.DelayMicroseconds(150);
 
             WritePayload(data);
 
             ChipEnable(true);
-            DelayMicroseconds(15);
+            Utilities.DelayMicroseconds(15);
             ChipEnable(false);
         }
 
-        private string FormatObserveTx(byte value)
-        {
-            return string.Format("OBSERVE_TX={0:X2}: POLS_CNT={1} ARC_CNT={2}",
-                value,
-                (value >> Constants.PLOS_CNT) & 0xF,
-                (value >> Constants.ARC_CNT) & 0xF);
-        }
-
-        public byte GetDynamicPayloadSize()
-        {
-            byte[] result = new byte[1];
-
-            _spiDevice.TransferFullDuplex(new[] { Constants.R_RX_PL_WID, Constants.NOP }, result);
-            return result[0];
-        }
 
         public bool Available()
         {
@@ -524,23 +306,21 @@ namespace Windows.Devices.Radios.nRF24L01
 
         public bool Available(byte[] pipes)
         {
-            byte status = GetStatus();
-            bool result = (status & _BV(Constants.RX_DR)) == 1;
+            Registers.StatusRegister statusRegister = Configuration.Registers.StatusRegister;
+
+            bool result = statusRegister.RX_DR;
             if (result)
             {
                 // If the caller wants the pipe number, include that
                 if (pipes != null)
-                    pipes[0] = (byte)((status >> Constants.RX_P_NO) & 0x7);
+                    pipes[0] = (byte)((statusRegister.FirstByte >> Constants.RX_P_NO) & 0x7);
 
-                // Clear the status bit
-
-                // ??? Should this REALLY be cleared now?  Or wait until we
-                // actually READ the payload?
-                WriteRegister(Constants.STATUS, _BV(Constants.RX_DR));
+                statusRegister.RX_DR = true;
 
                 // Handle ack payload receipt
-                if ((status & _BV(Constants.TX_DS)) == 1)
-                    WriteRegister(Constants.STATUS, _BV(Constants.TX_DS));
+                if (!statusRegister.TX_DS)
+                    statusRegister.TX_DS = true;
+                statusRegister.Save();
             }
 
             return result;
@@ -552,84 +332,69 @@ namespace Windows.Devices.Radios.nRF24L01
             ReadPayload(readBuffer, length);
 
             // was this the last of the data available?
-            return (ReadRegister(Constants.FIFO_STATUS) & _BV(Constants.RX_EMPTY)) == 1;
+            return ReceivePipes.FifoStatus == FifoStatus.Empty;
         }
 
         public void WhatHappened(out bool txOk, out bool txFail, out bool rxReady)
         {
-            byte status = ReadRegister(Constants.STATUS);
-            WriteRegister(Constants.STATUS, (byte)(_BV(Constants.RX_DR) | _BV(Constants.TX_DS) | _BV(Constants.MAX_RT)));
+            Registers.StatusRegister statusRegister = Configuration.Registers.StatusRegister;
+            statusRegister.RX_DR = true;
+            statusRegister.TX_DS = true;
+            statusRegister.MAX_RT = true;
+            statusRegister.Save();
 
-            txOk = (status & _BV(Constants.TX_DS)) == 1;
-            txFail = (status & _BV(Constants.MAX_RT)) == 1;
-            rxReady = (status & _BV(Constants.RX_DR)) == 1;
+            txOk = statusRegister.TX_DS;
+            txFail = statusRegister.MAX_RT;
+            rxReady = statusRegister.RX_DR;
         }
 
         public void OpenWritingPipe(long value)
         {
-            WriteRegister(Constants.RX_ADDR_P0, BitConverter.GetBytes(value), 5);
-            WriteRegister(Constants.TX_ADDR, BitConverter.GetBytes(value), 5);
-            WriteRegister(Constants.RX_PW_P0, PayloadSize);
+            byte[] address = BitConverter.GetBytes(value);
+            Array.Resize(ref address, 5);
+            ReceivePipes[0].Address = address;
+            ReceivePipes[0].PayloadWidth = Configuration.PayloadSize;
+            TransmitPipe.Address = address;
         }
 
-        public void OpenReadingPipe(byte child, long address)
+        public void OpenReadingPipe(byte pipeId, long address)
         {
-            if (child == 0)
+            byte[] buffer = BitConverter.GetBytes(address);
+            if (pipeId == 0)
                 _pipe0ReadingAddress = address;
-            if (child <= 6)
+            if (pipeId <= 1)
             {
-                // For pipes 2-5, only write the LSB
-                if (child < 2)
-                    WriteRegister(Constants.ChildPipes[child], BitConverter.GetBytes(address), 5);
-                else
-                    WriteRegister(Constants.ChildPipes[child], BitConverter.GetBytes(address), 1);
-
-                WriteRegister(Constants.ChildPayloadSizes[child], PayloadSize);
-
-                // Note it would be more efficient to set all of the bits for all open
-                // pipes at once.  However, I thought it would make the calling code
-                // more simple to do it this way.
-                WriteRegister(Constants.EN_RXADDR, (byte)(ReadRegister(Constants.EN_RXADDR) | _BV(Constants.ChildPipeEnable[child])));
+                Array.Resize(ref buffer, 5);
             }
+            else if (pipeId > 1 && pipeId < 6)
+            {
+                Array.Resize(ref buffer, 1);
+            }
+            ReceivePipe receivePipe = ReceivePipes[pipeId];
+            receivePipe.Address = buffer;
+            receivePipe.PayloadWidth = Configuration.PayloadSize;
+            receivePipe.Enabled = true;
+
         }
 
-        public void EnableDynamicPayloads()
-        {
-            // Enable dynamic payload throughout the system
-            WriteRegister(Constants.FEATURE, (byte)(ReadRegister(Constants.FEATURE) | _BV(Constants.EN_DPL)));
-
-            // If it didn't work, the features are not enabled
-            if (ReadRegister(Constants.FEATURE) != 1)
-            {
-                // So enable them and try again
-                ToggleFeatures();
-                WriteRegister(Constants.FEATURE, (byte)(ReadRegister(Constants.FEATURE) | _BV(Constants.EN_DPL)));
-            }
-
-            // Enable dynamic payload on all pipes
-            // Not sure the use case of only having dynamic payload on certain pipes, so the library does not support it.
-            WriteRegister(Constants.DYNPD, (byte)(ReadRegister(Constants.DYNPD) | _BV(Constants.DPL_P5) | _BV(Constants.DPL_P4)
-                | _BV(Constants.DPL_P3) | _BV(Constants.DPL_P2) | _BV(Constants.DPL_P1) | _BV(Constants.DPL_P0)));
-            _dynamicPayloadEnabled = true;
-        }
 
         public void EnableAckPayload()
         {
             // Enable ack payload and dynamic payload features
-            WriteRegister(Constants.FEATURE, (byte)(ReadRegister(Constants.FEATURE) | _BV(Constants.EN_ACK_PAY) | _BV(Constants.EN_DPL)));
+            Configuration.WriteRegister(Constants.FEATURE, (byte)(Configuration.ReadRegister(Constants.FEATURE) | Utilities.BitValue(Constants.EN_ACK_PAY) | Utilities.BitValue(Constants.EN_DPL)));
 
             // If it didn't work, the features are not enabled
-            if (ReadRegister(Constants.FEATURE) != 1)
+            if (Configuration.ReadRegister(Constants.FEATURE) != 1)
             {
                 // So enable them and try again
-                ToggleFeatures();
-                WriteRegister(Constants.FEATURE, (byte)(ReadRegister(Constants.FEATURE) | _BV(Constants.EN_ACK_PAY) | _BV(Constants.EN_DPL)));
+                Configuration.ToggleFeatures();
+                Configuration.WriteRegister(Constants.FEATURE, (byte)(Configuration.ReadRegister(Constants.FEATURE) | Utilities.BitValue(Constants.EN_ACK_PAY) | Utilities.BitValue(Constants.EN_DPL)));
             }
 
             //
             // Enable dynamic payload on pipes 0 & 1
             //
-            WriteRegister(Constants.DYNPD, (byte)(ReadRegister(Constants.DYNPD) | _BV(Constants.DPL_P1) | _BV(Constants.DPL_P0)));
+            Configuration.WriteRegister(Constants.DYNPD, (byte)(Configuration.ReadRegister(Constants.DYNPD) | Utilities.BitValue(Constants.DPL_P1) | Utilities.BitValue(Constants.DPL_P0)));
 
         }
 
@@ -639,103 +404,114 @@ namespace Windows.Devices.Radios.nRF24L01
             int payloadSize = Math.Min(length, Constants.MaxPayloadSize);
             if (data.Length > payloadSize)
                 Array.Resize(ref data, payloadSize);
-            _spiDevice.Write(data);
+            Transfer(data);
         }
-
-        public void ToggleFeatures()
-        {
-            _spiDevice.Write(new byte[] { Constants.ACTIVATE, 0x73 });
-
-        }
-
-        public void PowerDown()
-        {
-            WriteRegister(Constants.CONFIG, (byte)(ReadRegister(Constants.CONFIG) & ~_BV(Constants.PWR_UP)));
-            RadioState = RadioState.Off;
-        }
-
-        public void PowerUp()
-        {
-            WriteRegister(Constants.CONFIG, (byte)(ReadRegister(Constants.CONFIG) | _BV(Constants.PWR_UP)));
-            RadioState = RadioState.On;
-        }
-
 
         public bool TestCarrier()
         {
-            return (ReadRegister(Constants.CD) & 1) == 1;
+            return (Configuration.ReadRegister(Constants.CD) & 1) == 1;
         }
 
-        public bool TestRpd()
+        public bool ChannelReceivedPowerDector
         {
-            return (ReadRegister(Constants.RPD) & 1) == 1;
+            get
+            {
+                Configuration.Registers.ReceivedPowerDetectorRegister.Load();
+                return Configuration.Registers.ReceivedPowerDetectorRegister.RPD;
+            }
         }
 
-        public string GetDetails()
+        private DeviceStatus _status;
+        public DeviceStatus Status
         {
-            StringBuilder sb = new StringBuilder();
+            get
+            {
+                return _status;
+            }
+            set
+            {
+                if (value == _status)
+                    return;
+                DeviceStatus previous = _status;
+                _status = value;
+                //clean up previous status
+                //TODO: implement cleanup code
+                switch (previous)
+                {
+                    case DeviceStatus.Undefined:
+                        break;
+                    case DeviceStatus.PowerDown:
+                        break;
+                    case DeviceStatus.StandBy:
+                        break;
+                    case DeviceStatus.TransmitMode:
+                        break;
+                    case DeviceStatus.ReceiveMode:
+                        //Registers.CONFIG.PRIM_RX = false;  //disable RX role
+                        //Registers.CONFIG.Save();
+                        break;
+                    default:
+                        break;
+                }
+                //set device to new status
+                switch (_status)
+                {
+                    case DeviceStatus.Undefined:
+                        throw new InvalidOperationException("WTF???");
+                    case DeviceStatus.PowerDown:
+                        if (previous == DeviceStatus.StandBy)
+                        {
+                            Configuration.Registers.ConfigRegister.PWR_UP = false;
+                            Configuration.Registers.ConfigRegister.Save();
+                            break;
+                        }
+                        throw new InvalidOperationException(
+                            "Error status change, PowerDown should from StandBy mode only");
+                    case DeviceStatus.StandBy:
+                        if (previous == DeviceStatus.ReceiveMode || previous == DeviceStatus.TransmitMode)
+                        {
+                            ChipEnable(false);
+                            break;
+                        }
+                        if (previous == DeviceStatus.PowerDown)
+                        {
+                            Configuration.Registers.ConfigRegister.PWR_UP = true;
+                            Configuration.Registers.ConfigRegister.Save();
+                            Utilities.DelayMicroseconds(2000);
+                            break;
+                        }
+                        throw new InvalidOperationException(
+                            "Error status change, StandBy should from PowerDown,TX or RX mode only");
+                    case DeviceStatus.TransmitMode:
+                        if (previous == DeviceStatus.StandBy)
+                        {
+                            _checkStatus = false;
+                            Configuration.Registers.ConfigRegister.PRIM_RX = false;
+                            Configuration.Registers.ConfigRegister.Save();
+                            _checkStatus = true;
 
-            byte status = GetStatus();
-            sb.AppendFormat("STATUS\t\t = 0x{0} RX_DR={1} TX_DS={2} MAX_RT={3} RX_P_NO={4} TX_FULL={5}\r\n",
-                status,
-                status & _BV(Constants.RX_DR),
-                status & _BV(Constants.TX_DS),
-                status & _BV(Constants.MAX_RT),
-                (status >> Constants.RX_P_NO) & 7,
-                status & _BV(Constants.TX_FULL));
+                            ChipEnable(true);
+                            Utilities.DelayMicroseconds(1000); //wait device to enter TX mode
+                            break;
+                        }
+                        throw new InvalidOperationException("Error status change, RXMode should from Standyby mode only");
+                    case DeviceStatus.ReceiveMode:
+                        if (previous == DeviceStatus.StandBy)
+                        {
+                            _checkStatus = false;
+                            Configuration.Registers.ConfigRegister.PRIM_RX = true;
+                            Configuration.Registers.ConfigRegister.Save();
+                            _checkStatus = false;
+                            ChipEnable(true);
+                            Utilities.DelayMicroseconds(1000); //wait device to enter RX mode
+                            break;
 
-            sb.AppendLine(GetAddressRegister("RX_ADDR_P0-1", Constants.RX_ADDR_P0, 2));
-            sb.AppendLine(GetByteRegister("RX_ADDR_P2-5", Constants.RX_ADDR_P2, 4));
-            sb.AppendLine(GetAddressRegister("TX_ADDR", Constants.TX_ADDR, 1));
-
-            sb.AppendLine(GetByteRegister("RX_PW_P0-6", Constants.RX_PW_P0, 6));
-            sb.AppendLine(GetByteRegister("EN_AA", Constants.EN_AA, 1));
-            sb.AppendLine(GetByteRegister("EN_RXADDR", Constants.EN_RXADDR, 1));
-            sb.AppendLine(GetByteRegister("RF_CH", Constants.RF_CH, 1));
-            sb.AppendLine(GetByteRegister("RF_SETUP", Constants.RF_SETUP, 1));
-            sb.AppendLine(GetByteRegister("CONFIG", Constants.CONFIG, 1));
-            sb.AppendLine(GetByteRegister("DYNPD/FEATURE", Constants.DYNPD, 2));
-
-            sb.AppendLine("Data Rate\t = " + Constants.DataRateStrings[(int)GetDataRate()]);
-            sb.AppendLine("Model\t\t = " + Name);
-            sb.AppendLine("CRC Length\t = " + Constants.CrcLengthStrings[(int)GetCrcLength()]);
-            sb.AppendLine("PA Power\t = " + Constants.PowerLevelStrings[(int)GetPowerLevel()]);
-
-            Debug.WriteLine(sb);
-            return sb.ToString();
-        }
-
-        public void SetAutoAck(bool enable)
-        {
-            WriteRegister(Constants.EN_AA, (byte)(enable ? 0x3F : 0x0));
-        }
-
-        public void SetAutoAck(byte pipe, bool enable)
-        {
-            if (pipe > 6) return;
-            byte enAa = ReadRegister(Constants.EN_AA);
-            if (enable)
-                enAa |= _BV(pipe);
-            else
-                enAa &= (byte)~_BV(pipe);
-            WriteRegister(Constants.EN_AA, enAa);
-        }
-
-
-        public void SetRetries(byte delay, byte count)
-        {
-            WriteRegister(Constants.SETUP_RETR, (byte)((delay & 0xf) << Constants.ARD | (count & 0xf) << Constants.ARC));
-        }
-
-        private static byte _BV(byte mask)
-        {
-            return (byte)(1 << mask);
-        }
-
-        private static void DelayMicroseconds(int microSeconds)
-        {
-            // We will assume that 10 ticks = 1 microsecond
-            Task.Delay(new TimeSpan(10 * microSeconds)).Wait();
+                        }
+                        throw new InvalidOperationException("Error status change, RXMode should from Standyby mode only");
+                    default:
+                        break;
+                }
+            }
         }
     }
 }
