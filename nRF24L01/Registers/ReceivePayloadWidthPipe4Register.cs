@@ -13,7 +13,7 @@
         public byte RX_PW_P4
         {
             get { return GetByteValue(5, Properties.RX_PW_P4); }
-            set { FirstByte = SetByteValue(value, 5, Properties.RX_PW_P4); }
+            set { SetByteValue(value, 5, Properties.RX_PW_P4); }
         }
     }
 }

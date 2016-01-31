@@ -9,11 +9,5 @@
         public TransmitAddressRegister(Radio radio) : base(radio, 5, Addresses.TX_ADDR)
         {
         }
-
-        public byte[] TX_ADDR
-        {
-            get { return Value; }
-            set { Value = value; }
-        }
     }
 }

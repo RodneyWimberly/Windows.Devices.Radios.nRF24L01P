@@ -13,13 +13,13 @@
         public byte ARD
         {
             get { return GetByteValue(7, Properties.ARD); }
-            set { FirstByte = SetByteValue(value, 7, Properties.ARD); }
+            set { SetByteValue(value, 7, Properties.ARD); }
         }
 
         public byte ARC
         {
             get { return GetByteValue(3, Properties.ARC); }
-            set { FirstByte = SetByteValue(value, 3, Properties.ARC); }
+            set { SetByteValue(value, 3, Properties.ARC); }
         }
     }
 }

@@ -13,37 +13,37 @@
         public bool ERX_P5
         {
             get { return GetBitValue(Properties.ERX_P5); }
-            set { FirstByte = SetBitValue(Properties.ERX_P5, value); }
+            set { SetBitValue(Properties.ERX_P5, value); }
         }
 
         public bool ERX_P4
         {
             get { return GetBitValue(Properties.ERX_P4); }
-            set { FirstByte = SetBitValue(Properties.ERX_P4, value); }
+            set { SetBitValue(Properties.ERX_P4, value); }
         }
 
         public bool ERX_P3
         {
             get { return GetBitValue(Properties.ERX_P3); }
-            set { FirstByte = SetBitValue(Properties.ERX_P3, value); }
+            set { SetBitValue(Properties.ERX_P3, value); }
         }
 
         public bool ERX_P2
         {
             get { return GetBitValue(Properties.ERX_P2); }
-            set { FirstByte = SetBitValue(Properties.ERX_P2, value); }
+            set { SetBitValue(Properties.ERX_P2, value); }
         }
 
         public bool ERX_P1
         {
             get { return GetBitValue(Properties.ERX_P1); }
-            set { FirstByte = SetBitValue(Properties.ERX_P1, value); }
+            set { SetBitValue(Properties.ERX_P1, value); }
         }
 
         public bool ERX_P0
         {
             get { return GetBitValue(Properties.ERX_P0); }
-            set { FirstByte = SetBitValue(Properties.ERX_P0, value); }
+            set { SetBitValue(Properties.ERX_P0, value); }
         }
     }
 }

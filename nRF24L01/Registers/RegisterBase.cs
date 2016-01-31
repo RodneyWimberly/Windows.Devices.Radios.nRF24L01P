@@ -5,21 +5,9 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
 {
     public abstract class RegisterBase
     {
-        private byte[] _value;
-
         protected Radio Radio;
 
-        public byte[] Value
-        {
-            get { return _value; }
-            internal set { _value = value; }
-        }
-
-        public byte FirstByte
-        {
-            get { return _value[0]; }
-            internal set { _value[0] = value; }
-        }
+        public byte[] Value { get; private set; }
 
         public int Length { get; private set; }
         public byte Address { get; private set; }
@@ -27,10 +15,10 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
 
         protected RegisterBase(Radio radio, int length, byte address, string name = "")
         {
+            Value = new byte[length];
             Name = string.IsNullOrEmpty(name) ? GetType().Name : name;
             Radio = radio;
             Length = length;
-            Value = new byte[length];
             Address = address;
         }
 
@@ -39,7 +27,12 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
             byte[] request = new byte[Length + 1];
             request[0] = (byte)(Commands.R_REGISTER | (Commands.REGISTER_MASK & Address));
             Array.Copy(Value, 0, request, 1, Length);
-            Value = Radio.Transfer(request);
+            Load(Radio.Transfer(request));
+        }
+
+        public void Load(byte[] value)
+        {
+            Value = value;
         }
 
         public void Save()
@@ -49,7 +42,7 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
             Array.Copy(Value, 0, buffer, 1, Length);
             Radio.Transfer(buffer);
 
-            Load();
+            //Load();
         }
 
         public static implicit operator byte[] (RegisterBase source)
@@ -60,18 +53,18 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
         public static implicit operator byte(RegisterBase source)
         {
             if (source.Length == 1)
-                return source.FirstByte;
+                return source.Value[0];
             throw new InvalidOperationException("Cannot convert register value to single byte while register length is greater than 1");
         }
 
         protected bool GetBitValue(byte mask)
         {
-            return (FirstByte & mask) > 0;
+            return (Value[0] & mask) > 0;
         }
 
-        protected byte SetBitValue(byte mask, bool value)
+        protected void SetBitValue(byte mask, bool value)
         {
-            return (byte)(value ? (FirstByte | mask) : (FirstByte & ~mask));
+            Value[0] = (byte)(value ? (Value[0] | mask) : (Value[0] & ~mask));
         }
 
         /// <summary>
@@ -88,7 +81,7 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
         /// <returns></returns>
         protected byte GetByteValue(int start, int end)
         {
-            return (byte)(FirstByte << (7 - start) >> (7 - (start - end)));
+            return (byte)(Value[0] << (7 - start) >> (7 - (start - end)));
         }
 
         /// <summary>
@@ -105,14 +98,14 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        protected byte SetByteValue(byte source, int start, int end)
+        protected void SetByteValue(byte source, int start, int end)
         {
             if (start < end)
                 throw new ArgumentOutOfRangeException("end", "end value cannot be larget than start value");
             byte mask = CreateBitMask(start, end);
-            int masked_source = (source & mask); //extract the source bits
-            int masked_target = (FirstByte & ~mask); //clear the bits at target byte
-            return (byte)(masked_source | masked_target);
+            int maskedSource = (source & mask); //extract the source bits
+            int maskedTarget = (Value[0] & ~mask); //clear the bits at target byte
+            Value[0] = (byte)(maskedSource | maskedTarget);
         }
 
         protected byte CreateBitMask(int start, int end)

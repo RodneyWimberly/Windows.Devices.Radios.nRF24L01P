@@ -22,17 +22,17 @@ namespace Windows.Devices.Radios.nRF24L01
                 switch (PipeId)
                 {
                     case 0:
-                        return _registers.ReceiveAddressPipe0Register.RX_ADDR_P0;
+                        return _registers.ReceiveAddressPipe0Register;
                     case 1:
-                        return _registers.ReceiveAddressPipe1Register.RX_ADDR_P1;
+                        return _registers.ReceiveAddressPipe1Register;
                     case 2:
-                        return BitConverter.GetBytes(_registers.ReceiveAddressPipe2Register.RX_ADDR_P2);
+                        return BitConverter.GetBytes(_registers.ReceiveAddressPipe2Register);
                     case 3:
-                        return BitConverter.GetBytes(_registers.ReceiveAddressPipe3Register.RX_ADDR_P3);
+                        return BitConverter.GetBytes(_registers.ReceiveAddressPipe3Register);
                     case 4:
-                        return BitConverter.GetBytes(_registers.ReceiveAddressPipe4Register.RX_ADDR_P4);
+                        return BitConverter.GetBytes(_registers.ReceiveAddressPipe4Register);
                     case 5:
-                        return BitConverter.GetBytes(_registers.ReceiveAddressPipe5Register.RX_ADDR_P5);
+                        return BitConverter.GetBytes(_registers.ReceiveAddressPipe5Register);
                     default:
                         throw new InvalidOperationException("Cannot get address for data pipe, invalid ID number for this Pipe");
                 }
@@ -49,27 +49,27 @@ namespace Windows.Devices.Radios.nRF24L01
                 switch (PipeId)
                 {
                     case 0:
-                        _registers.ReceiveAddressPipe0Register.RX_ADDR_P0 = value;
+                        _registers.ReceiveAddressPipe0Register.Load(value);
                         _registers.ReceiveAddressPipe0Register.Save();
                         break;
                     case 1:
-                        _registers.ReceiveAddressPipe1Register.RX_ADDR_P1 = value;
+                        _registers.ReceiveAddressPipe1Register.Load(value);
                         _registers.ReceiveAddressPipe1Register.Save();
                         break;
                     case 2:
-                        _registers.ReceiveAddressPipe2Register.RX_ADDR_P2 = value[0];
+                        _registers.ReceiveAddressPipe2Register.Load(value);
                         _registers.ReceiveAddressPipe2Register.Save();
                         break;
                     case 3:
-                        _registers.ReceiveAddressPipe3Register.RX_ADDR_P3 = value[0];
+                        _registers.ReceiveAddressPipe3Register.Load(value);
                         _registers.ReceiveAddressPipe3Register.Save();
                         break;
                     case 4:
-                        _registers.ReceiveAddressPipe4Register.RX_ADDR_P4 = value[0];
+                        _registers.ReceiveAddressPipe4Register.Load(value);
                         _registers.ReceiveAddressPipe4Register.Save();
                         break;
                     case 5:
-                        _registers.ReceiveAddressPipe5Register.RX_ADDR_P5 = value[0];
+                        _registers.ReceiveAddressPipe5Register.Load(value);
                         _registers.ReceiveAddressPipe5Register.Save();
                         break;
                     default:

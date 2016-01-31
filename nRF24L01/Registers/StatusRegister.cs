@@ -12,19 +12,19 @@
         public bool RX_DR
         {
             get { return GetBitValue(Properties.RX_DR); }
-            set { FirstByte = SetBitValue(Properties.RX_DR, value); }
+            set { SetBitValue(Properties.RX_DR, value); }
         }
 
         public bool TX_DS
         {
             get { return GetBitValue(Properties.TX_DS); }
-            set { FirstByte = SetBitValue(Properties.TX_DS, value); }
+            set { SetBitValue(Properties.TX_DS, value); }
         }
 
         public bool MAX_RT
         {
             get { return GetBitValue(Properties.MAX_RT); }
-            set { FirstByte = SetBitValue(Properties.MAX_RT, value); }
+            set { SetBitValue(Properties.MAX_RT, value); }
         }
 
         public byte RX_P_NO => GetByteValue(3, 1);

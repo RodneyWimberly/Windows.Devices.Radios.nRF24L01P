@@ -9,11 +9,5 @@
         {
 
         }
-
-        public byte[] RX_ADDR_P0
-        {
-            get { return Value; }
-            set { Value = value; }
-        }
     }
 }

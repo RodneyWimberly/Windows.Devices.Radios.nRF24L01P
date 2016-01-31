@@ -13,31 +13,31 @@
         public bool TX_REUSE
         {
             get { return GetBitValue(Properties.TX_REUSE); }
-            set { FirstByte = SetBitValue(Properties.TX_REUSE, value); }
+            set { SetBitValue(Properties.TX_REUSE, value); }
         }
 
         public bool TX_FULL
         {
             get { return GetBitValue(Properties.TX_FULL); }
-            set { FirstByte = SetBitValue(Properties.TX_FULL, value); }
+            set { SetBitValue(Properties.TX_FULL, value); }
         }
 
         public bool TX_EMPTY
         {
             get { return GetBitValue(Properties.TX_EMPTY); }
-            set { FirstByte = SetBitValue(Properties.TX_EMPTY, value); }
+            set { SetBitValue(Properties.TX_EMPTY, value); }
         }
 
         public bool RX_FULL
         {
             get { return GetBitValue(Properties.RX_FULL); }
-            set { FirstByte = SetBitValue(Properties.RX_FULL, value); }
+            set { SetBitValue(Properties.RX_FULL, value); }
         }
 
         public bool RX_EMPTY
         {
             get { return GetBitValue(Properties.RX_EMPTY); }
-            set { FirstByte = SetBitValue(Properties.RX_EMPTY, value); }
+            set { SetBitValue(Properties.RX_EMPTY, value); }
         }
     }
 }

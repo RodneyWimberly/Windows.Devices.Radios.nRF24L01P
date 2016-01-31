@@ -81,7 +81,7 @@
         internal const byte RF_DR_LOW = 5;
         internal const byte PLL_LOCK = 4;
         internal const byte RF_DR_HIGH = 3;
-        internal const byte RF_PWR = 1; // (2 bits wide) // 6 here and 2 in cs file
+        internal const byte RF_PWR = 1; // (2 bits wide)
 
         // Setup Address Width Register
         internal const byte AW = 1;

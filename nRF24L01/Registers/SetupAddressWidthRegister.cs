@@ -13,7 +13,7 @@
         public byte AW
         {
             get { return GetByteValue(Properties.AW, 0); }
-            set { FirstByte = SetByteValue(value, Properties.AW, 0); }
+            set { SetByteValue(value, Properties.AW, 0); }
         }
     }
 }

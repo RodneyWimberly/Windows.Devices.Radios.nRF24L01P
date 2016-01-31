@@ -81,7 +81,7 @@ namespace Windows.Devices.Radios.nRF24L01
             }
 
             // The STATUS register value is returned at first byte on each SPI call
-            Configuration.Registers.StatusRegister.FirstByte = response[0];
+            Configuration.Registers.StatusRegister.Load(new[] { response[0] });
 
             // Chip uses LSByte first, need to revert the result order,first byte (STATUS register) is skipped
             for (int i = 0; i < request.Length; i++)
@@ -214,7 +214,7 @@ namespace Windows.Devices.Radios.nRF24L01
             {
                 ReceiveAddressPipe0Register receivePipe0AddressRegister =
                     Configuration.Registers.ReceiveAddressPipe0Register;
-                receivePipe0AddressRegister.RX_ADDR_P0 = BitConverter.GetBytes(_receiveAddressPipe0);
+                receivePipe0AddressRegister.Load(BitConverter.GetBytes(_receiveAddressPipe0));
                 receivePipe0AddressRegister.Save();
             }
 
@@ -316,7 +316,7 @@ namespace Windows.Devices.Radios.nRF24L01
             {
                 // If the caller wants the pipe number, include that
                 if (pipes != null)
-                    pipes[0] = (byte)((statusRegister.FirstByte >> Properties.RX_P_NO) & 0x7);
+                    pipes[0] = (byte)((statusRegister >> Properties.RX_P_NO) & 0x7);
 
                 statusRegister.RX_DR = true;
 

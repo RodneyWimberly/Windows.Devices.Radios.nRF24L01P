@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Windows.Devices.Radios.nRF24L01.Registers
+﻿namespace Windows.Devices.Radios.nRF24L01.Registers
 {
     public class ReceiveAddressPipe5Register : RegisterBase
     {
@@ -11,10 +9,6 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
         {
 
         }
-        public byte RX_ADDR_P5
-        {
-            get { return FirstByte; }
-            set { Value = BitConverter.GetBytes(value); }
-        }
+
     }
 }

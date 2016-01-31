@@ -13,7 +13,7 @@
         public byte RF_CH
         {
             get { return GetByteValue(6, Properties.RF_CH); }
-            set { FirstByte = SetByteValue(value, 6, Properties.RF_CH); }
+            set { SetByteValue(value, 6, Properties.RF_CH); }
         }
     }
 }

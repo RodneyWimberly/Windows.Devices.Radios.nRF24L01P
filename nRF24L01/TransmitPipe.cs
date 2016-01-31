@@ -17,7 +17,7 @@ namespace Windows.Devices.Radios.nRF24L01
         {
             get
             {
-                return _registers.TransmitAddressRegister.TX_ADDR;
+                return _registers.TransmitAddressRegister;
             }
             set
             {
@@ -26,7 +26,7 @@ namespace Windows.Devices.Radios.nRF24L01
                     throw new InvalidOperationException("Address length should equal or greater than device.Config.AddressWidth");
                 else if (value.Length > addressWidth)
                     Array.Resize(ref value, addressWidth);
-                _registers.TransmitAddressRegister.TX_ADDR = value;
+                _registers.TransmitAddressRegister.Load(value);
                 _registers.TransmitAddressRegister.Save();
             }
         }

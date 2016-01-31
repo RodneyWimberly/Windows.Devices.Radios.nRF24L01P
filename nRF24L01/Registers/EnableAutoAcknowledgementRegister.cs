@@ -12,44 +12,44 @@
 
         public bool EN_AA
         {
-            get { return FirstByte != 0x0; }
-            set { FirstByte = (byte)(value ? 0x3F : 0x0); }
+            get { return Value[0] != 0x0; }
+            set { Value[0] = (byte)(value ? 0x3F : 0x0); }
         }
 
         public bool ENAA_P5
         {
             get { return GetBitValue(Properties.ENAA_P5); }
-            set { FirstByte = SetBitValue(Properties.ENAA_P5, value); }
+            set { SetBitValue(Properties.ENAA_P5, value); }
         }
 
         public bool ENAA_P4
         {
             get { return GetBitValue(Properties.ENAA_P4); }
-            set { FirstByte = SetBitValue(Properties.ENAA_P4, value); }
+            set { SetBitValue(Properties.ENAA_P4, value); }
         }
 
         public bool ENAA_P3
         {
             get { return GetBitValue(Properties.ENAA_P3); }
-            set { FirstByte = SetBitValue(Properties.ENAA_P3, value); }
+            set { SetBitValue(Properties.ENAA_P3, value); }
         }
 
         public bool ENAA_P2
         {
             get { return GetBitValue(Properties.ENAA_P2); }
-            set { FirstByte = SetBitValue(Properties.ENAA_P2, value); }
+            set { SetBitValue(Properties.ENAA_P2, value); }
         }
 
         public bool ENAA_P1
         {
             get { return GetBitValue(Properties.ENAA_P1); }
-            set { FirstByte = SetBitValue(Properties.ENAA_P1, value); }
+            set { SetBitValue(Properties.ENAA_P1, value); }
         }
 
         public bool ENAA_P0
         {
             get { return GetBitValue(Properties.ENAA_P0); }
-            set { FirstByte = SetBitValue(Properties.ENAA_P0, value); }
+            set { SetBitValue(Properties.ENAA_P0, value); }
         }
     }
 }
