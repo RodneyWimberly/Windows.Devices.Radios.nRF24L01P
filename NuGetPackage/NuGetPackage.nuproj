@@ -18,20 +18,20 @@
   </PropertyGroup>
   <Import Project="$(NuProjPath)\NuProj.props" Condition="Exists('$(NuProjPath)\NuProj.props')" />
   <PropertyGroup Label="Configuration">
-    <Id>Windows.Devices.Radios.nRF24L01</Id>
+    <Id>Windows.Devices.Radios.nRF24L01P</Id>
     <Version>1.0.3</Version>
-    <Title>nRF24L01</Title>
+    <Title>nRF24L01P</Title>
     <Authors>Rodney Wimberly</Authors>
     <Owners>Rodney Wimberly</Owners>
-    <Summary>nRF24L01 Driver for Window 10 IoT Core</Summary>
-    <Description>nRF24L01 Driver for Window 10 IoT Core</Description>
+    <Summary>nRF24L01P Driver for Window 10 IoT Core</Summary>
+    <Description>nRF24L01P Driver for Window 10 IoT Core</Description>
     <ReleaseNotes>
     </ReleaseNotes>
-    <ProjectUrl>https://github.com/RodneyWimberly/Windows.Devices.Radios.nRF24L01</ProjectUrl>
+    <ProjectUrl>https://github.com/RodneyWimberly/Windows.Devices.Radios.nRF24L01P</ProjectUrl>
     <LicenseUrl>
     </LicenseUrl>
     <Copyright>Copyright © Rodney Wimberly</Copyright>
-    <Tags>nRF24L01, Window 10 IoT Core</Tags>
+    <Tags>nRF24L01, nRF24L01P, Window 10 IoT Core</Tags>
     <IconUrl>$(SolutionDir)wireless.png</IconUrl>
   </PropertyGroup>
   <ItemGroup>

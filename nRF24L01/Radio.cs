@@ -37,7 +37,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public string Name => Constants.RadioModels[(int)Configuration.RadioModel];
 
-        public bool IsDataAvailable => (Configuration.GetStatus() & (Utilities.BitValue(Properties.MASK_RX_DR))) > 0;
+        public bool IsDataAvailable => Configuration.Registers.StatusRegister.RX_DR;
 
         public Radio(GpioPin cePin, SpiDevice spiDevice)
         {
@@ -105,8 +105,8 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         protected byte WritePayload(byte[] payload)
         {
-            int payloadSize = Math.Min(payload.Length, Configuration.PayloadSize);
-            int blankLength = Configuration.DynamicPayloadLengthEnabled ? 0 : Configuration.PayloadSize - payloadSize;
+            int payloadSize = Math.Min(payload.Length, Configuration.PayloadWidth);
+            int blankLength = Configuration.DynamicPayloadLengthEnabled ? 0 : Configuration.PayloadWidth - payloadSize;
             byte[] status = new byte[1];
 
             ChipEnable(false);
@@ -122,8 +122,8 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         protected byte ReadPayload(ref byte[] payload, int length)
         {
-            int payloadSize = Math.Min(length, Configuration.PayloadSize);
-            int blankLength = Configuration.DynamicPayloadLengthEnabled ? 0 : Configuration.PayloadSize - payloadSize;
+            int payloadSize = Math.Min(length, Configuration.PayloadWidth);
+            int blankLength = Configuration.DynamicPayloadLengthEnabled ? 0 : Configuration.PayloadWidth - payloadSize;
 
             ChipEnable(false);
 
@@ -187,10 +187,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             statusRegister.TX_DS = false;
             statusRegister.MAX_RT = false;
             statusRegister.Save();
-            Configuration.WriteRegister(Addresses.STATUS, (byte)
-                (Utilities.BitValue(Properties.RX_DR) |
-                Utilities.BitValue(Properties.TX_DS) |
-                Utilities.BitValue(Properties.MAX_RT)));
 
             TransmitPipe.FlushBuffer();
             ReceivePipes.FlushBuffer();
@@ -256,7 +252,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             stopwatch.Start();
             do
             {
-                status = Configuration.ReadRegister(Registers.Addresses.OBSERVE_TX, ref observeTx, 1);
+                status = Configuration.Registers.ObserveTransmitRegister;
                 //string observeTxDisplay = FormatObserveTx(observeTx[1]);
             } while ((status & (Utilities.BitValue(Properties.TX_DS) | Utilities.BitValue(Properties.MAX_RT))) != 1 && (stopwatch.ElapsedMilliseconds < 500));
 
@@ -356,7 +352,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             byte[] address = BitConverter.GetBytes(value);
             Array.Resize(ref address, 5);
             ReceivePipes[0].Address = address;
-            ReceivePipes[0].PayloadWidth = Configuration.PayloadSize;
+            ReceivePipes[0].PayloadWidth = Configuration.PayloadWidth;
             TransmitPipe.Address = address;
         }
 
@@ -375,7 +371,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
             ReceivePipe receivePipe = ReceivePipes[pipeId];
             receivePipe.Address = buffer;
-            receivePipe.PayloadWidth = Configuration.PayloadSize;
+            receivePipe.PayloadWidth = Configuration.PayloadWidth;
             receivePipe.Enabled = true;
 
         }
@@ -383,21 +379,29 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public void EnableAckPayload()
         {
-            // Enable ack payload and dynamic payload features
-            Configuration.WriteRegister(Registers.Addresses.FEATURE, (byte)(Configuration.ReadRegister(Registers.Addresses.FEATURE) | Utilities.BitValue(Properties.EN_ACK_PAY) | Utilities.BitValue(Properties.EN_DPL)));
+            FeatureRegister featureRegister = Configuration.Registers.FeatureRegister;
+            featureRegister.EN_ACK_PAY = true;
+            featureRegister.EN_DPL = true;
+            featureRegister.Save();
 
             // If it didn't work, the features are not enabled
-            if (Configuration.ReadRegister(Registers.Addresses.FEATURE) != 1)
+            if (Configuration.Registers.FeatureRegister != 1)
             {
                 // So enable them and try again
                 Configuration.ToggleFeatures();
-                Configuration.WriteRegister(Registers.Addresses.FEATURE, (byte)(Configuration.ReadRegister(Registers.Addresses.FEATURE) | Utilities.BitValue(Properties.EN_ACK_PAY) | Utilities.BitValue(Properties.EN_DPL)));
+
+                featureRegister.EN_ACK_PAY = true;
+                featureRegister.EN_DPL = true;
+                featureRegister.Save();
             }
 
             //
             // Enable dynamic payload on pipes 0 & 1
             //
-            Configuration.WriteRegister(Registers.Addresses.DYNPD, (byte)(Configuration.ReadRegister(Registers.Addresses.DYNPD) | Utilities.BitValue(Properties.DPL_P1) | Utilities.BitValue(Properties.DPL_P0)));
+            DynamicPayloadLengthRegister dypRegister = Configuration.Registers.DynamicPayloadLengthRegister;
+            dypRegister.DPL_P0 = true;
+            dypRegister.DPL_P1 = true;
+            dypRegister.Save();
 
         }
 

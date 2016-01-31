@@ -108,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands.cs" />
+    <Compile Include="Diagnostics.cs" />
     <Compile Include="Registers\Properties.cs" />
     <Compile Include="Registers\RegisterAddresses.cs" />
     <Compile Include="Enums\AutoRetransmitDelays.cs" />
