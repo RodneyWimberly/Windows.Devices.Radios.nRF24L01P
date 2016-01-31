@@ -243,7 +243,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             // is flaky and we get neither.
 
             // IN the end, the send should be blocking.  It comes back in 60ms worst case, or much faster
-            // if I tighted up the retry logic.  (Default settings will be 1500us.
+            // if I tighten up the retry logic.  (Default settings will be 1500us.
             // Monitor the send
 
             byte[] observeTx = new byte[1];
@@ -293,7 +293,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             WritePayload(data);
 
             ChipEnable(true);
-            Utilities.DelayMicroseconds(15);
             ChipEnable(false);
         }
 
@@ -375,7 +374,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             receivePipe.Enabled = true;
 
         }
-
 
         public void EnableAckPayload()
         {

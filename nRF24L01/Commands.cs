@@ -83,10 +83,13 @@
         /// </summary>
         public const byte NOP = 0xFF;
 
+        /// <summary>
+        ///   Toggles Features
+        /// </summary>
+        public const byte ACTIVATE = 0x50;
+
         public const byte REGISTER_MASK = 0x1F;
 
         public const byte EMPTY_ADDRESS = 0x00;
-
-        public const byte ACTIVATE = 0x50;
     }
 }

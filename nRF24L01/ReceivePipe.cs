@@ -136,7 +136,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-        public bool AutoACKEnabled
+        public bool AutoAcknowledgementEnabled
         {
             get
             {
@@ -220,7 +220,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                 {
                     throw new InvalidOperationException("please enable Config.DynamicPayloadLengthEnabled before you enable this feature on data pipe");
                 }
-                if (value && !AutoACKEnabled)
+                if (value && !AutoAcknowledgementEnabled)
                 {
                     throw new InvalidOperationException("please enable AutoACK of current data pipe before you can enable this feature on current data pipe");
                 }
