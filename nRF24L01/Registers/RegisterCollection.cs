@@ -8,89 +8,89 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
     {
         private Radio _radio;
 
-        public ConfigRegister ConfigRegister { get; private set; }
-        public AutoAckRegister AutoAckRegister { get; private set; }
-        public ReceivePipeRegister ReceivePipeRegister { get; private set; }
-        public AddressWidthRegister AddressWidthRegister { get; private set; }
-        public SetupRetryRegister SetupRetryRegister { get; private set; }
-        public ChannelRegister ChannelRegister { get; private set; }
-        public SetupRegister SetupRegister { get; private set; }
+        public ConfigurationRegister ConfigurationRegister { get; private set; }
+        public EnableAutoAcknowledgementRegister EnableAutoAcknowledgementRegister { get; private set; }
+        public EnableReceiveAddressRegister EnableReceiveAddressRegister { get; private set; }
+        public SetupAddressWidthRegister AddressWidthRegister { get; private set; }
+        public SetupRetransmissionRegister SetupRetransmissionRegister { get; private set; }
+        public RfChannelRegister RfChannelRegister { get; private set; }
+        public RfSetupRegister RfSetupRegister { get; private set; }
         public StatusRegister StatusRegister { get; private set; }
         public ObserveTransmitRegister ObserveTransmitRegister { get; private set; }
         public ReceivedPowerDetectorRegister ReceivedPowerDetectorRegister { get; private set; }
-        public ReceivePipe0AddressRegister ReceivePipe0AddressRegister { get; private set; }
-        public ReceivePipe1AddressRegister ReceivePipe1AddressRegister { get; private set; }
-        public ReceivePipe2AddressRegister ReceivePipe2AddressRegister { get; private set; }
-        public ReceivePipe3AddressRegister ReceivePipe3AddressRegister { get; private set; }
-        public ReceivePipe4AddressRegister ReceivePipe4AddressRegister { get; private set; }
-        public ReceivePipe5AddressRegister ReceivePipe5AddressRegister { get; private set; }
+        public ReceiveAddressPipe0Register ReceiveAddressPipe0Register { get; private set; }
+        public ReceiveAddressPipe1Register ReceiveAddressPipe1Register { get; private set; }
+        public ReceiveAddressPipe2Register ReceiveAddressPipe2Register { get; private set; }
+        public ReceiveAddressPipe3Register ReceiveAddressPipe3Register { get; private set; }
+        public ReceiveAddressPipe4Register ReceiveAddressPipe4Register { get; private set; }
+        public ReceiveAddressPipe5Register ReceiveAddressPipe5Register { get; private set; }
         public TransmitAddressRegister TransmitAddressRegister { get; private set; }
-        public ReceivePipe0PayloadWidthRegister ReceivePipe0PayloadWidthRegister { get; private set; }
-        public ReceivePipe1PayloadWidthRegister ReceivePipe1PayloadWidthRegister { get; private set; }
-        public ReceivePipe2PayloadWidthRegister ReceivePipe2PayloadWidthRegister { get; private set; }
-        public ReceivePipe3PayloadWidthRegister ReceivePipe3PayloadWidthRegister { get; private set; }
-        public ReceivePipe4PayloadWidthRegister ReceivePipe4PayloadWidthRegister { get; private set; }
-        public ReceivePipe5PayloadWidthRegister ReceivePipe5PayloadWidthRegister { get; private set; }
+        public ReceivePayloadWidthPipe0Register ReceivePayloadWidthPipe0Register { get; private set; }
+        public ReceivePayloadWidthPipe1Register ReceivePayloadWidthPipe1Register { get; private set; }
+        public ReceivePayloadWidthPipe2Register ReceivePayloadWidthPipe2Register { get; private set; }
+        public ReceivePayloadWidthPipe3Register ReceivePayloadWidthPipe3Register { get; private set; }
+        public ReceivePayloadWidthPipe4Register ReceivePayloadWidthPipe4Register { get; private set; }
+        public ReceivePayloadWidthPipe5Register ReceivePayloadWidthPipe5Register { get; private set; }
         public FifoStatusRegister FifoStatusRegister { get; private set; }
-        public DynamicPayloadRegister DynamicPayloadRegister { get; private set; }
+        public DynamicPayloadLengthRegister DynamicPayloadLengthRegister { get; private set; }
         public FeatureRegister FeatureRegister { get; private set; }
 
         public RegisterCollection(Radio radio)
         {
             _radio = radio;
-            ConfigRegister = new ConfigRegister(radio);
-            AutoAckRegister = new AutoAckRegister(radio);
-            ReceivePipeRegister = new ReceivePipeRegister(radio);
-            AddressWidthRegister = new AddressWidthRegister(radio);
-            SetupRetryRegister = new SetupRetryRegister(radio);
-            ChannelRegister = new ChannelRegister(radio);
-            SetupRegister = new SetupRegister(radio);
+            ConfigurationRegister = new ConfigurationRegister(radio);
+            EnableAutoAcknowledgementRegister = new EnableAutoAcknowledgementRegister(radio);
+            EnableReceiveAddressRegister = new EnableReceiveAddressRegister(radio);
+            AddressWidthRegister = new SetupAddressWidthRegister(radio);
+            SetupRetransmissionRegister = new SetupRetransmissionRegister(radio);
+            RfChannelRegister = new RfChannelRegister(radio);
+            RfSetupRegister = new RfSetupRegister(radio);
             StatusRegister = new StatusRegister(radio);
             ObserveTransmitRegister = new ObserveTransmitRegister(radio);
             ReceivedPowerDetectorRegister = new ReceivedPowerDetectorRegister(radio);
-            ReceivePipe0AddressRegister = new ReceivePipe0AddressRegister(radio);
-            ReceivePipe1AddressRegister = new ReceivePipe1AddressRegister(radio);
-            ReceivePipe2AddressRegister = new ReceivePipe2AddressRegister(radio);
-            ReceivePipe3AddressRegister = new ReceivePipe3AddressRegister(radio);
-            ReceivePipe4AddressRegister = new ReceivePipe4AddressRegister(radio);
-            ReceivePipe5AddressRegister = new ReceivePipe5AddressRegister(radio);
+            ReceiveAddressPipe0Register = new ReceiveAddressPipe0Register(radio);
+            ReceiveAddressPipe1Register = new ReceiveAddressPipe1Register(radio);
+            ReceiveAddressPipe2Register = new ReceiveAddressPipe2Register(radio);
+            ReceiveAddressPipe3Register = new ReceiveAddressPipe3Register(radio);
+            ReceiveAddressPipe4Register = new ReceiveAddressPipe4Register(radio);
+            ReceiveAddressPipe5Register = new ReceiveAddressPipe5Register(radio);
             TransmitAddressRegister = new TransmitAddressRegister(radio);
-            ReceivePipe0PayloadWidthRegister = new ReceivePipe0PayloadWidthRegister(radio);
-            ReceivePipe1PayloadWidthRegister = new ReceivePipe1PayloadWidthRegister(radio);
-            ReceivePipe2PayloadWidthRegister = new ReceivePipe2PayloadWidthRegister(radio);
-            ReceivePipe3PayloadWidthRegister = new ReceivePipe3PayloadWidthRegister(radio);
-            ReceivePipe4PayloadWidthRegister = new ReceivePipe4PayloadWidthRegister(radio);
-            ReceivePipe5PayloadWidthRegister = new ReceivePipe5PayloadWidthRegister(radio);
+            ReceivePayloadWidthPipe0Register = new ReceivePayloadWidthPipe0Register(radio);
+            ReceivePayloadWidthPipe1Register = new ReceivePayloadWidthPipe1Register(radio);
+            ReceivePayloadWidthPipe2Register = new ReceivePayloadWidthPipe2Register(radio);
+            ReceivePayloadWidthPipe3Register = new ReceivePayloadWidthPipe3Register(radio);
+            ReceivePayloadWidthPipe4Register = new ReceivePayloadWidthPipe4Register(radio);
+            ReceivePayloadWidthPipe5Register = new ReceivePayloadWidthPipe5Register(radio);
             FifoStatusRegister = new FifoStatusRegister(radio);
-            DynamicPayloadRegister = new DynamicPayloadRegister(radio);
+            DynamicPayloadLengthRegister = new DynamicPayloadLengthRegister(radio);
             FeatureRegister = new FeatureRegister(radio);
 
-            Add(Constants.CONFIG, ConfigRegister);
-            Add(Constants.EN_AA, AutoAckRegister);
-            Add(Constants.EN_RXADDR, ReceivePipeRegister);
-            Add(Constants.SETUP_AW, AddressWidthRegister);
-            Add(Constants.SETUP_RETR, SetupRetryRegister);
-            Add(Constants.RF_CH, ChannelRegister);
-            Add(Constants.RF_SETUP, SetupRegister);
-            Add(Constants.STATUS, StatusRegister);
-            Add(Constants.OBSERVE_TX, ObserveTransmitRegister);
-            Add(Constants.RPD, ReceivedPowerDetectorRegister);
-            Add(Constants.RX_ADDR_P0, ReceivePipe0AddressRegister);
-            Add(Constants.RX_ADDR_P1, ReceivePipe1AddressRegister);
-            Add(Constants.RX_ADDR_P2, ReceivePipe2AddressRegister);
-            Add(Constants.RX_ADDR_P3, ReceivePipe3AddressRegister);
-            Add(Constants.RX_ADDR_P4, ReceivePipe4AddressRegister);
-            Add(Constants.RX_ADDR_P5, ReceivePipe5AddressRegister);
-            Add(Constants.TX_ADDR, TransmitAddressRegister);
-            Add(Constants.RX_PW_P0, ReceivePipe0PayloadWidthRegister);
-            Add(Constants.RX_PW_P1, ReceivePipe1PayloadWidthRegister);
-            Add(Constants.RX_PW_P2, ReceivePipe2PayloadWidthRegister);
-            Add(Constants.RX_PW_P3, ReceivePipe3PayloadWidthRegister);
-            Add(Constants.RX_PW_P4, ReceivePipe4PayloadWidthRegister);
-            Add(Constants.RX_PW_P5, ReceivePipe5PayloadWidthRegister);
-            Add(Constants.FIFO_STATUS, FifoStatusRegister);
-            Add(Constants.DYNPD, DynamicPayloadRegister);
-            Add(Constants.FEATURE, FeatureRegister);
+            Add(Addresses.CONFIG, ConfigurationRegister);
+            Add(Addresses.EN_AA, EnableAutoAcknowledgementRegister);
+            Add(Addresses.EN_RXADDR, EnableReceiveAddressRegister);
+            Add(Addresses.SETUP_AW, AddressWidthRegister);
+            Add(Addresses.SETUP_RETR, SetupRetransmissionRegister);
+            Add(Addresses.RF_CH, RfChannelRegister);
+            Add(Addresses.RF_SETUP, RfSetupRegister);
+            Add(Addresses.STATUS, StatusRegister);
+            Add(Addresses.OBSERVE_TX, ObserveTransmitRegister);
+            Add(Addresses.RPD, ReceivedPowerDetectorRegister);
+            Add(Addresses.RX_ADDR_P0, ReceiveAddressPipe0Register);
+            Add(Addresses.RX_ADDR_P1, ReceiveAddressPipe1Register);
+            Add(Addresses.RX_ADDR_P2, ReceiveAddressPipe2Register);
+            Add(Addresses.RX_ADDR_P3, ReceiveAddressPipe3Register);
+            Add(Addresses.RX_ADDR_P4, ReceiveAddressPipe4Register);
+            Add(Addresses.RX_ADDR_P5, ReceiveAddressPipe5Register);
+            Add(Addresses.TX_ADDR, TransmitAddressRegister);
+            Add(Addresses.RX_PW_P0, ReceivePayloadWidthPipe0Register);
+            Add(Addresses.RX_PW_P1, ReceivePayloadWidthPipe1Register);
+            Add(Addresses.RX_PW_P2, ReceivePayloadWidthPipe2Register);
+            Add(Addresses.RX_PW_P3, ReceivePayloadWidthPipe3Register);
+            Add(Addresses.RX_PW_P4, ReceivePayloadWidthPipe4Register);
+            Add(Addresses.RX_PW_P5, ReceivePayloadWidthPipe5Register);
+            Add(Addresses.FIFO_STATUS, FifoStatusRegister);
+            Add(Addresses.DYNPD, DynamicPayloadLengthRegister);
+            Add(Addresses.FEATURE, FeatureRegister);
         }
 
         public void LoadAll()

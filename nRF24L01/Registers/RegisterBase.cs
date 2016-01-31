@@ -5,26 +5,25 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
 {
     public abstract class RegisterBase
     {
-        private byte[] _valueBuffer;
+        private byte[] _value;
+
+        protected Radio Radio;
 
         public byte[] Value
         {
-            get { return _valueBuffer; }
-            internal set { _valueBuffer = value; }
+            get { return _value; }
+            internal set { _value = value; }
         }
 
         public byte FirstByte
         {
-            get { return _valueBuffer[0]; }
-            internal set { _valueBuffer[0] = value; }
+            get { return _value[0]; }
+            internal set { _value[0] = value; }
         }
 
         public int Length { get; private set; }
         public byte Address { get; private set; }
-
         public string Name { get; private set; }
-
-        protected Radio Radio;
 
         protected RegisterBase(Radio radio, int length, byte address, string name = "")
         {
@@ -38,7 +37,7 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
         public void Load()
         {
             byte[] request = new byte[Length + 1];
-            request[0] = (byte)(Constants.R_REGISTER | Address);
+            request[0] = (byte)(Commands.R_REGISTER | (Commands.REGISTER_MASK & Address));
             Array.Copy(Value, 0, request, 1, Length);
             Value = Radio.Transfer(request);
         }
@@ -46,7 +45,7 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
         public void Save()
         {
             byte[] buffer = new byte[Length + 1];
-            buffer[0] = (byte)(Constants.W_REGISTER | Address);
+            buffer[0] = (byte)(Commands.W_REGISTER | (Commands.REGISTER_MASK & Address));
             Array.Copy(Value, 0, buffer, 1, Length);
             Radio.Transfer(buffer);
 
@@ -61,8 +60,8 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
         public static implicit operator byte(RegisterBase source)
         {
             if (source.Length == 1)
-                return source.Value[0];
-            throw new InvalidOperationException("cannot convert register value to single byte while register length is greater than 1");
+                return source.FirstByte;
+            throw new InvalidOperationException("Cannot convert register value to single byte while register length is greater than 1");
         }
 
         protected bool GetBitValue(byte mask)
@@ -93,8 +92,8 @@ namespace Windows.Devices.Radios.nRF24L01.Registers
         }
 
         /// <summary>
-        /// fill the target byte with spefied bits from source byte
-        /// example:
+        /// Fill the target byte with specified bits from source byte
+        /// Example:
         /// target = 1111 1111
         /// source = 0000 0000
         /// start = 6

@@ -21,7 +21,7 @@ namespace Windows.Devices.Radios.nRF24L01
 
         public void FlushBuffer()
         {
-            _radio.Transfer(Constants.FLUSH_RX);
+            _radio.Transfer(Commands.FLUSH_RX);
         }
 
         public FifoStatus FifoStatus

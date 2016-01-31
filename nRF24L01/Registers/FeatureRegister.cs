@@ -1,28 +1,31 @@
 ﻿namespace Windows.Devices.Radios.nRF24L01.Registers
 {
+    /// <summary>
+    ///   Feature Register
+    /// </summary>
     public class FeatureRegister : RegisterBase
     {
-        public FeatureRegister(Radio radio) : base(radio, 1, Constants.FEATURE)
+        public FeatureRegister(Radio radio) : base(radio, 1, Addresses.FEATURE)
         {
 
         }
 
         public bool EN_DPL
         {
-            get { return GetBitValue(Constants.EN_DPL); }
-            set { FirstByte = SetBitValue(Constants.EN_DPL, value); }
+            get { return GetBitValue(Properties.EN_DPL); }
+            set { FirstByte = SetBitValue(Properties.EN_DPL, value); }
         }
 
         public bool EN_ACK_PAY
         {
-            get { return GetBitValue(Constants.EN_ACK_PAY); }
-            set { FirstByte = SetBitValue(Constants.EN_ACK_PAY, value); }
+            get { return GetBitValue(Properties.EN_ACK_PAY); }
+            set { FirstByte = SetBitValue(Properties.EN_ACK_PAY, value); }
         }
 
         public bool EN_DYN_ACK
         {
-            get { return GetBitValue(Constants.EN_DYN_ACK); }
-            set { FirstByte = SetBitValue(Constants.EN_DYN_ACK, value); }
+            get { return GetBitValue(Properties.EN_DYN_ACK); }
+            set { FirstByte = SetBitValue(Properties.EN_DYN_ACK, value); }
         }
 
     }

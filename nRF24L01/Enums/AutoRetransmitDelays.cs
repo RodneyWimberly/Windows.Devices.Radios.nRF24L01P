@@ -1,6 +1,6 @@
 ﻿namespace Windows.Devices.Radios.nRF24L01.Enums
 {
-    public enum AutoRetransmitDelay : byte
+    public enum AutoRetransmitDelays : byte
     {
         Delay250uS = 0,
         Delay500uS = 1,
