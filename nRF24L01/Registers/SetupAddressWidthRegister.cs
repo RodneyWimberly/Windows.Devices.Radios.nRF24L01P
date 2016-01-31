@@ -1,4 +1,4 @@
-﻿namespace Windows.Devices.Radios.nRF24L01.Registers
+﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Setup of Address Widths (common for all data pipes)

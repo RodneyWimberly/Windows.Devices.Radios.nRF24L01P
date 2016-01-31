@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Text;
-using Windows.Devices.Radios.nRF24L01.Enums;
-using Windows.Devices.Radios.nRF24L01.Registers;
+using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Registers;
 
-namespace Windows.Devices.Radios.nRF24L01
+namespace Windows.Devices.Radios.nRF24L01P
 {
     public class RadioConfiguration
     {
@@ -291,7 +291,7 @@ namespace Windows.Devices.Radios.nRF24L01
 
         public byte GetStatus()
         {
-            return ReadRegister(nRF24L01.Registers.Addresses.STATUS);
+            return ReadRegister(Addresses.STATUS);
         }
 
         private string GetAddressRegister(string name, byte register, int quantity)
@@ -331,17 +331,17 @@ namespace Windows.Devices.Radios.nRF24L01
                 (status << (4) >> (5)),
                 (status & Properties.TX_FULL) > 0);
 
-            sb.AppendLine(GetAddressRegister("RX_ADDR_P0-1", nRF24L01.Registers.Addresses.RX_ADDR_P0, 2));
-            sb.AppendLine(GetByteRegister("RX_ADDR_P2-5", nRF24L01.Registers.Addresses.RX_ADDR_P2, 4));
-            sb.AppendLine(GetAddressRegister("TX_ADDR", nRF24L01.Registers.Addresses.TX_ADDR, 1));
+            sb.AppendLine(GetAddressRegister("RX_ADDR_P0-1", Addresses.RX_ADDR_P0, 2));
+            sb.AppendLine(GetByteRegister("RX_ADDR_P2-5", Addresses.RX_ADDR_P2, 4));
+            sb.AppendLine(GetAddressRegister("TX_ADDR", Addresses.TX_ADDR, 1));
 
-            sb.AppendLine(GetByteRegister("RX_PW_P0-6", nRF24L01.Registers.Addresses.RX_PW_P0, 6));
-            sb.AppendLine(GetByteRegister("EN_AA", nRF24L01.Registers.Addresses.EN_AA, 1));
-            sb.AppendLine(GetByteRegister("EN_RXADDR", nRF24L01.Registers.Addresses.EN_RXADDR, 1));
-            sb.AppendLine(GetByteRegister("RF_CH", nRF24L01.Registers.Addresses.RF_CH, 1));
-            sb.AppendLine(GetByteRegister("RF_SETUP", nRF24L01.Registers.Addresses.RF_SETUP, 1));
-            sb.AppendLine(GetByteRegister("CONFIG", nRF24L01.Registers.Addresses.CONFIG, 1));
-            sb.AppendLine(GetByteRegister("DYNPD/FEATURE", nRF24L01.Registers.Addresses.DYNPD, 2));
+            sb.AppendLine(GetByteRegister("RX_PW_P0-6", Addresses.RX_PW_P0, 6));
+            sb.AppendLine(GetByteRegister("EN_AA", Addresses.EN_AA, 1));
+            sb.AppendLine(GetByteRegister("EN_RXADDR", Addresses.EN_RXADDR, 1));
+            sb.AppendLine(GetByteRegister("RF_CH", Addresses.RF_CH, 1));
+            sb.AppendLine(GetByteRegister("RF_SETUP", Addresses.RF_SETUP, 1));
+            sb.AppendLine(GetByteRegister("CONFIG", Addresses.CONFIG, 1));
+            sb.AppendLine(GetByteRegister("DYNPD/FEATURE", Addresses.DYNPD, 2));
 
             sb.AppendLine("Data Rate = " + Constants.DataRates[(int)DataRate]);
             sb.AppendLine("Model = " + _radio.Name);

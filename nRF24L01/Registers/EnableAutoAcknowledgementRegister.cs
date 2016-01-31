@@ -1,4 +1,4 @@
-﻿namespace Windows.Devices.Radios.nRF24L01.Registers
+﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Enable 'Auto Acknowledgment' Function. Disable this functionality to be compatible with nRF2401.

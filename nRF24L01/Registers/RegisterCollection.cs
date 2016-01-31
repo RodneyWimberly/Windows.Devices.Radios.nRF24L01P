@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Windows.Devices.Radios.nRF24L01.Registers
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     public class RegisterCollection : Dictionary<byte, RegisterBase>
     {

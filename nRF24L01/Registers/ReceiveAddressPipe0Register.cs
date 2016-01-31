@@ -1,4 +1,4 @@
-﻿namespace Windows.Devices.Radios.nRF24L01.Registers
+﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Receive address data pipe 0. 5 Bytes maximum length. (LSByte is written first. Write the number of bytes defined by SETUP_AW)

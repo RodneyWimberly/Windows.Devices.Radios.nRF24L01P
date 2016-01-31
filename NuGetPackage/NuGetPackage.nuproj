@@ -38,7 +38,7 @@
     <Content Include="Readme.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\nRF24L01\nRF24L01.csproj" />
+    <ProjectReference Include="..\nRF24L01\nRF24L01P.csproj" />
   </ItemGroup>
   <Import Project="$(NuProjPath)\NuProj.targets" />
 </Project>

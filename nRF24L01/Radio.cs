@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
 using Windows.Devices.Gpio;
-using Windows.Devices.Radios.nRF24L01.Enums;
-using Windows.Devices.Radios.nRF24L01.Registers;
+using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Registers;
 using Windows.Devices.Spi;
 
-namespace Windows.Devices.Radios.nRF24L01
+namespace Windows.Devices.Radios.nRF24L01P
 {
     /// <summary>
     /// Driver for nRF24L01(+) 2.4GHz Wireless Transceiver

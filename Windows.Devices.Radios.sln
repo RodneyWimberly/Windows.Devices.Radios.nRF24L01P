@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nRF24L01", "nRF24L01\nRF24L01.csproj", "{D134678E-33D7-4F4C-B30F-96D795D86E95}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nRF24L01P", "nRF24L01\nRF24L01P.csproj", "{D134678E-33D7-4F4C-B30F-96D795D86E95}"
 EndProject
 Project("{FF286327-C783-4F7A-AB73-9BCBAD0D4460}") = "NuGetPackage", "NuGetPackage\NuGetPackage.nuproj", "{DA010EC6-E51A-47C5-95DF-885A1903087E}"
 EndProject

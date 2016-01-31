@@ -1,4 +1,4 @@
-﻿namespace Windows.Devices.Radios.nRF24L01.Registers
+﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Transmit address. Used for a PTX device only. (LSByte is written first) 

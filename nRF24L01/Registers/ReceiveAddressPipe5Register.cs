@@ -1,4 +1,4 @@
-﻿namespace Windows.Devices.Radios.nRF24L01.Registers
+﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     public class ReceiveAddressPipe5Register : RegisterBase
     {

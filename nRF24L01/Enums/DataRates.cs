@@ -1,4 +1,4 @@
-namespace Windows.Devices.Radios.nRF24L01.Enums
+namespace Windows.Devices.Radios.nRF24L01P.Enums
 {
     public enum DataRates
     {

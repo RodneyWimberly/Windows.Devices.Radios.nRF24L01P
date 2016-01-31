@@ -7,8 +7,8 @@
     <ProjectGuid>{D134678E-33D7-4F4C-B30F-96D795D86E95}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Windows.Devices.Radios.nRF24L01</RootNamespace>
-    <AssemblyName>Windows.Devices.Radios.nRF24L01</AssemblyName>
+    <RootNamespace>Windows.Devices.Radios.nRF24L01P</RootNamespace>
+    <AssemblyName>Windows.Devices.Radios.nRF24L01P</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion>10.0.10586.0</TargetPlatformVersion>

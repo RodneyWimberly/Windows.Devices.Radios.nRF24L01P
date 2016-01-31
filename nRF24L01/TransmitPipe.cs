@@ -1,7 +1,7 @@
 ﻿using System;
-using Windows.Devices.Radios.nRF24L01.Enums;
+using Windows.Devices.Radios.nRF24L01P.Enums;
 
-namespace Windows.Devices.Radios.nRF24L01
+namespace Windows.Devices.Radios.nRF24L01P
 {
     public class TransmitPipe
     {
