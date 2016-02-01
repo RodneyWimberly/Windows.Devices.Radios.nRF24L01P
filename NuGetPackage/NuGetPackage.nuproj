@@ -10,6 +10,9 @@
       <Platform>AnyCPU</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\nRF24L01P\nRF24L01P.csproj" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>da010ec6-e51a-47c5-95df-885a1903087e</ProjectGuid>
   </PropertyGroup>
@@ -19,23 +22,19 @@
   <Import Project="$(NuProjPath)\NuProj.props" Condition="Exists('$(NuProjPath)\NuProj.props')" />
   <PropertyGroup Label="Configuration">
     <Id>Windows.Devices.Radios.nRF24L01P</Id>
-    <Version>1.0.3</Version>
+    <Version>1.0.5</Version>
     <Title>nRF24L01P</Title>
     <Authors>Rodney Wimberly</Authors>
     <Owners>Rodney Wimberly</Owners>
-    <Summary>nRF24L01P Driver for Window 10 IoT Core</Summary>
-    <Description>nRF24L01P Driver for Window 10 IoT Core</Description>
-    <ReleaseNotes>
-    </ReleaseNotes>
-    <ProjectUrl>https://github.com/RodneyWimberly/Windows.Devices.Radios.nRF24L01P</ProjectUrl>
+    <Summary>Universal Windows Platform (UWP) driver for the nRF24L01+ 2.4GHz Wireless Transceiver. </Summary>
+    <Description>This project is based on the RF24 Arduino driver from maniacbug (https://github.com/maniacbug/RF24) and the nRF24L01Plus .NETMF driver from JohnMasen (http://nrf24l01plus.codeplex.com/)</Description>
+    <ReleaseNotes>The driver targets "Any CPU" but I have only tested it on the Raspberry Pi2 running Windows10 IoT Core.</ReleaseNotes>
+    <ProjectUrl>https://github.com/RodneyWimberly/Windows.Devices.Radios.nRF24L01</ProjectUrl>
     <LicenseUrl>
     </LicenseUrl>
     <Copyright>Copyright © Rodney Wimberly</Copyright>
     <Tags>nRF24L01, nRF24L01P, Window 10 IoT Core</Tags>
     <IconUrl>$(SolutionDir)wireless.png</IconUrl>
   </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\nRF24L01\nRF24L01P.csproj" />
-  </ItemGroup>
   <Import Project="$(NuProjPath)\NuProj.targets" />
 </Project>

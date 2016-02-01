@@ -7,7 +7,6 @@ namespace Windows.Devices.Radios.nRF24L01P
     public class RadioConfiguration
     {
         private readonly Radio _radio;
-        private readonly Diagnostics _diagnostics;
 
         public RegisterManager Registers { get; private set; }
 
@@ -15,7 +14,6 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             _radio = radio;
             _payloadWidth = Constants.MaxPayloadWidth;
-            _diagnostics = new Diagnostics(radio);
             Registers = new RegisterManager(_radio);
             Registers.LoadRegisters();
         }
@@ -202,7 +200,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                         Registers.AddressWidthRegister.AW = (byte)3;
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException("AddressWidth", "AddressWidth should be 3,4,5 only");
+                        throw new ArgumentOutOfRangeException(nameof(value), "AddressWidth should be 3,4,5 only");
                 }
                 Registers.AddressWidthRegister.Save();
             }
@@ -241,6 +239,12 @@ namespace Windows.Devices.Radios.nRF24L01P
         public void ToggleFeatures()
         {
             _radio.Transfer(new byte[] { Commands.ACTIVATE, 0x73 });
+        }
+
+        public string GetDetails()
+        {
+            Diagnostics diagnostics = new Diagnostics(_radio);
+            return diagnostics.GetDetails();
         }
 
         public override string ToString()
