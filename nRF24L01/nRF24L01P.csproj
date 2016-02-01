@@ -109,7 +109,10 @@
   <ItemGroup>
     <Compile Include="Commands.cs" />
     <Compile Include="Diagnostics.cs" />
+    <Compile Include="Registers\PipeRegisterBase.cs" />
     <Compile Include="Registers\Properties.cs" />
+    <Compile Include="Registers\AddressPipeRegister.cs" />
+    <Compile Include="Registers\ReceivePayloadWidthPipeRegister.cs" />
     <Compile Include="Registers\RegisterAddresses.cs" />
     <Compile Include="Enums\AutoRetransmitDelays.cs" />
     <Compile Include="Enums\CrcEncodingSchemes.cs" />
@@ -118,6 +121,7 @@
     <Compile Include="RadioConfiguration.cs" />
     <Compile Include="ReceivePipe.cs" />
     <Compile Include="ReceivePipeCollection.cs" />
+    <Compile Include="Registers\RegisterManager.cs" />
     <Compile Include="Registers\SetupAddressWidthRegister.cs" />
     <Compile Include="Registers\EnableAutoAcknowledgementRegister.cs" />
     <Compile Include="Registers\RfChannelRegister.cs" />
@@ -126,19 +130,7 @@
     <Compile Include="Registers\FeatureRegister.cs" />
     <Compile Include="Registers\FifoStatusRegister.cs" />
     <Compile Include="Registers\ObserveTransmitRegister.cs" />
-    <Compile Include="Registers\ReceivePayloadWidthPipe1Register.cs" />
-    <Compile Include="Registers\ReceivePayloadWidthPipe2Register.cs" />
-    <Compile Include="Registers\ReceivePayloadWidthPipe3Register.cs" />
-    <Compile Include="Registers\ReceivePayloadWidthPipe4Register.cs" />
-    <Compile Include="Registers\ReceivePayloadWidthPipe5Register.cs" />
-    <Compile Include="Registers\ReceiveAddressPipe1Register.cs" />
-    <Compile Include="Registers\ReceiveAddressPipe5Register.cs" />
-    <Compile Include="Registers\ReceiveAddressPipe4Register.cs" />
-    <Compile Include="Registers\ReceiveAddressPipe3Register.cs" />
-    <Compile Include="Registers\ReceiveAddressPipe2Register.cs" />
-    <Compile Include="Registers\ReceiveAddressPipe0Register.cs" />
     <Compile Include="Registers\ReceivedPowerDetectorRegister.cs" />
-    <Compile Include="Registers\ReceivePayloadWidthPipe0Register.cs" />
     <Compile Include="Registers\EnableReceiveAddressRegister.cs" />
     <Compile Include="Registers\RegisterBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -151,7 +143,6 @@
     <Compile Include="Registers\RfSetupRegister.cs" />
     <Compile Include="Registers\SetupRetransmissionRegister.cs" />
     <Compile Include="Registers\StatusRegister.cs" />
-    <Compile Include="Registers\TransmitAddressRegister.cs" />
     <Compile Include="TransmitPipe.cs" />
     <Compile Include="Utilities.cs" />
     <EmbeddedResource Include="Properties\nRF24L01.rd.xml" />

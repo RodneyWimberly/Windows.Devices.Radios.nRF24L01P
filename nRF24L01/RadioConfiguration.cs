@@ -9,15 +9,15 @@ namespace Windows.Devices.Radios.nRF24L01P
         private readonly Radio _radio;
         private readonly Diagnostics _diagnostics;
 
-        public RegisterCollection Registers { get; private set; }
+        public RegisterManager Registers { get; private set; }
 
         public RadioConfiguration(Radio radio)
         {
             _radio = radio;
             _payloadWidth = Constants.MaxPayloadWidth;
             _diagnostics = new Diagnostics(radio);
-            Registers = new RegisterCollection(_radio);
-            Registers.LoadAll();
+            Registers = new RegisterManager(_radio);
+            Registers.LoadRegisters();
         }
 
         public DataRates DataRate

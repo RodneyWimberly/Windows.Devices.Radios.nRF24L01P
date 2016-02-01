@@ -6,7 +6,7 @@ namespace Windows.Devices.Radios.nRF24L01P
     public class ReceivePipeCollection : Dictionary<byte, ReceivePipe>
     {
         private readonly Radio _radio;
-        private readonly Registers.RegisterCollection _registers;
+        private readonly Registers.RegisterManager _registers;
         public ReceivePipeCollection(Radio radio)
         {
             _radio = radio;

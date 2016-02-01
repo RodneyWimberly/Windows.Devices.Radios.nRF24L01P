@@ -144,7 +144,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public void Begin()
         {
-            RegisterCollection registers = Configuration.Registers;
+            RegisterManager registers = Configuration.Registers;
 
             ChipEnable(false);
 
@@ -208,10 +208,9 @@ namespace Windows.Devices.Radios.nRF24L01P
             // Restore the pipe0 address, if exists
             if (_receiveAddressPipe0 > 0)
             {
-                ReceiveAddressPipe0Register receivePipe0AddressRegister =
-                    Configuration.Registers.ReceiveAddressPipe0Register;
-                receivePipe0AddressRegister.Load(BitConverter.GetBytes(_receiveAddressPipe0));
-                receivePipe0AddressRegister.Save();
+                AddressPipeRegister receiveAddressPipe0Register = Configuration.Registers.ReceiveAddressPipeRegisters[0];
+                receiveAddressPipe0Register.Load(BitConverter.GetBytes(_receiveAddressPipe0));
+                receiveAddressPipe0Register.Save();
             }
 
             TransmitPipe.FlushBuffer();
@@ -383,7 +382,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             featureRegister.Save();
 
             // If it didn't work, the features are not enabled
-            if (Configuration.Registers.FeatureRegister != 1)
+            if (featureRegister != 1)
             {
                 // So enable them and try again
                 Configuration.ToggleFeatures();
@@ -393,19 +392,15 @@ namespace Windows.Devices.Radios.nRF24L01P
                 featureRegister.Save();
             }
 
-            //
-            // Enable dynamic payload on pipes 0 & 1
-            //
             DynamicPayloadLengthRegister dypRegister = Configuration.Registers.DynamicPayloadLengthRegister;
             dypRegister.DPL_P0 = true;
             dypRegister.DPL_P1 = true;
             dypRegister.Save();
-
         }
 
         public void WriteAckPayload(byte pipe, byte[] data, int length)
         {
-            _spiDevice.Write(new[] { (byte)(Commands.W_ACK_PAYLOAD | (pipe & 0x7)) });
+            Transfer((byte)(Commands.W_ACK_PAYLOAD | (pipe & 0x7)));
             int payloadSize = Math.Min(length, Constants.MaxPayloadWidth);
             if (data.Length > payloadSize)
                 Array.Resize(ref data, payloadSize);

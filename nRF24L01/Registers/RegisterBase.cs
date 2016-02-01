@@ -12,6 +12,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public int Length { get; private set; }
         public byte Address { get; private set; }
         public string Name { get; private set; }
+        public bool IsDirty { get; private set; }
 
         protected RegisterBase(Radio radio, int length, byte address, string name = "")
         {
@@ -20,6 +21,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
             Radio = radio;
             Length = length;
             Address = address;
+            IsDirty = false;
         }
 
         public void Load()
@@ -33,6 +35,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public void Load(byte[] value)
         {
             Value = value;
+            IsDirty = false;
         }
 
         public void Save()
@@ -41,8 +44,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
             buffer[0] = (byte)(Commands.W_REGISTER | (Commands.REGISTER_MASK & Address));
             Array.Copy(Value, 0, buffer, 1, Length);
             Radio.Transfer(buffer);
-
-            //Load();
+            IsDirty = false;
         }
 
         public static implicit operator byte[] (RegisterBase source)
@@ -65,6 +67,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         protected void SetBitValue(byte mask, bool value)
         {
             Value[0] = (byte)(value ? (Value[0] | mask) : (Value[0] & ~mask));
+            IsDirty = true;
         }
 
         /// <summary>
@@ -106,6 +109,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
             int maskedSource = (source & mask); //extract the source bits
             int maskedTarget = (Value[0] & ~mask); //clear the bits at target byte
             Value[0] = (byte)(maskedSource | maskedTarget);
+            IsDirty = true;
         }
 
         protected byte CreateBitMask(int start, int end)
