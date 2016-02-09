@@ -60,7 +60,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             string registerValue = name + " =";
             for (int index = 0; index < quantity; index++)
             {
-                registerValue += " 0x" + ReadRegister(register++);
+                registerValue += " 0x" + ReadRegister(register++).ToString("X");
             }
 
             return registerValue;
@@ -72,12 +72,12 @@ namespace Windows.Devices.Radios.nRF24L01P
 
             byte status = _radio.Configuration.Registers.StatusRegister;
             sb.AppendFormat("STATUS = 0x{0} RX_DR={1} TX_DS={2} MAX_RT={3} RX_P_NO={4} TX_FULL={5}\r\n",
-                status,
-                (status & Properties.RX_DR) > 0,
-                (status & Properties.TX_DS) > 0,
-                (status & Properties.MAX_RT) > 0,
+                status.ToString("X"),
+                (status & Utilities.BitValue(Properties.RX_DR)),
+                (status & Utilities.BitValue(Properties.TX_DS)),
+                (status & Utilities.BitValue(Properties.MAX_RT)),
                 (status << (4) >> (5)),
-                (status & Properties.TX_FULL) > 0);
+                (status & Utilities.BitValue(Properties.TX_FULL)));
 
             sb.AppendLine(GetAddressRegister("RX_ADDR_P0-1", Addresses.RX_ADDR_P0, 2));
             sb.AppendLine(GetByteRegister("RX_ADDR_P2-5", Addresses.RX_ADDR_P2, 4));

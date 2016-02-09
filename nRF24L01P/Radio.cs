@@ -68,24 +68,29 @@ namespace Windows.Devices.Radios.nRF24L01P
             int length = request.Length;
 
             byte[] response = new byte[length],
-                buffer = new byte[length];
-            buffer[0] = request[0];
+                buffer = new byte[length == 1 ? 1 : length - 1];
+            //buffer[0] = request[0];
+            //Array.Copy(request, 1, buffer, 1, request.Length - 1);
 
             // Chip uses LSByte first, need to revert the payload order. first byte (command byte) is skipped 
-            for (int i = 1; i < request.Length; i++)
-                buffer[length - i] = request[i];
+            //for (int i = 1; i < request.Length; i++)
+            //    buffer[length - i] = request[i];
 
             lock (_spiLock)
             {
-                _spiDevice.TransferFullDuplex(buffer, response);
+                _spiDevice.TransferFullDuplex(request, response);
             }
 
             // The STATUS register value is returned at first byte on each SPI call
-            Configuration.Registers.StatusRegister.Load(new[] { response[0] });
+            Configuration?.Registers?.StatusRegister?.Load(new[] { response[0] });
 
+            if(length > 1)
+                Array.Copy(response, 1, buffer, 0, buffer.Length);
+            else
+                buffer[0] = response[0];
             // Chip uses LSByte first, need to revert the result order,first byte (STATUS register) is skipped
-            for (int i = 0; i < request.Length; i++)
-                buffer[(length - 1) - i] = response[i];
+            //for (int i = 0; i < request.Length; i++)
+            //    buffer[(length - 1) - i] = response[i];
 
             return buffer;
         }
@@ -151,34 +156,30 @@ namespace Windows.Devices.Radios.nRF24L01P
             // Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make testing a little easier
             // WARNING: If this is ever lowered, either 250KBS mode with AA is broken or maximum packet
             // sizes must never be used. See documentation for a more complete explanation.
-            Configuration.AutoRetransmitDelay = AutoRetransmitDelays.Delay4000uS;
+            Configuration.AutoRetransmitDelay = AutoRetransmitDelays.Delay1500uS;
             Configuration.AutoRetransmitCount = 15;
+
+            // Restore our default PA level
+            Configuration.PowerLevel = PowerLevels.Max;
+
+            // Attempt to set DataRate to 250Kbps to determine if this is a plus model
+            Configuration.DataRate = DataRates.DataRate250Kbps;
+            Configuration.IsPlusModel = Configuration.DataRate == DataRates.DataRate250Kbps;
+
+            // Then set the data rate to the slowest (and most reliable) speed supported by all hardware.
+            Configuration.DataRate = DataRates.DataRate1Mbps;
+
+            // Initialize CRC and request 2-byte (16bit) CRC
+            Configuration.CrcEncodingScheme = CrcEncodingSchemes.DualBytes;
+            Configuration.CrcEnabled = true;
 
             // Disable auto acknowledgement 
             EnableAutoAcknowledgementRegister autoAckRegister = registers.EnableAutoAcknowledgementRegister;
             autoAckRegister.EN_AA = false;
             autoAckRegister.Save();
 
-            // Attempt to set DataRate to 250Kbps to determine if this is a plus model
-            Configuration.DataRate = DataRates.DataRate250Kbps;
-            Configuration.IsPlusModel = Configuration.DataRate == DataRates.DataRate250Kbps;
-
-            // Restore our default PA level
-            Configuration.PowerLevel = PowerLevels.Max;
-
-            // Initialize CRC and request 2-byte (16bit) CRC
-            Configuration.CrcEncodingScheme = CrcEncodingSchemes.DualBytes;
-            Configuration.CrcEnabled = true;
-
             // Disable dynamic payload lengths
             Configuration.DynamicPayloadLengthEnabled = false;
-
-            // Set up default configuration.  Callers can always change it later.
-            // This channel should be universally safe and not bleed over into adjacent spectrum.
-            Configuration.Channel = 76;
-
-            // Then set the data rate to the slowest (and most reliable) speed supported by all hardware.
-            Configuration.DataRate = DataRates.DataRate1Mbps;
 
             // Reset current status
             // Notice reset and flush is the last thing we do
@@ -188,8 +189,12 @@ namespace Windows.Devices.Radios.nRF24L01P
             statusRegister.MAX_RT = false;
             statusRegister.Save();
 
-            TransmitPipe.FlushBuffer();
+            // Set up default configuration.  Callers can always change it later.
+            // This channel should be universally safe and not bleed over into adjacent spectrum.
+            Configuration.Channel = 76;
+
             ReceivePipes.FlushBuffer();
+            TransmitPipe.FlushBuffer();
         }
 
         public void StartListening()

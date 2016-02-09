@@ -1,0 +1,8 @@
+﻿<Application
+    x:Class="nRF24L01P.IntegrationTests.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:nRF24L01P.IntegrationTests"
+    RequestedTheme="Light">
+
+</Application>

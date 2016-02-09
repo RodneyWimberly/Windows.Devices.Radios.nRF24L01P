@@ -33,10 +33,16 @@
             set { SetBitValue(Properties.RF_DR_HIGH, value); }
         }
 
-        public byte RF_PWR
+        public bool RF_PWR_HIGH
         {
-            get { return GetByteValue(2, Properties.RF_PWR); }
-            set { SetByteValue(value, 2, Properties.RF_PWR); }
+            get { return GetBitValue(Properties.RF_PWR_HIGH); }
+            set { SetBitValue(Properties.RF_PWR_HIGH, value); }
+        }
+
+        public bool RF_PWR_LOW
+        {
+            get { return GetBitValue(Properties.RF_PWR_LOW); }
+            set { SetBitValue(Properties.RF_PWR_LOW, value); }
         }
     }
 }

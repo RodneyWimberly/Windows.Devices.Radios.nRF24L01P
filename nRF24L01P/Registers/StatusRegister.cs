@@ -9,6 +9,9 @@
         {
         }
 
+        /// <summary>
+        /// Receive Data Ready6
+        /// </summary>
         public bool RX_DR
         {
             get { return GetBitValue(Properties.RX_DR); }

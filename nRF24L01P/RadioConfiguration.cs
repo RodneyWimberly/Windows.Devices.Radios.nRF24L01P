@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 
@@ -61,7 +62,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             get
             {
                 PowerLevels powerLevel = PowerLevels.Error;
-                bool low = Registers.RfSetupRegister.RF_DR_LOW;
+                bool low = Registers.RfSetupRegister.RF_PWR_LOW;
                 bool high = Registers.RfSetupRegister.RF_DR_HIGH;
                 if (low && high)
                     powerLevel = PowerLevels.Max;
@@ -249,7 +250,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public override string ToString()
         {
-            return Registers.ToString();
+            return GetType().Name + ":\r\n" + JsonConvert.SerializeObject(this, Formatting.Indented);
         }
     }
 }
