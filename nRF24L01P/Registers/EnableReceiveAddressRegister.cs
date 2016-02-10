@@ -5,7 +5,7 @@
     /// </summary>
     public class EnableReceiveAddressRegister : RegisterBase
     {
-        public EnableReceiveAddressRegister(Radio radio) : base(radio, 1, Addresses.EN_RXADDR)
+        public EnableReceiveAddressRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.EN_RXADDR)
         {
 
         }

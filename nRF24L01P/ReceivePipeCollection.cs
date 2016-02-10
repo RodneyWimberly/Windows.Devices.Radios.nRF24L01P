@@ -5,23 +5,23 @@ namespace Windows.Devices.Radios.nRF24L01P
 {
     public class ReceivePipeCollection : Dictionary<byte, ReceivePipe>
     {
-        private readonly Radio _radio;
+        private readonly ICommandProcessor _commandProcessor;
         private readonly Registers.RegisterManager _registers;
-        public ReceivePipeCollection(Radio radio)
+        public ReceivePipeCollection(RadioConfiguration configuration, ICommandProcessor commandProcessor)
         {
-            _radio = radio;
-            _registers = _radio.Configuration.Registers;
-            Add(0, new ReceivePipe(radio, 0));
-            Add(1, new ReceivePipe(radio, 1));
-            Add(2, new ReceivePipe(radio, 2));
-            Add(3, new ReceivePipe(radio, 3));
-            Add(4, new ReceivePipe(radio, 4));
-            Add(5, new ReceivePipe(radio, 5));
+            _commandProcessor = commandProcessor;
+            _registers = configuration.Registers;
+            Add(0, new ReceivePipe(configuration, 0));
+            Add(1, new ReceivePipe(configuration, 1));
+            Add(2, new ReceivePipe(configuration, 2));
+            Add(3, new ReceivePipe(configuration, 3));
+            Add(4, new ReceivePipe(configuration, 4));
+            Add(5, new ReceivePipe(configuration, 5));
         }
 
         public void FlushBuffer()
         {
-            _radio.Transfer(Commands.FLUSH_RX);
+            _commandProcessor.ExecuteCommand(DeviceCommands.FLUSH_RX);
         }
 
         public FifoStatus FifoStatus

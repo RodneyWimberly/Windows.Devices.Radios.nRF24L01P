@@ -7,15 +7,15 @@ namespace Windows.Devices.Radios.nRF24L01P
 {
     public class RadioConfiguration
     {
-        private readonly Radio _radio;
+        private readonly ICommandProcessor _commandProcessor;
 
         public RegisterManager Registers { get; private set; }
 
-        public RadioConfiguration(Radio radio)
+        public RadioConfiguration(ICommandProcessor commandProcessor)
         {
-            _radio = radio;
+            _commandProcessor = commandProcessor;
             _payloadWidth = Constants.MaxPayloadWidth;
-            Registers = new RegisterManager(_radio);
+            Registers = new RegisterManager(_commandProcessor);
             Registers.LoadRegisters();
         }
 
@@ -220,14 +220,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-        public byte DynamicPayloadSize
-        {
-            get
-            {
-                byte[] result = _radio.Transfer(new[] { Commands.R_RX_PL_WID, Commands.NOP });
-                return result[0];
-            }
-        }
+        public byte DynamicPayloadSize => _commandProcessor.ExecuteCommand(DeviceCommands.R_RX_PL_WID, RegisterAddresses.EMPTY_ADDRESS, new byte[1])[0];
 
         private byte _payloadWidth;
 
@@ -239,13 +232,8 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public void ToggleFeatures()
         {
-            _radio.Transfer(new byte[] { Commands.ACTIVATE, 0x73 });
-        }
-
-        public string GetDetails()
-        {
-            Diagnostics diagnostics = new Diagnostics(_radio);
-            return diagnostics.GetDetails();
+            _commandProcessor.ExecuteCommand(DeviceCommands.ACTIVATE);
+            _commandProcessor.ExecuteCommand(DeviceCommands.FEATURES);
         }
 
         public override string ToString()

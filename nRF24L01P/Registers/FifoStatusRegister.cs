@@ -5,7 +5,7 @@
     /// </summary>
     public class FifoStatusRegister : RegisterBase
     {
-        public FifoStatusRegister(Radio radio) : base(radio, 1, Addresses.FIFO_STATUS)
+        public FifoStatusRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.FIFO_STATUS)
         {
 
         }

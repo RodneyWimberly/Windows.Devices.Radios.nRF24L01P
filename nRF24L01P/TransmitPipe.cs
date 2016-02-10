@@ -1,16 +1,19 @@
 ﻿using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P
 {
     public class TransmitPipe
     {
         private readonly Registers.RegisterManager _registers;
-        private readonly Radio _radio;
-        public TransmitPipe(Radio radio)
+        private readonly RadioConfiguration _configuration;
+        private readonly ICommandProcessor _commandProcessor;
+        public TransmitPipe(RadioConfiguration configuration, ICommandProcessor commandProcessor)
         {
-            _radio = radio;
-            _registers = _radio.Configuration.Registers;
+            _configuration = configuration;
+            _commandProcessor = commandProcessor;
+            _registers = configuration.Registers;
         }
 
         public byte[] Address
@@ -21,7 +24,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
             set
             {
-                int addressWidth = _radio.Configuration.AddressWidth;
+                int addressWidth = _configuration.AddressWidth;
                 if (value.Length < addressWidth)
                     throw new InvalidOperationException("Address length should equal or greater than device.Config.AddressWidth");
                 else if (value.Length > addressWidth)
@@ -33,7 +36,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public void FlushBuffer()
         {
-            _radio.Transfer(Commands.FLUSH_TX);
+            _commandProcessor.ExecuteCommand(DeviceCommands.FLUSH_TX);
         }
 
         public FifoStatus FifoStatus
@@ -53,10 +56,8 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             if (data.Length > Constants.MaxPayloadWidth)
                 throw new ArgumentOutOfRangeException(nameof(data), string.Format("data should be 0-{0} bytes", Constants.MaxPayloadWidth));
-            byte[] buffer = new byte[data.Length + 1];
-            Array.Copy(data, 0, buffer, 1, buffer.Length);
-            buffer[0] = (byte)(disableACK ? (Commands.W_TX_PAYLOAD_NO_ACK | Commands.EMPTY_ADDRESS) : (Commands.W_TX_PAYLOAD | Commands.EMPTY_ADDRESS));
-            _radio.Transfer(buffer);
+
+            _commandProcessor.ExecuteCommand(disableACK ? DeviceCommands.W_TX_PAYLOAD_NO_ACK : DeviceCommands.W_TX_PAYLOAD, RegisterAddresses.EMPTY_ADDRESS, data);
         }
     }
 }

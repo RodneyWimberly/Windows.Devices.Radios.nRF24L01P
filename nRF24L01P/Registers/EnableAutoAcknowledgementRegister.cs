@@ -5,7 +5,7 @@
     /// </summary>
     public class EnableAutoAcknowledgementRegister : RegisterBase
     {
-        public EnableAutoAcknowledgementRegister(Radio radio) : base(radio, 1, Addresses.EN_AA)
+        public EnableAutoAcknowledgementRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.EN_AA)
         {
 
         }

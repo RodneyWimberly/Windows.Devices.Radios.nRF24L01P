@@ -5,7 +5,7 @@
     /// </summary>
     public class FeatureRegister : RegisterBase
     {
-        public FeatureRegister(Radio radio) : base(radio, 1, Addresses.FEATURE)
+        public FeatureRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.FEATURE)
         {
 
         }

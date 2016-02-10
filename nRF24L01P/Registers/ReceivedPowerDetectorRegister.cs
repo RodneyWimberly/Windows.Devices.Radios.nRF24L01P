@@ -6,7 +6,7 @@
 
     public class ReceivedPowerDetectorRegister : RegisterBase
     {
-        public ReceivedPowerDetectorRegister(Radio radio) : base(radio, 1, Addresses.RPD)
+        public ReceivedPowerDetectorRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.RPD)
         {
 
         }

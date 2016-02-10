@@ -5,7 +5,7 @@
     /// </summary>
     public class RfSetupRegister : RegisterBase
     {
-        public RfSetupRegister(Radio radio) : base(radio, 1, Addresses.RF_SETUP)
+        public RfSetupRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.RF_SETUP)
         {
 
         }

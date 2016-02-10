@@ -5,7 +5,7 @@
     /// </summary>
     public class StatusRegister : RegisterBase
     {
-        public StatusRegister(Radio radio) : base(radio, 1, Addresses.STATUS)
+        public StatusRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.STATUS)
         {
         }
 

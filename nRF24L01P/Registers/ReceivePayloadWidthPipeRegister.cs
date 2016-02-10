@@ -5,8 +5,8 @@
     /// </summary>
     public class ReceivePayloadWidthPipeRegister : PipeRegisterBase
     {
-        public ReceivePayloadWidthPipeRegister(Radio radio, byte address, byte pipeNumber) :
-            base(radio, address, 1, pipeNumber)
+        public ReceivePayloadWidthPipeRegister(ICommandProcessor commandProcessor, byte address, byte pipeNumber) :
+            base(commandProcessor, address, 1, pipeNumber)
         { }
 
         public byte PayloadWidth

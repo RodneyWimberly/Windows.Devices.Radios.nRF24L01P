@@ -5,7 +5,7 @@
     /// </summary>
     public class SetupRetransmissionRegister : RegisterBase
     {
-        public SetupRetransmissionRegister(Radio radio) : base(radio, 1, Addresses.SETUP_RETR)
+        public SetupRetransmissionRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.SETUP_RETR)
         {
 
         }

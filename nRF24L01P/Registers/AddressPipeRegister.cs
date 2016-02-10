@@ -7,8 +7,8 @@
     /// </summary>
     public class AddressPipeRegister : PipeRegisterBase
     {
-        public AddressPipeRegister(Radio radio, byte address, byte pipeNumber) :
-            base(radio, address, (byte)(pipeNumber <= 1 ? 5 : 1), pipeNumber)
+        public AddressPipeRegister(ICommandProcessor commandProcessor, byte address, byte pipeNumber) :
+            base(commandProcessor, address, (byte)(pipeNumber <= 1 ? 5 : 1), pipeNumber)
         { }
     }
 }

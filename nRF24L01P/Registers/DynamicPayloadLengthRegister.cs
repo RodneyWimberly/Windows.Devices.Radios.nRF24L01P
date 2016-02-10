@@ -5,7 +5,7 @@
     /// </summary>
     public class DynamicPayloadLengthRegister : RegisterBase
     {
-        public DynamicPayloadLengthRegister(Radio radio) : base(radio, 1, Addresses.DYNPD)
+        public DynamicPayloadLengthRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.DYNPD)
         {
 
         }

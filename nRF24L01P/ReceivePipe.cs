@@ -1,19 +1,20 @@
 ﻿using System;
+using Windows.Devices.Radios.nRF24L01P.Enums;
 
 namespace Windows.Devices.Radios.nRF24L01P
 {
     public class ReceivePipe
     {
         private readonly Registers.RegisterManager _registers;
-        private readonly Radio _radio;
+        private readonly RadioConfiguration _configuration;
         public int PipeId { get; }
-        public ReceivePipe(Radio radio, int pipeId)
+        public ReceivePipe(RadioConfiguration configuration, int pipeId)
         {
             if (PipeId > 5)
                 throw new ArgumentOutOfRangeException(nameof(pipeId), "Invalid PipeId number for this Pipe");
-            _radio = radio;
+            _configuration = configuration;
+            _registers = _configuration.Registers;
             PipeId = pipeId;
-            _registers = _radio.Configuration.Registers;
         }
 
         public byte[] Address
@@ -21,7 +22,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             get { return _registers.ReceiveAddressPipeRegisters[(byte)PipeId]; }
             set
             {
-                int addressWidth = _radio.Configuration.AddressWidth;
+                int addressWidth = _configuration.AddressWidth;
                 if (PipeId < 2 && value.Length < addressWidth)
                     throw new InvalidOperationException("Address length should equal or greater than device.Config.AddressWidth");
                 if (PipeId < 2 && value.Length > addressWidth)
@@ -171,7 +172,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
             set
             {
-                if (value && !_radio.Configuration.DynamicPayloadLengthEnabled)
+                if (value && !_configuration.DynamicPayloadLengthEnabled)
                 {
                     throw new InvalidOperationException("please enable Config.DynamicPayloadLengthEnabled before you enable this feature on data pipe");
                 }
@@ -221,6 +222,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-        public byte BytesToRead => _radio.Transfer(Commands.R_RX_PL_WID | Commands.EMPTY_ADDRESS);
+        public byte BytesToRead => _configuration.DynamicPayloadSize;
     }
 }

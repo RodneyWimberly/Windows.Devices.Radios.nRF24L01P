@@ -4,7 +4,7 @@
     {
         public byte PipeNumber { get; }
 
-        protected PipeRegisterBase(Radio radio, byte address, byte length, byte pipeNumber) : base(radio, length, address)
+        protected PipeRegisterBase(ICommandProcessor commandProcessor, byte address, byte length, byte pipeNumber) : base(commandProcessor, length, address)
         {
             PipeNumber = pipeNumber;
         }

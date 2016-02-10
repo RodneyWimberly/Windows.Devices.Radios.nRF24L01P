@@ -5,7 +5,7 @@
     /// </summary>
     public class ObserveTransmitRegister : RegisterBase
     {
-        public ObserveTransmitRegister(Radio radio) : base(radio, 1, Addresses.OBSERVE_TX)
+        public ObserveTransmitRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.OBSERVE_TX)
         {
 
         }

@@ -5,7 +5,7 @@
     /// </summary>
     public class SetupAddressWidthRegister : RegisterBase
     {
-        public SetupAddressWidthRegister(Radio radio) : base(radio, 1, Addresses.SETUP_AW)
+        public SetupAddressWidthRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.SETUP_AW)
         {
 
         }

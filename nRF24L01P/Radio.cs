@@ -15,8 +15,9 @@ namespace Windows.Devices.Radios.nRF24L01P
         private long _receiveAddressPipe0;
         private readonly object _spiLock;
         private readonly GpioPin _cePin;
-        private readonly SpiDevice _spiDevice;
         private bool _checkStatus;
+
+        public ICommandProcessor CommandProcessor { get; private set; }
 
         public RadioConfiguration Configuration { get; private set; }
 
@@ -46,53 +47,20 @@ namespace Windows.Devices.Radios.nRF24L01P
             _receiveAddressPipe0 = 0;
             _spiLock = new object();
 
-            _spiDevice = spiDevice;
             _cePin = cePin;
             _cePin.SetDriveMode(GpioPinDriveMode.Output);
 
-            Configuration = new RadioConfiguration(this);
-            TransmitPipe = new TransmitPipe(this);
-            ReceivePipes = new ReceivePipeCollection(this);
+            CommandProcessor = new CommandProcessor(spiDevice, this);
+            Configuration = new RadioConfiguration(CommandProcessor);
+            CommandProcessor.StatusRegisterLoad = Configuration.Registers.StatusRegister.Load;
+            TransmitPipe = new TransmitPipe(Configuration, CommandProcessor);
+            ReceivePipes = new ReceivePipeCollection(Configuration, CommandProcessor);
         }
 
-        public byte Transfer(byte request)
+        public string GetDetails()
         {
-            return Transfer(new byte[] { request })[0];
-        }
-
-        public byte[] Transfer(byte[] request)
-        {
-            if (_checkStatus && (request[0] == Commands.W_REGISTER && !(_status == DeviceStatus.StandBy || _status == DeviceStatus.PowerDown)))
-                throw new InvalidOperationException("Writing register should only be in Standby or PowerDown mode");
-
-            int length = request.Length;
-
-            byte[] response = new byte[length],
-                buffer = new byte[length == 1 ? 1 : length - 1];
-            //buffer[0] = request[0];
-            //Array.Copy(request, 1, buffer, 1, request.Length - 1);
-
-            // Chip uses LSByte first, need to revert the payload order. first byte (command byte) is skipped 
-            //for (int i = 1; i < request.Length; i++)
-            //    buffer[length - i] = request[i];
-
-            lock (_spiLock)
-            {
-                _spiDevice.TransferFullDuplex(request, response);
-            }
-
-            // The STATUS register value is returned at first byte on each SPI call
-            Configuration?.Registers?.StatusRegister?.Load(new[] { response[0] });
-
-            if(length > 1)
-                Array.Copy(response, 1, buffer, 0, buffer.Length);
-            else
-                buffer[0] = response[0];
-            // Chip uses LSByte first, need to revert the result order,first byte (STATUS register) is skipped
-            //for (int i = 0; i < request.Length; i++)
-            //    buffer[(length - 1) - i] = response[i];
-
-            return buffer;
+            Diagnostics diagnostics = new Diagnostics(this);
+            return diagnostics.GetDetails();
         }
 
         public void ChipEnable(bool enabled)
@@ -112,17 +80,19 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             int payloadSize = Math.Min(payload.Length, Configuration.PayloadWidth);
             int blankLength = Configuration.DynamicPayloadLengthEnabled ? 0 : Configuration.PayloadWidth - payloadSize;
-            byte[] status = new byte[1];
+            if (blankLength > 0)
+            {
+                int originalLength = payload.Length;
+                Array.Resize(ref payload, originalLength + blankLength);
+                for (int index = 0; index < blankLength; index++)
+                    payload[originalLength + index] = 0;
+            }
 
             ChipEnable(false);
-            status = Transfer(new[] { Commands.W_TX_PAYLOAD });
-
-            Transfer(payload);
-            for (int index = 0; index < blankLength; index++)
-                Transfer(new byte[] { 0 });
+            CommandProcessor.ExecuteCommand(DeviceCommands.W_TX_PAYLOAD, RegisterAddresses.EMPTY_ADDRESS, payload);
             ChipEnable(true);
 
-            return status[0];
+            return Configuration.Registers.StatusRegister;
         }
 
         protected byte ReadPayload(ref byte[] payload, int length)
@@ -130,21 +100,15 @@ namespace Windows.Devices.Radios.nRF24L01P
             int payloadSize = Math.Min(length, Configuration.PayloadWidth);
             int blankLength = Configuration.DynamicPayloadLengthEnabled ? 0 : Configuration.PayloadWidth - payloadSize;
 
-            ChipEnable(false);
-
-            byte[] status = Transfer(new[] { Commands.R_RX_PAYLOAD });
-
-            byte[] request = new byte[payloadSize];
+            byte[] request = new byte[payloadSize + blankLength];
             for (int index = 0; index < payloadSize; index++)
-                request[index] = Commands.NOP;
-            payload = Transfer(request);
+                request[index] = (byte)DeviceCommands.NOP;
 
-            for (int index = 0; index <= blankLength; index++)
-                Transfer(new byte[] { Commands.NOP });
-
+            ChipEnable(false);
+            payload = CommandProcessor.ExecuteCommand(DeviceCommands.R_RX_PAYLOAD, RegisterAddresses.EMPTY_ADDRESS, request);
             ChipEnable(true);
 
-            return status[0];
+            return Configuration.Registers.StatusRegister;
         }
 
         public void Begin()
@@ -405,11 +369,10 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public void WriteAckPayload(byte pipe, byte[] data, int length)
         {
-            Transfer((byte)(Commands.W_ACK_PAYLOAD | (pipe & 0x7)));
             int payloadSize = Math.Min(length, Constants.MaxPayloadWidth);
             if (data.Length > payloadSize)
                 Array.Resize(ref data, payloadSize);
-            Transfer(data);
+            CommandProcessor.ExecuteCommand(DeviceCommands.W_ACK_PAYLOAD, (byte)(pipe & 0x7), data);
         }
 
         public bool ChannelReceivedPowerDector

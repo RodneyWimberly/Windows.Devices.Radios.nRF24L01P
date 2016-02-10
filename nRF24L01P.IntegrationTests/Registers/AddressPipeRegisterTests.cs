@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using System;
 using System.Diagnostics;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 using Windows.Devices.Spi;
-using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 
 namespace Windows.Devices.Radios.nRF24L01P.IntegrationTests.Registers
 {
@@ -26,7 +26,7 @@ namespace Windows.Devices.Radios.nRF24L01P.IntegrationTests.Registers
             _radio.Begin();
             _radio.OpenReadingPipe(1, _pipes[0]);
             _radio.StartListening();
-            Debug.WriteLine(_radio.Configuration.GetDetails());
+            Debug.WriteLine(_radio.GetDetails());
         }
 
         [TestMethod]

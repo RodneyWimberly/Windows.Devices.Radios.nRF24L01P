@@ -5,7 +5,7 @@
     /// </summary>
     public class ConfigurationRegister : RegisterBase
     {
-        public ConfigurationRegister(Radio radio) : base(radio, 1, Addresses.CONFIG)
+        public ConfigurationRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.CONFIG)
         {
 
         }
