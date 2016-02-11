@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 using Windows.Devices.Spi;
 
@@ -10,84 +11,90 @@ namespace Windows.Devices.Radios.nRF24L01P
     /// <summary>
     /// Driver for nRF24L01(+) 2.4GHz Wireless Transceiver
     /// </summary>
-    public class Radio
+    public class Radio : IRadio
     {
-        private long _receiveAddressPipe0;
-        private readonly object _spiLock;
         private readonly GpioPin _cePin;
-        private readonly SpiDevice _spiDevice;
-        private bool _checkStatus;
 
-        public RadioConfiguration Configuration { get; private set; }
+        public ICommandProcessor CommandProcessor { get; private set; }
+
+        public IRadioConfiguration Configuration { get; private set; }
 
         public TransmitPipe TransmitPipe { get; private set; }
 
-        public ReceivePipeCollection ReceivePipes { get; private set; }
-
-        private bool _isAckPayloadAvailable;
-        public bool IsAckPayloadAvailable
-        {
-            get
-            {
-                bool isAckPayloadAvailable = _isAckPayloadAvailable;
-                _isAckPayloadAvailable = false;
-                return isAckPayloadAvailable;
-            }
-        }
+        public IDictionary<int, ReceivePipe> ReceivePipes { get; private set; }
 
         public string Name => Constants.RadioModels[(int)Configuration.RadioModel];
 
-        public bool IsDataAvailable => Configuration.Registers.StatusRegister.RX_DR;
-
         public Radio(GpioPin cePin, SpiDevice spiDevice)
         {
-            _checkStatus = false;
-            _isAckPayloadAvailable = false;
-            _receiveAddressPipe0 = 0;
-            _spiLock = new object();
-
-            _spiDevice = spiDevice;
             _cePin = cePin;
             _cePin.SetDriveMode(GpioPinDriveMode.Output);
+            ChipEnable(false);
 
-            Configuration = new RadioConfiguration(this);
-            TransmitPipe = new TransmitPipe(this);
-            ReceivePipes = new ReceivePipeCollection(this);
-        }
-
-        public byte Transfer(byte request)
-        {
-            return Transfer(new byte[] { request })[0];
-        }
-
-        public byte[] Transfer(byte[] request)
-        {
-            if (_checkStatus && (request[0] == Commands.W_REGISTER && !(_status == DeviceStatus.StandBy || _status == DeviceStatus.PowerDown)))
-                throw new InvalidOperationException("Writing register should only be in Standby or PowerDown mode");
-
-            int length = request.Length;
-
-            byte[] response = new byte[length],
-                buffer = new byte[length];
-            buffer[0] = request[0];
-
-            // Chip uses LSByte first, need to revert the payload order. first byte (command byte) is skipped 
-            for (int i = 1; i < request.Length; i++)
-                buffer[length - i] = request[i];
-
-            lock (_spiLock)
+            CommandProcessor = new CommandProcessor(spiDevice, this, false);
+            Configuration = new RadioConfiguration(CommandProcessor);
+            CommandProcessor.StatusRegisterLoad = Configuration.Registers.StatusRegister.Load;
+            TransmitPipe = new TransmitPipe(Configuration, CommandProcessor);
+            ReceivePipes = new Dictionary<int, ReceivePipe>
             {
-                _spiDevice.TransferFullDuplex(buffer, response);
-            }
+                {0, new ReceivePipe(Configuration, CommandProcessor, 0)},
+                {1, new ReceivePipe(Configuration, CommandProcessor, 1)},
+                {2, new ReceivePipe(Configuration, CommandProcessor, 2)},
+                {3, new ReceivePipe(Configuration, CommandProcessor, 3)},
+                {4, new ReceivePipe(Configuration, CommandProcessor, 4)},
+                {5, new ReceivePipe(Configuration, CommandProcessor, 5)}
+            };
+            _status = DeviceStatus.PowerDown;
+        }
 
-            // The STATUS register value is returned at first byte on each SPI call
-            Configuration.Registers.StatusRegister.Load(new[] { response[0] });
+        public override string ToString()
+        {
+            return new Diagnostics(this).GetDetails();
+        }
 
-            // Chip uses LSByte first, need to revert the result order,first byte (STATUS register) is skipped
-            for (int i = 0; i < request.Length; i++)
-                buffer[(length - 1) - i] = response[i];
+        public void Initialize()
+        {
+            // Shut down device for config
+            Status = DeviceStatus.StandBy;
+            ChipEnable(false);
 
-            return buffer;
+            // Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make testing a little easier
+            // WARNING: If this is ever lowered, either 250KBS mode with AA is broken or maximum packet
+            // sizes must never be used. See documentation for a more complete explanation.
+            Configuration.AutoRetransmitDelay = AutoRetransmitDelays.Delay1500uS;
+            Configuration.AutoRetransmitCount = 15;
+
+            // Restore our default PA level
+            Configuration.PowerLevel = PowerLevels.Max;
+
+            // Attempt to set DataRate to 250Kbps to determine if this is a plus model
+            Configuration.DataRate = DataRates.DataRate250Kbps;
+            Configuration.IsPlusModel = Configuration.DataRate == DataRates.DataRate250Kbps;
+
+            // Then set the data rate to the slowest (and most reliable) speed supported by all hardware.
+            Configuration.DataRate = DataRates.DataRate1Mbps;
+
+            // Initialize CRC and request 2-byte (16bit) CRC
+            Configuration.CrcEncodingScheme = CrcEncodingSchemes.DualBytes;
+            Configuration.CrcEnabled = true;
+
+            // Disable dynamic payload lengths
+            Configuration.DynamicPayloadLengthEnabled = false;
+
+            // Reset current status
+            // Notice reset and flush is the last thing we do
+            StatusRegister statusRegister = Configuration.Registers.StatusRegister;
+            statusRegister.RX_DR = false;
+            statusRegister.TX_DS = false;
+            statusRegister.MAX_RT = false;
+            statusRegister.Save();
+
+            // Set up default configuration.  Callers can always change it later.
+            // This channel should be universally safe and not bleed over into adjacent spectrum.
+            Configuration.Channel = 76;
+
+            ReceivePipes[0].FlushBuffer();
+            TransmitPipe.FlushBuffer();
         }
 
         public void ChipEnable(bool enabled)
@@ -101,310 +108,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             // Technically we require 4.5ms + 14us as a worst case. We'll just call it 5ms for good measure.
             // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
             Utilities.DelayMicroseconds(5000);
-        }
-
-        protected byte WritePayload(byte[] payload)
-        {
-            int payloadSize = Math.Min(payload.Length, Configuration.PayloadWidth);
-            int blankLength = Configuration.DynamicPayloadLengthEnabled ? 0 : Configuration.PayloadWidth - payloadSize;
-            byte[] status = new byte[1];
-
-            ChipEnable(false);
-            status = Transfer(new[] { Commands.W_TX_PAYLOAD });
-
-            Transfer(payload);
-            for (int index = 0; index < blankLength; index++)
-                Transfer(new byte[] { 0 });
-            ChipEnable(true);
-
-            return status[0];
-        }
-
-        protected byte ReadPayload(ref byte[] payload, int length)
-        {
-            int payloadSize = Math.Min(length, Configuration.PayloadWidth);
-            int blankLength = Configuration.DynamicPayloadLengthEnabled ? 0 : Configuration.PayloadWidth - payloadSize;
-
-            ChipEnable(false);
-
-            byte[] status = Transfer(new[] { Commands.R_RX_PAYLOAD });
-
-            byte[] request = new byte[payloadSize];
-            for (int index = 0; index < payloadSize; index++)
-                request[index] = Commands.NOP;
-            payload = Transfer(request);
-
-            for (int index = 0; index <= blankLength; index++)
-                Transfer(new byte[] { Commands.NOP });
-
-            ChipEnable(true);
-
-            return status[0];
-        }
-
-        public void Begin()
-        {
-            RegisterManager registers = Configuration.Registers;
-
-            ChipEnable(false);
-
-            // Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make testing a little easier
-            // WARNING: If this is ever lowered, either 250KBS mode with AA is broken or maximum packet
-            // sizes must never be used. See documentation for a more complete explanation.
-            Configuration.AutoRetransmitDelay = AutoRetransmitDelays.Delay4000uS;
-            Configuration.AutoRetransmitCount = 15;
-
-            // Disable auto acknowledgement 
-            EnableAutoAcknowledgementRegister autoAckRegister = registers.EnableAutoAcknowledgementRegister;
-            autoAckRegister.EN_AA = false;
-            autoAckRegister.Save();
-
-            // Attempt to set DataRate to 250Kbps to determine if this is a plus model
-            Configuration.DataRate = DataRates.DataRate250Kbps;
-            Configuration.IsPlusModel = Configuration.DataRate == DataRates.DataRate250Kbps;
-
-            // Restore our default PA level
-            Configuration.PowerLevel = PowerLevels.Max;
-
-            // Initialize CRC and request 2-byte (16bit) CRC
-            Configuration.CrcEncodingScheme = CrcEncodingSchemes.DualBytes;
-            Configuration.CrcEnabled = true;
-
-            // Disable dynamic payload lengths
-            Configuration.DynamicPayloadLengthEnabled = false;
-
-            // Set up default configuration.  Callers can always change it later.
-            // This channel should be universally safe and not bleed over into adjacent spectrum.
-            Configuration.Channel = 76;
-
-            // Then set the data rate to the slowest (and most reliable) speed supported by all hardware.
-            Configuration.DataRate = DataRates.DataRate1Mbps;
-
-            // Reset current status
-            // Notice reset and flush is the last thing we do
-            StatusRegister statusRegister = registers.StatusRegister;
-            statusRegister.RX_DR = false;
-            statusRegister.TX_DS = false;
-            statusRegister.MAX_RT = false;
-            statusRegister.Save();
-
-            TransmitPipe.FlushBuffer();
-            ReceivePipes.FlushBuffer();
-        }
-
-        public void StartListening()
-        {
-            ConfigurationRegister configRegister = Configuration.Registers.ConfigurationRegister;
-            configRegister.PWR_UP = true;
-            configRegister.PRIM_RX = true;
-            configRegister.Save();
-
-            StatusRegister statusRegister = Configuration.Registers.StatusRegister;
-            statusRegister.RX_DR = false;
-            statusRegister.TX_DS = false;
-            statusRegister.MAX_RT = false;
-            statusRegister.Save();
-
-            // Restore the pipe0 address, if exists
-            if (_receiveAddressPipe0 > 0)
-            {
-                AddressPipeRegister receiveAddressPipe0Register = Configuration.Registers.ReceiveAddressPipeRegisters[0];
-                receiveAddressPipe0Register.Load(BitConverter.GetBytes(_receiveAddressPipe0));
-                receiveAddressPipe0Register.Save();
-            }
-
-            TransmitPipe.FlushBuffer();
-            ReceivePipes.FlushBuffer();
-
-            ChipEnable(true);
-        }
-
-        public void StopListening()
-        {
-            ChipEnable(false);
-            TransmitPipe.FlushBuffer();
-            ReceivePipes.FlushBuffer();
-        }
-
-        public bool Write(byte[] data)
-        {
-            bool result = false;
-
-            // Begin the write
-            StartWrite(data);
-
-            // ------------
-            // At this point we could return from a non-blocking write, and then call
-            // the rest after an interrupt
-
-            // Instead, we are going to block here until we get TX_DS (transmission completed and ack'd)
-            // or MAX_RT (maximum retries, transmission failed).  Also, we'll timeout in case the radio
-            // is flaky and we get neither.
-
-            // IN the end, the send should be blocking.  It comes back in 60ms worst case, or much faster
-            // if I tighten up the retry logic.  (Default settings will be 1500us.
-            // Monitor the send
-
-            byte[] observeTx = new byte[1];
-            byte status;
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
-            do
-            {
-                status = Configuration.Registers.ObserveTransmitRegister;
-                //string observeTxDisplay = FormatObserveTx(observeTx[1]);
-            } while ((status & (Utilities.BitValue(Properties.TX_DS) | Utilities.BitValue(Properties.MAX_RT))) != 1 && (stopwatch.ElapsedMilliseconds < 500));
-
-            // The part above is what you could recreate with your own interrupt handler,
-            // and then call this when you got an interrupt
-            // ------------
-
-            // Call this when you get an interrupt
-            // The status tells us three things
-            // * The send was successful (TX_DS)
-            // * The send failed, too many retries (MAX_RT)
-            // * There is an ack packet waiting (RX_DR)
-            bool txOk, txFail;
-            WhatHappened(out txOk, out txFail, out _isAckPayloadAvailable);
-            result = txOk;
-
-            // Handle the ack packet
-            if (_isAckPayloadAvailable)
-            {
-                byte ackPayloadLength = Configuration.DynamicPayloadSize;
-            }
-
-            Status = DeviceStatus.PowerDown;
-            TransmitPipe.FlushBuffer();
-
-            return result;
-        }
-
-        public void StartWrite(byte[] data)
-        {
-            ConfigurationRegister configRegister = Configuration.Registers.ConfigurationRegister;
-            configRegister.PWR_UP = true;
-            configRegister.PRIM_RX = false;
-            configRegister.Save();
-
-            Utilities.DelayMicroseconds(150);
-
-            WritePayload(data);
-
-            ChipEnable(true);
-            ChipEnable(false);
-        }
-
-
-        public bool Available()
-        {
-            return Available(null);
-        }
-
-        public bool Available(byte[] pipes)
-        {
-            StatusRegister statusRegister = Configuration.Registers.StatusRegister;
-
-            bool result = statusRegister.RX_DR;
-            if (result)
-            {
-                // If the caller wants the pipe number, include that
-                if (pipes != null)
-                    pipes[0] = (byte)((statusRegister >> Properties.RX_P_NO) & 0x7);
-
-                statusRegister.RX_DR = true;
-
-                // Handle ack payload receipt
-                if (!statusRegister.TX_DS)
-                    statusRegister.TX_DS = true;
-                statusRegister.Save();
-            }
-
-            return result;
-        }
-
-        public bool Read(ref byte[] readBuffer, int length)
-        {
-            // Fetch the payload
-            ReadPayload(ref readBuffer, length);
-
-            // was this the last of the data available?
-            return ReceivePipes.FifoStatus == FifoStatus.Empty;
-        }
-
-        public void WhatHappened(out bool txOk, out bool txFail, out bool rxReady)
-        {
-            StatusRegister statusRegister = Configuration.Registers.StatusRegister;
-            statusRegister.RX_DR = true;
-            statusRegister.TX_DS = true;
-            statusRegister.MAX_RT = true;
-            statusRegister.Save();
-
-            txOk = statusRegister.TX_DS;
-            txFail = statusRegister.MAX_RT;
-            rxReady = statusRegister.RX_DR;
-        }
-
-        public void OpenWritingPipe(long value)
-        {
-            byte[] address = BitConverter.GetBytes(value);
-            Array.Resize(ref address, 5);
-            ReceivePipes[0].Address = address;
-            ReceivePipes[0].PayloadWidth = Configuration.PayloadWidth;
-            TransmitPipe.Address = address;
-        }
-
-        public void OpenReadingPipe(byte pipeId, long address)
-        {
-            byte[] buffer = BitConverter.GetBytes(address);
-            if (pipeId == 0)
-                _receiveAddressPipe0 = address;
-            if (pipeId <= 1)
-            {
-                Array.Resize(ref buffer, 5);
-            }
-            else if (pipeId > 1 && pipeId < 6)
-            {
-                Array.Resize(ref buffer, 1);
-            }
-            ReceivePipe receivePipe = ReceivePipes[pipeId];
-            receivePipe.Address = buffer;
-            receivePipe.PayloadWidth = Configuration.PayloadWidth;
-            receivePipe.Enabled = true;
-
-        }
-
-        public void EnableAckPayload()
-        {
-            FeatureRegister featureRegister = Configuration.Registers.FeatureRegister;
-            featureRegister.EN_ACK_PAY = true;
-            featureRegister.EN_DPL = true;
-            featureRegister.Save();
-
-            // If it didn't work, the features are not enabled
-            if (featureRegister != 1)
-            {
-                // So enable them and try again
-                Configuration.ToggleFeatures();
-
-                featureRegister.EN_ACK_PAY = true;
-                featureRegister.EN_DPL = true;
-                featureRegister.Save();
-            }
-
-            DynamicPayloadLengthRegister dypRegister = Configuration.Registers.DynamicPayloadLengthRegister;
-            dypRegister.DPL_P0 = true;
-            dypRegister.DPL_P1 = true;
-            dypRegister.Save();
-        }
-
-        public void WriteAckPayload(byte pipe, byte[] data, int length)
-        {
-            Transfer((byte)(Commands.W_ACK_PAYLOAD | (pipe & 0x7)));
-            int payloadSize = Math.Min(length, Constants.MaxPayloadWidth);
-            if (data.Length > payloadSize)
-                Array.Resize(ref data, payloadSize);
-            Transfer(data);
         }
 
         public bool ChannelReceivedPowerDector
@@ -427,34 +130,14 @@ namespace Windows.Devices.Radios.nRF24L01P
             {
                 if (value == _status)
                     return;
-                DeviceStatus previous = _status;
+                DeviceStatus lastStatus = _status;
                 _status = value;
-                //clean up previous status
-                //TODO: implement cleanup code
-                switch (previous)
-                {
-                    case DeviceStatus.Undefined:
-                        break;
-                    case DeviceStatus.PowerDown:
-                        break;
-                    case DeviceStatus.StandBy:
-                        break;
-                    case DeviceStatus.TransmitMode:
-                        break;
-                    case DeviceStatus.ReceiveMode:
-                        //Constants.CONFIG.PRIM_RX = false;  //disable RX role
-                        //Constants.CONFIG.Save();
-                        break;
-                    default:
-                        break;
-                }
-                //set device to new status
                 switch (_status)
                 {
                     case DeviceStatus.Undefined:
                         throw new InvalidOperationException("WTF???");
                     case DeviceStatus.PowerDown:
-                        if (previous == DeviceStatus.StandBy)
+                        if (lastStatus == DeviceStatus.StandBy)
                         {
                             Configuration.Registers.ConfigurationRegister.PWR_UP = false;
                             Configuration.Registers.ConfigurationRegister.Save();
@@ -463,12 +146,12 @@ namespace Windows.Devices.Radios.nRF24L01P
                         throw new InvalidOperationException(
                             "Error status change, PowerDown should from StandBy mode only");
                     case DeviceStatus.StandBy:
-                        if (previous == DeviceStatus.ReceiveMode || previous == DeviceStatus.TransmitMode)
+                        if (lastStatus == DeviceStatus.ReceiveMode || lastStatus == DeviceStatus.TransmitMode)
                         {
                             ChipEnable(false);
                             break;
                         }
-                        if (previous == DeviceStatus.PowerDown)
+                        if (lastStatus == DeviceStatus.PowerDown)
                         {
                             Configuration.Registers.ConfigurationRegister.PWR_UP = true;
                             Configuration.Registers.ConfigurationRegister.Save();
@@ -478,31 +161,31 @@ namespace Windows.Devices.Radios.nRF24L01P
                         throw new InvalidOperationException(
                             "Error status change, StandBy should from PowerDown,TX or RX mode only");
                     case DeviceStatus.TransmitMode:
-                        if (previous == DeviceStatus.StandBy)
+                        if (lastStatus == DeviceStatus.StandBy)
                         {
-                            _checkStatus = false;
+                            CommandProcessor.CheckStatus = false;
                             Configuration.Registers.ConfigurationRegister.PRIM_RX = false;
                             Configuration.Registers.ConfigurationRegister.Save();
-                            _checkStatus = true;
+                            CommandProcessor.CheckStatus = true;
 
                             ChipEnable(true);
                             Utilities.DelayMicroseconds(1000); //wait device to enter TX mode
                             break;
                         }
-                        throw new InvalidOperationException("Error status change, RXMode should from Standyby mode only");
+                        throw new InvalidOperationException("Error status change, RXMode should from Standby mode only");
                     case DeviceStatus.ReceiveMode:
-                        if (previous == DeviceStatus.StandBy)
+                        if (lastStatus == DeviceStatus.StandBy)
                         {
-                            _checkStatus = false;
+                            CommandProcessor.CheckStatus = false;
                             Configuration.Registers.ConfigurationRegister.PRIM_RX = true;
                             Configuration.Registers.ConfigurationRegister.Save();
-                            _checkStatus = false;
+                            CommandProcessor.CheckStatus = false;
                             ChipEnable(true);
                             Utilities.DelayMicroseconds(1000); //wait device to enter RX mode
                             break;
 
                         }
-                        throw new InvalidOperationException("Error status change, RXMode should from Standyby mode only");
+                        throw new InvalidOperationException("Error status change, RXMode should from Standby mode only");
                     default:
                         break;
                 }

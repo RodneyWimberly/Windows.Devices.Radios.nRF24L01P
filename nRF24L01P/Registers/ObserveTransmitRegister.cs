@@ -1,11 +1,13 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Observe Transmit register
     /// </summary>
     public class ObserveTransmitRegister : RegisterBase
     {
-        public ObserveTransmitRegister(Radio radio) : base(radio, 1, Addresses.OBSERVE_TX)
+        public ObserveTransmitRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.OBSERVE_TX)
         {
 
         }

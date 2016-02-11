@@ -1,4 +1,6 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Transmit/Receive address data pipe. 5 Bytes maximum length for transmit and receive 0 and 1 (LSByte is written first. Write the number of bytes defined by SETUP_AW)
@@ -7,8 +9,8 @@
     /// </summary>
     public class AddressPipeRegister : PipeRegisterBase
     {
-        public AddressPipeRegister(Radio radio, byte address, byte pipeNumber) :
-            base(radio, address, (byte)(pipeNumber <= 1 ? 5 : 1), pipeNumber)
+        public AddressPipeRegister(ICommandProcessor commandProcessor, byte address, byte pipeNumber) :
+            base(commandProcessor, address, (byte)(pipeNumber <= 1 ? 5 : 1), pipeNumber)
         { }
     }
 }

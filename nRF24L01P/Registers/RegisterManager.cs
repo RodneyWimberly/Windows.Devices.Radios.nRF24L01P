@@ -1,4 +1,6 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     public class RegisterManager
     {
@@ -19,68 +21,68 @@
         public RegisterCollection<RegisterBase> AllRegisters { get; }
         public RegisterCollection<AddressPipeRegister> ReceiveAddressPipeRegisters { get; }
         public RegisterCollection<ReceivePayloadWidthPipeRegister> ReceivePayloadWidthPipeRegisters { get; }
-        public RegisterManager(Radio radio)
+        public RegisterManager(ICommandProcessor commandProcessor)
         {
-            ConfigurationRegister = new ConfigurationRegister(radio);
-            EnableAutoAcknowledgementRegister = new EnableAutoAcknowledgementRegister(radio);
-            EnableReceiveAddressRegister = new EnableReceiveAddressRegister(radio);
-            AddressWidthRegister = new SetupAddressWidthRegister(radio);
-            SetupRetransmissionRegister = new SetupRetransmissionRegister(radio);
-            RfChannelRegister = new RfChannelRegister(radio);
-            RfSetupRegister = new RfSetupRegister(radio);
-            StatusRegister = new StatusRegister(radio);
-            ObserveTransmitRegister = new ObserveTransmitRegister(radio);
-            ReceivedPowerDetectorRegister = new ReceivedPowerDetectorRegister(radio);
-            TransmitAddressRegister = new AddressPipeRegister(radio, Addresses.TX_ADDR, 0);
-            FifoStatusRegister = new FifoStatusRegister(radio);
-            DynamicPayloadLengthRegister = new DynamicPayloadLengthRegister(radio);
-            FeatureRegister = new FeatureRegister(radio);
+            ConfigurationRegister = new ConfigurationRegister(commandProcessor);
+            EnableAutoAcknowledgementRegister = new EnableAutoAcknowledgementRegister(commandProcessor);
+            EnableReceiveAddressRegister = new EnableReceiveAddressRegister(commandProcessor);
+            AddressWidthRegister = new SetupAddressWidthRegister(commandProcessor);
+            SetupRetransmissionRegister = new SetupRetransmissionRegister(commandProcessor);
+            RfChannelRegister = new RfChannelRegister(commandProcessor);
+            RfSetupRegister = new RfSetupRegister(commandProcessor);
+            StatusRegister = new StatusRegister(commandProcessor);
+            ObserveTransmitRegister = new ObserveTransmitRegister(commandProcessor);
+            ReceivedPowerDetectorRegister = new ReceivedPowerDetectorRegister(commandProcessor);
+            TransmitAddressRegister = new AddressPipeRegister(commandProcessor, RegisterAddresses.TX_ADDR, 0);
+            FifoStatusRegister = new FifoStatusRegister(commandProcessor);
+            DynamicPayloadLengthRegister = new DynamicPayloadLengthRegister(commandProcessor);
+            FeatureRegister = new FeatureRegister(commandProcessor);
             ReceiveAddressPipeRegisters = new RegisterCollection<AddressPipeRegister>
             {
-                {0, new AddressPipeRegister(radio, Addresses.RX_ADDR_P0, 0)},
-                {1, new AddressPipeRegister(radio, Addresses.RX_ADDR_P1, 1)},
-                {2, new AddressPipeRegister(radio, Addresses.RX_ADDR_P1, 2)},
-                {3, new AddressPipeRegister(radio, Addresses.RX_ADDR_P1, 3)},
-                {4, new AddressPipeRegister(radio, Addresses.RX_ADDR_P1, 4)},
-                {5, new AddressPipeRegister(radio, Addresses.RX_ADDR_P1, 5)},
+                {0, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P0, 0)},
+                {1, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, 1)},
+                {2, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, 2)},
+                {3, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, 3)},
+                {4, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, 4)},
+                {5, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, 5)},
             };
             ReceivePayloadWidthPipeRegisters = new RegisterCollection<ReceivePayloadWidthPipeRegister>
             {
-                {0, new ReceivePayloadWidthPipeRegister(radio, Addresses.RX_PW_P0, 0)},
-                {1, new ReceivePayloadWidthPipeRegister(radio, Addresses.RX_PW_P1, 1)},
-                {2, new ReceivePayloadWidthPipeRegister(radio, Addresses.RX_PW_P2, 2)},
-                {3, new ReceivePayloadWidthPipeRegister(radio, Addresses.RX_PW_P3, 3)},
-                {4, new ReceivePayloadWidthPipeRegister(radio, Addresses.RX_PW_P4, 4)},
-                {5, new ReceivePayloadWidthPipeRegister(radio, Addresses.RX_PW_P5, 5)}
+                {0, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P0, 0)},
+                {1, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P1, 1)},
+                {2, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P2, 2)},
+                {3, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P3, 3)},
+                {4, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P4, 4)},
+                {5, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P5, 5)}
             };
             AllRegisters = new RegisterCollection<RegisterBase>
             {
-                {Addresses.CONFIG, ConfigurationRegister},
-                {Addresses.EN_AA, EnableAutoAcknowledgementRegister},
-                {Addresses.EN_RXADDR, EnableReceiveAddressRegister},
-                {Addresses.SETUP_AW, AddressWidthRegister},
-                {Addresses.SETUP_RETR, SetupRetransmissionRegister},
-                {Addresses.RF_CH, RfChannelRegister},
-                {Addresses.RF_SETUP, RfSetupRegister},
-                {Addresses.STATUS, StatusRegister},
-                {Addresses.OBSERVE_TX, ObserveTransmitRegister},
-                {Addresses.RPD, ReceivedPowerDetectorRegister},
-                {Addresses.RX_ADDR_P0, ReceiveAddressPipeRegisters[0]},
-                {Addresses.RX_ADDR_P1, ReceiveAddressPipeRegisters[1]},
-                {Addresses.RX_ADDR_P2, ReceiveAddressPipeRegisters[2]},
-                {Addresses.RX_ADDR_P3, ReceiveAddressPipeRegisters[3]},
-                {Addresses.RX_ADDR_P4, ReceiveAddressPipeRegisters[4]},
-                {Addresses.RX_ADDR_P5, ReceiveAddressPipeRegisters[5]},
-                {Addresses.TX_ADDR, TransmitAddressRegister},
-                {Addresses.RX_PW_P0, ReceivePayloadWidthPipeRegisters[0]},
-                {Addresses.RX_PW_P1, ReceivePayloadWidthPipeRegisters[1]},
-                {Addresses.RX_PW_P2, ReceivePayloadWidthPipeRegisters[2]},
-                {Addresses.RX_PW_P3, ReceivePayloadWidthPipeRegisters[3]},
-                {Addresses.RX_PW_P4, ReceivePayloadWidthPipeRegisters[4]},
-                {Addresses.RX_PW_P5, ReceivePayloadWidthPipeRegisters[5]},
-                {Addresses.FIFO_STATUS, FifoStatusRegister},
-                {Addresses.DYNPD, DynamicPayloadLengthRegister},
-                {Addresses.FEATURE, FeatureRegister}
+                {RegisterAddresses.CONFIG, ConfigurationRegister},
+                {RegisterAddresses.EN_AA, EnableAutoAcknowledgementRegister},
+                {RegisterAddresses.EN_RXADDR, EnableReceiveAddressRegister},
+                {RegisterAddresses.SETUP_AW, AddressWidthRegister},
+                {RegisterAddresses.SETUP_RETR, SetupRetransmissionRegister},
+                {RegisterAddresses.RF_CH, RfChannelRegister},
+                {RegisterAddresses.RF_SETUP, RfSetupRegister},
+                {RegisterAddresses.STATUS, StatusRegister},
+                {RegisterAddresses.OBSERVE_TX, ObserveTransmitRegister},
+                {RegisterAddresses.RPD, ReceivedPowerDetectorRegister},
+                {RegisterAddresses.RX_ADDR_P0, ReceiveAddressPipeRegisters[0]},
+                {RegisterAddresses.RX_ADDR_P1, ReceiveAddressPipeRegisters[1]},
+                {RegisterAddresses.RX_ADDR_P2, ReceiveAddressPipeRegisters[2]},
+                {RegisterAddresses.RX_ADDR_P3, ReceiveAddressPipeRegisters[3]},
+                {RegisterAddresses.RX_ADDR_P4, ReceiveAddressPipeRegisters[4]},
+                {RegisterAddresses.RX_ADDR_P5, ReceiveAddressPipeRegisters[5]},
+                {RegisterAddresses.TX_ADDR, TransmitAddressRegister},
+                {RegisterAddresses.RX_PW_P0, ReceivePayloadWidthPipeRegisters[0]},
+                {RegisterAddresses.RX_PW_P1, ReceivePayloadWidthPipeRegisters[1]},
+                {RegisterAddresses.RX_PW_P2, ReceivePayloadWidthPipeRegisters[2]},
+                {RegisterAddresses.RX_PW_P3, ReceivePayloadWidthPipeRegisters[3]},
+                {RegisterAddresses.RX_PW_P4, ReceivePayloadWidthPipeRegisters[4]},
+                {RegisterAddresses.RX_PW_P5, ReceivePayloadWidthPipeRegisters[5]},
+                {RegisterAddresses.FIFO_STATUS, FifoStatusRegister},
+                {RegisterAddresses.DYNPD, DynamicPayloadLengthRegister},
+                {RegisterAddresses.FEATURE, FeatureRegister}
             };
         }
 

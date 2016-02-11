@@ -1,11 +1,13 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Configuration Register
     /// </summary>
     public class ConfigurationRegister : RegisterBase
     {
-        public ConfigurationRegister(Radio radio) : base(radio, 1, Addresses.CONFIG)
+        public ConfigurationRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.CONFIG)
         {
 
         }

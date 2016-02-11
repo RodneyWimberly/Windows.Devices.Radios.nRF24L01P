@@ -1,20 +1,22 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P
 {
-    public class RadioConfiguration
+    public class RadioConfiguration : IRadioConfiguration
     {
-        private readonly Radio _radio;
+        private readonly ICommandProcessor _commandProcessor;
 
-        public RegisterManager Registers { get; private set; }
+        public RegisterManager Registers { get; }
 
-        public RadioConfiguration(Radio radio)
+        public RadioConfiguration(ICommandProcessor commandProcessor)
         {
-            _radio = radio;
+            _commandProcessor = commandProcessor;
             _payloadWidth = Constants.MaxPayloadWidth;
-            Registers = new RegisterManager(_radio);
+            Registers = new RegisterManager(_commandProcessor);
             Registers.LoadRegisters();
         }
 
@@ -61,8 +63,8 @@ namespace Windows.Devices.Radios.nRF24L01P
             get
             {
                 PowerLevels powerLevel = PowerLevels.Error;
-                bool low = Registers.RfSetupRegister.RF_DR_LOW;
-                bool high = Registers.RfSetupRegister.RF_DR_HIGH;
+                bool low = Registers.RfSetupRegister.RF_PWR_LOW;
+                bool high = Registers.RfSetupRegister.RF_PWR_HIGH;
                 if (low && high)
                     powerLevel = PowerLevels.Max;
                 else if (high)
@@ -78,20 +80,20 @@ namespace Windows.Devices.Radios.nRF24L01P
                 switch (value)
                 {
                     case PowerLevels.Max:
-                        Registers.RfSetupRegister.RF_DR_LOW = true;
-                        Registers.RfSetupRegister.RF_DR_HIGH = true;
+                        Registers.RfSetupRegister.RF_PWR_LOW = true;
+                        Registers.RfSetupRegister.RF_PWR_HIGH = true;
                         break;
                     case PowerLevels.High:
-                        Registers.RfSetupRegister.RF_DR_LOW = false;
-                        Registers.RfSetupRegister.RF_DR_HIGH = true;
+                        Registers.RfSetupRegister.RF_PWR_LOW = false;
+                        Registers.RfSetupRegister.RF_PWR_HIGH = true;
                         break;
                     case PowerLevels.Low:
-                        Registers.RfSetupRegister.RF_DR_LOW = true;
-                        Registers.RfSetupRegister.RF_DR_HIGH = false;
+                        Registers.RfSetupRegister.RF_PWR_LOW = true;
+                        Registers.RfSetupRegister.RF_PWR_HIGH = false;
                         break;
                     case PowerLevels.Min:
-                        Registers.RfSetupRegister.RF_DR_LOW = false;
-                        Registers.RfSetupRegister.RF_DR_HIGH = false;
+                        Registers.RfSetupRegister.RF_PWR_LOW = false;
+                        Registers.RfSetupRegister.RF_PWR_HIGH = false;
                         break;
                 }
                 Registers.RfSetupRegister.Save();
@@ -113,7 +115,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-        public bool IsPlusModel;
+        public bool IsPlusModel { get; set; }
         public RadioModels RadioModel => IsPlusModel ? RadioModels.nRF24L01Plus : RadioModels.nRF24L01;
 
         public bool CrcEnabled
@@ -219,14 +221,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-        public byte DynamicPayloadSize
-        {
-            get
-            {
-                byte[] result = _radio.Transfer(new[] { Commands.R_RX_PL_WID, Commands.NOP });
-                return result[0];
-            }
-        }
+        public byte DynamicPayloadSize => _commandProcessor.ExecuteCommand(DeviceCommands.R_RX_PL_WID, RegisterAddresses.EMPTY_ADDRESS, new byte[1])[0];
 
         private byte _payloadWidth;
 
@@ -238,18 +233,13 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public void ToggleFeatures()
         {
-            _radio.Transfer(new byte[] { Commands.ACTIVATE, 0x73 });
-        }
-
-        public string GetDetails()
-        {
-            Diagnostics diagnostics = new Diagnostics(_radio);
-            return diagnostics.GetDetails();
+            _commandProcessor.ExecuteCommand(DeviceCommands.ACTIVATE);
+            _commandProcessor.ExecuteCommand(DeviceCommands.FEATURES);
         }
 
         public override string ToString()
         {
-            return Registers.ToString();
+            return GetType().Name + ":\r\n" + JsonConvert.SerializeObject(this, Formatting.Indented);
         }
     }
 }

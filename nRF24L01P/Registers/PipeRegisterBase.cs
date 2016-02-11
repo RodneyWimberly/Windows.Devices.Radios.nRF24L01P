@@ -1,10 +1,12 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     public abstract class PipeRegisterBase : RegisterBase
     {
         public byte PipeNumber { get; }
 
-        protected PipeRegisterBase(Radio radio, byte address, byte length, byte pipeNumber) : base(radio, length, address)
+        protected PipeRegisterBase(ICommandProcessor commandProcessor, byte address, byte length, byte pipeNumber) : base(commandProcessor, length, address)
         {
             PipeNumber = pipeNumber;
         }

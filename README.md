@@ -1,5 +1,5 @@
 # Windows.Devices.Radios.nRF24L01
-Universal Windows Platform (UWP) driver for the nRF24L01 2.4GHz Wireless Transceiver. The driver targets "Any CPU" but I have only tested it on the Raspberry Pi2 running Windows10 IoT Core. 
+Universal Windows Platform (UWP) driver for the nRF24L01 2.4GHz Wireless Transceiver. 
 
 This project is based on these two projects: 
 * The RF24 Arduino driver from maniacbug (https://github.com/maniacbug/RF24) 

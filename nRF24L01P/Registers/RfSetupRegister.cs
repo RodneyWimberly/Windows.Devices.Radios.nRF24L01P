@@ -1,11 +1,13 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   RF Setup Register
     /// </summary>
     public class RfSetupRegister : RegisterBase
     {
-        public RfSetupRegister(Radio radio) : base(radio, 1, Addresses.RF_SETUP)
+        public RfSetupRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.RF_SETUP)
         {
 
         }
@@ -33,10 +35,16 @@
             set { SetBitValue(Properties.RF_DR_HIGH, value); }
         }
 
-        public byte RF_PWR
+        public bool RF_PWR_HIGH
         {
-            get { return GetByteValue(2, Properties.RF_PWR); }
-            set { SetByteValue(value, 2, Properties.RF_PWR); }
+            get { return GetBitValue(Properties.RF_PWR_HIGH); }
+            set { SetBitValue(Properties.RF_PWR_HIGH, value); }
+        }
+
+        public bool RF_PWR_LOW
+        {
+            get { return GetBitValue(Properties.RF_PWR_LOW); }
+            set { SetBitValue(Properties.RF_PWR_LOW, value); }
         }
     }
 }

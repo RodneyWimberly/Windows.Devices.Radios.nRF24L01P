@@ -1,19 +1,24 @@
 ﻿using System;
+using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
+using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P
 {
-    public class ReceivePipe
+    public class ReceivePipe : IReceivePipe
     {
         private readonly Registers.RegisterManager _registers;
-        private readonly Radio _radio;
+        private readonly IRadioConfiguration _configuration;
+        private readonly ICommandProcessor _commandProcessor;
         public int PipeId { get; }
-        public ReceivePipe(Radio radio, int pipeId)
+        public ReceivePipe(IRadioConfiguration configuration, ICommandProcessor commandProcessor, int pipeId)
         {
             if (PipeId > 5)
                 throw new ArgumentOutOfRangeException(nameof(pipeId), "Invalid PipeId number for this Pipe");
-            _radio = radio;
+            _configuration = configuration;
+            _commandProcessor = commandProcessor;
+            _registers = _configuration.Registers;
             PipeId = pipeId;
-            _registers = _radio.Configuration.Registers;
         }
 
         public byte[] Address
@@ -21,7 +26,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             get { return _registers.ReceiveAddressPipeRegisters[(byte)PipeId]; }
             set
             {
-                int addressWidth = _radio.Configuration.AddressWidth;
+                int addressWidth = _configuration.AddressWidth;
                 if (PipeId < 2 && value.Length < addressWidth)
                     throw new InvalidOperationException("Address length should equal or greater than device.Config.AddressWidth");
                 if (PipeId < 2 && value.Length > addressWidth)
@@ -171,7 +176,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
             set
             {
-                if (value && !_radio.Configuration.DynamicPayloadLengthEnabled)
+                if (value && !_configuration.DynamicPayloadLengthEnabled)
                 {
                     throw new InvalidOperationException("please enable Config.DynamicPayloadLengthEnabled before you enable this feature on data pipe");
                 }
@@ -221,6 +226,86 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-        public byte BytesToRead => _radio.Transfer(Commands.R_RX_PL_WID | Commands.EMPTY_ADDRESS);
+        public byte BytesToRead => _configuration.DynamicPayloadSize;
+
+        public FifoStatus FifoStatus
+        {
+            get
+            {
+                _registers.FifoStatusRegister.Load();
+                if (_registers.FifoStatusRegister.RX_FULL)
+                    return FifoStatus.Full;
+                if (_registers.FifoStatusRegister.RX_EMPTY)
+                    return FifoStatus.Empty;
+                return FifoStatus.InUse;
+            }
+        }
+
+        public void FlushBuffer()
+        {
+            _commandProcessor.ExecuteCommand(DeviceCommands.FLUSH_RX);
+        }
+
+        /// <summary>
+        /// Reads data from RX buffer, use this feature when dynamic payload length is turned off
+        /// Warning: use this feature will ignore the data pipe ID, it may read buffer belongs to other data pipe
+        /// </summary>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        public byte[] ReadBuffer(int length)
+        {
+            if (length == 0 || length > 32)
+                throw new ArgumentOutOfRangeException(nameof(length), "length should between 1 and 32");
+
+            byte[] buffer = new byte[length];
+
+            return _commandProcessor.ExecuteCommand(DeviceCommands.R_RX_PAYLOAD, RegisterAddresses.EMPTY_ADDRESS, buffer, false);
+        }
+
+        /// <summary>
+        /// Reads data from RX buffer, use Dynamic payload length feature to detect package length
+        /// </summary>
+        /// <returns></returns>
+        public byte[] ReadBufferAll(int readBufferSize = 512)
+        {
+            byte[] buffer = new byte[readBufferSize];
+            int length = ReadBufferAll(buffer, 0);
+            byte[] result = new byte[length];
+            Array.Copy(buffer, result, length);
+            return result;
+        }
+
+        /// <summary>
+        /// reads all data available in FIFO buffer to a byte array
+        /// </summary>
+        /// <param name="outputBuffer">output buffer</param>
+        /// <param name="writeStartPosition">start position in output buffer</param>
+        /// <returns></returns>
+        public int ReadBufferAll(byte[] outputBuffer, int writeStartPosition)
+        {
+            int position = writeStartPosition;
+            int bytesRead = 0;
+            if (DynamicPayloadLengthEnabled)
+            {
+                while (FifoStatus != FifoStatus.Empty)
+                {
+                    int length = BytesToRead;
+                    if (length > 32)
+                    {
+                        FlushBuffer();
+                        return 0;
+                    }
+                    if (length == 0)
+                        return 0;
+                    if (position + length > outputBuffer.Length)//buffer full
+                        break;
+                    Array.Copy(ReadBuffer(length), 0, outputBuffer, position, length);
+                    position += length;
+                    bytesRead += length;
+                }
+                return bytesRead;
+            }
+            throw new InvalidOperationException("DynamicPayloadLength is not enabled on this pipe, please turn it On or use ReadBuffer(int length) instead");
+        }
     }
 }

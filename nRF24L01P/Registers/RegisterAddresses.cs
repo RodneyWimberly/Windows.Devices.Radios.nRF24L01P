@@ -1,6 +1,6 @@
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
-    internal static class Addresses
+    internal static class RegisterAddresses
     {
         /// <summary>
         ///   Configuration Register
@@ -55,7 +55,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         /// <summary>
         ///   Used to dynamically determine the correct value based on the pipe number
         /// </summary>
-        public static byte[] ReceivePipeAddress = { Addresses.RX_ADDR_P0, Addresses.RX_ADDR_P1, Addresses.RX_ADDR_P2, Addresses.RX_ADDR_P3, Addresses.RX_ADDR_P4, Addresses.RX_ADDR_P5 };
+        public static byte[] ReceivePipeAddress = { RegisterAddresses.RX_ADDR_P0, RegisterAddresses.RX_ADDR_P1, RegisterAddresses.RX_ADDR_P2, RegisterAddresses.RX_ADDR_P3, RegisterAddresses.RX_ADDR_P4, RegisterAddresses.RX_ADDR_P5 };
 
         /// <summary>
         ///   Receive address data pipe 0. 5 Bytes maximum length. (LSByte is written first. Write the number of bytes defined by SETUP_AW)
@@ -96,7 +96,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         /// <summary>
         ///   Used to dynamically determine the correct value based on the pipe number
         /// </summary>
-        public static byte[] ReceivePipePayloadWidth = { Addresses.RX_PW_P0, Addresses.RX_PW_P1, Addresses.RX_PW_P2, Addresses.RX_PW_P3, Addresses.RX_PW_P4, Addresses.RX_PW_P5 };
+        public static byte[] ReceivePipePayloadWidth = { RegisterAddresses.RX_PW_P0, RegisterAddresses.RX_PW_P1, RegisterAddresses.RX_PW_P2, RegisterAddresses.RX_PW_P3, RegisterAddresses.RX_PW_P4, RegisterAddresses.RX_PW_P5 };
 
         /// <summary>
         ///   Number of bytes in RX payload in data pipe 0
@@ -142,5 +142,11 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         ///   Feature Register
         /// </summary>
         public const byte FEATURE = 0x1D;
+
+
+        public const byte REGISTER_MASK = 0x1F;
+
+        public const byte EMPTY_ADDRESS = 0x00;
+
     }
 }

@@ -1,11 +1,13 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Enable dynamic payload length
     /// </summary>
     public class DynamicPayloadLengthRegister : RegisterBase
     {
-        public DynamicPayloadLengthRegister(Radio radio) : base(radio, 1, Addresses.DYNPD)
+        public DynamicPayloadLengthRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.DYNPD)
         {
 
         }

@@ -1,11 +1,13 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Setup of Automatic Retransmission
     /// </summary>
     public class SetupRetransmissionRegister : RegisterBase
     {
-        public SetupRetransmissionRegister(Radio radio) : base(radio, 1, Addresses.SETUP_RETR)
+        public SetupRetransmissionRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.SETUP_RETR)
         {
 
         }

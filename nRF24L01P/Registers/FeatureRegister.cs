@@ -1,11 +1,13 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Feature Register
     /// </summary>
     public class FeatureRegister : RegisterBase
     {
-        public FeatureRegister(Radio radio) : base(radio, 1, Addresses.FEATURE)
+        public FeatureRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.FEATURE)
         {
 
         }

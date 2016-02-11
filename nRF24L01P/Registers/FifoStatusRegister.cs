@@ -1,11 +1,13 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   FIFO Status Register
     /// </summary>
     public class FifoStatusRegister : RegisterBase
     {
-        public FifoStatusRegister(Radio radio) : base(radio, 1, Addresses.FIFO_STATUS)
+        public FifoStatusRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.FIFO_STATUS)
         {
 
         }
