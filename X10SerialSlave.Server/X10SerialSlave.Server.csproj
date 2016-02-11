@@ -93,6 +93,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="IX10Controller.cs" />
     <Compile Include="PSC05Server.cs" />
+    <Compile Include="Rf24Server - Copy.cs" />
     <Compile Include="Rf24Server.cs" />
     <Compile Include="StartupTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
