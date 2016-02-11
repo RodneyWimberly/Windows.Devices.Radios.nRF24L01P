@@ -1,30 +1,28 @@
-﻿using System;
+﻿using System.Linq;
 using System.Text;
 using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P
 {
     public class Diagnostics
     {
-        private readonly Radio _radio;
+        private readonly IRadio _radio;
 
-        public Diagnostics(Radio radio)
+        public Diagnostics(IRadio radio)
         {
             _radio = radio;
         }
 
         public byte ReadRegister(byte register)
         {
-            _radio.CommandProcessor.ExecuteCommand(DeviceCommands.R_REGISTER, register);
-            return _radio.Configuration.Registers.StatusRegister;
+            return _radio.CommandProcessor.ExecuteCommand(DeviceCommands.R_REGISTER, register, new byte[1])[0];
         }
 
         public byte ReadRegister(byte register, ref byte[] buffer, int length = 0)
         {
-            var response = _radio.CommandProcessor.ExecuteCommand(DeviceCommands.R_REGISTER, register, buffer);
-            buffer = new byte[response.Length];
-            Array.Copy(response, 0, buffer, 0, buffer.Length);
+            buffer = _radio.CommandProcessor.ExecuteCommand(DeviceCommands.R_REGISTER, register, buffer);
             return _radio.Configuration.Registers.StatusRegister;
         }
 
@@ -38,12 +36,18 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         private string GetAddressRegister(string name, byte register, int quantity)
         {
-            string registerValue = name + " =";
+            string extraTab = string.Empty;
+            if (name.Length < 8)
+                extraTab += "\t\t";
+            else if (name.Length < 12)
+                extraTab += "\t";
+            string registerValue = string.Format("{0}{1}\t =", name, extraTab);
             for (int index = 0; index < quantity; index++)
             {
                 byte[] buffer = new byte[5];
                 ReadRegister(register++, ref buffer, buffer.Length);
-                registerValue += " 0x" + BitConverter.ToString(buffer).Replace("-", string.Empty);
+                registerValue += " 0x"; // + BitConverter.ToString(buffer).Replace("-", string.Empty);
+                registerValue = buffer.Aggregate(registerValue, (current, part) => current + part.ToString("X"));
             }
 
             return registerValue;
@@ -51,7 +55,12 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         private string GetByteRegister(string name, byte register, int quantity)
         {
-            string registerValue = name + " =";
+            string extraTab = string.Empty;
+            if (name.Length < 8)
+                extraTab += "\t\t";
+            else if (name.Length < 12)
+                extraTab += "\t";
+            string registerValue = string.Format("{0}{1}\t =", name, extraTab);
             for (int index = 0; index < quantity; index++)
             {
                 registerValue += " 0x" + ReadRegister(register++).ToString("X");
@@ -65,7 +74,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             StringBuilder sb = new StringBuilder();
 
             byte status = _radio.Configuration.Registers.StatusRegister;
-            sb.AppendFormat("STATUS = 0x{0} RX_DR={1} TX_DS={2} MAX_RT={3} RX_P_NO={4} TX_FULL={5}\r\n",
+            sb.AppendFormat("STATUS\t\t\t = 0x{0} RX_DR={1} TX_DS={2} MAX_RT={3} RX_P_NO={4} TX_FULL={5}\r\n",
                 status.ToString("X"),
                 (status & Utilities.BitValue(Properties.RX_DR)),
                 (status & Utilities.BitValue(Properties.TX_DS)),
@@ -85,13 +94,12 @@ namespace Windows.Devices.Radios.nRF24L01P
             sb.AppendLine(GetByteRegister("CONFIG", RegisterAddresses.CONFIG, 1));
             sb.AppendLine(GetByteRegister("DYNPD/FEATURE", RegisterAddresses.DYNPD, 2));
 
-            sb.AppendLine("Data Rate = " + Constants.DataRates[(int)_radio.Configuration.DataRate]);
-            sb.AppendLine("Model = " + _radio.Name);
-            sb.AppendLine("CRC Enabled = " + _radio.Configuration.CrcEnabled);
-            sb.AppendLine("CRC Encoding Scheme = " + Constants.CrcEncodingSchemes[(int)_radio.Configuration.CrcEncodingScheme]);
-            sb.AppendLine("PA Power = " + Constants.PowerLevels[(int)_radio.Configuration.PowerLevel]);
+            sb.AppendLine("Data Rate\t\t = " + Constants.DataRates[(int)_radio.Configuration.DataRate]);
+            sb.AppendLine("Model\t\t\t = " + _radio.Name);
+            sb.AppendLine("CRC Enabled\t\t = " + _radio.Configuration.CrcEnabled);
+            sb.AppendLine("CRC Encoding\t = " + Constants.CrcEncodingSchemes[(int)_radio.Configuration.CrcEncodingScheme]);
+            sb.AppendLine("PA Power\t\t = " + Constants.PowerLevels[(int)_radio.Configuration.PowerLevel]);
 
-            sb.AppendFormat("\r\n{0}\r\n", _radio.Configuration.Registers);
             return sb.ToString();
         }
 

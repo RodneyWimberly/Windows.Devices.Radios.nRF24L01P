@@ -1,5 +1,6 @@
 ﻿using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Spi;
 
 namespace Windows.Devices.Radios.nRF24L01P
@@ -7,17 +8,19 @@ namespace Windows.Devices.Radios.nRF24L01P
     public class CommandProcessor : ICommandProcessor
     {
         private readonly bool _revertBytes;
-        private readonly bool _checkStatus;
-        protected readonly object SyncRoot;
         private readonly SpiDevice _spiDevice;
-        private readonly Radio _radio;
-        public Action<byte[]> StatusRegisterLoad { get; set; }
+        private readonly IRadio _radio;
 
-        public CommandProcessor(SpiDevice spiDevice,Radio radio, bool checkStatus = true)
+        protected readonly object SyncRoot;
+
+        public Action<byte[]> StatusRegisterLoad { get; set; }
+        public bool CheckStatus { get; set; }
+
+        public CommandProcessor(SpiDevice spiDevice, IRadio radio, bool checkStatus = true)
         {
             //chip uses LSByte first, we should revert byte array order on MSByte first CPU
             _revertBytes = BitConverter.IsLittleEndian;
-            _checkStatus = checkStatus;
+            CheckStatus = checkStatus;
             SyncRoot = new object();
             _spiDevice = spiDevice;
             _radio = radio;
@@ -32,7 +35,7 @@ namespace Windows.Devices.Radios.nRF24L01P
         /// <returns></returns>
         public byte[] ExecuteCommand(DeviceCommands deviceCommand, byte address, byte[] value, bool autoRevert = true)
         {
-            CheckStatus(deviceCommand);
+            CanExecuteCommand(deviceCommand);
 
             // Create send and receive buffers
             int resultLength = value.Length,
@@ -56,10 +59,10 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
 
             // The STATUS register value is returned at first byte on each SPI call
-            StatusRegisterLoad(new[] {receiveBuffer[0]});
+            StatusRegisterLoad?.Invoke(new[] { receiveBuffer[0] });
 
             // Populate result with the rest of the receive buffer
-            if (value.Length > 1 && autoRevert && _revertBytes) 
+            if (value.Length > 1 && autoRevert && _revertBytes)
                 for (int i = 0; i < result.Length; i++)
                     result[i] = receiveBuffer[bufferLength - (i + 1)];
             else
@@ -73,27 +76,27 @@ namespace Windows.Devices.Radios.nRF24L01P
         /// </summary>
         /// <param name="deviceCommand"></param>
         /// <param name="address"></param>
-        public void ExecuteCommand(DeviceCommands deviceCommand, byte address)
+        public byte ExecuteCommand(DeviceCommands deviceCommand, byte address)
         {
-            CheckStatus(deviceCommand);
+            CanExecuteCommand(deviceCommand);
 
             byte[] sendBuffer = new byte[1],
                     receiveBuffer = new byte[1];
-            sendBuffer[0] = (byte)((byte)deviceCommand | address); 
+            sendBuffer[0] = (byte)((byte)deviceCommand | address);
             lock (SyncRoot)
             {
                 _spiDevice.TransferFullDuplex(sendBuffer, receiveBuffer);
             }
-            StatusRegisterLoad(receiveBuffer);
+            return receiveBuffer[0];
         }
 
         /// <summary>
         /// write single command to SPI, return value is status register value
         /// </summary>
         /// <param name="deviceCommand"></param>
-        public void ExecuteCommand(DeviceCommands deviceCommand)
+        public byte ExecuteCommand(DeviceCommands deviceCommand)
         {
-            CheckStatus(deviceCommand);
+            CanExecuteCommand(deviceCommand);
 
             byte[] sendBuffer = new byte[1],
                     receiveBuffer = new byte[1];
@@ -102,13 +105,13 @@ namespace Windows.Devices.Radios.nRF24L01P
             {
                 _spiDevice.TransferFullDuplex(sendBuffer, receiveBuffer);
             }
-            StatusRegisterLoad(receiveBuffer);
+            return receiveBuffer[0];
         }
 
-        private void CheckStatus(DeviceCommands deviceCommand)
+        private void CanExecuteCommand(DeviceCommands deviceCommand)
         {
             // Can we write at this time
-            if (_checkStatus && (deviceCommand == DeviceCommands.W_REGISTER && !(_radio.Status == DeviceStatus.StandBy || _radio.Status == DeviceStatus.PowerDown)))
+            if (CheckStatus && (deviceCommand == DeviceCommands.W_REGISTER && !(_radio.Status == DeviceStatus.StandBy || _radio.Status == DeviceStatus.PowerDown)))
                 throw new InvalidOperationException("Writing register should only in Standby or PowerDown mode");
         }
     }

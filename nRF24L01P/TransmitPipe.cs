@@ -1,15 +1,16 @@
 ﻿using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P
 {
-    public class TransmitPipe
+    public class TransmitPipe : ITransmitPipe
     {
         private readonly Registers.RegisterManager _registers;
-        private readonly RadioConfiguration _configuration;
+        private readonly IRadioConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
-        public TransmitPipe(RadioConfiguration configuration, ICommandProcessor commandProcessor)
+        public TransmitPipe(IRadioConfiguration configuration, ICommandProcessor commandProcessor)
         {
             _configuration = configuration;
             _commandProcessor = commandProcessor;

@@ -107,10 +107,16 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands.cs" />
     <Compile Include="Diagnostics.cs" />
     <Compile Include="Enums\DeviceCommands.cs" />
-    <Compile Include="ICommandProcessor.cs" />
+    <Compile Include="Interfaces\ICommandProcessor.cs" />
+    <Compile Include="Interfaces\IDataPipe.cs" />
+    <Compile Include="Interfaces\IRadioConfiguration.cs" />
+    <Compile Include="Interfaces\IRole.cs" />
+    <Compile Include="Interfaces\IRadio.cs" />
+    <Compile Include="Interfaces\IReceivePipe.cs" />
+    <Compile Include="Interfaces\ITransmitPipe.cs" />
+    <Compile Include="RadioOld.cs" />
     <Compile Include="Registers\PipeRegisterBase.cs" />
     <Compile Include="Registers\Properties.cs" />
     <Compile Include="Registers\AddressPipeRegister.cs" />
@@ -122,7 +128,6 @@
     <Compile Include="Enums\FifoStatus.cs" />
     <Compile Include="RadioConfiguration.cs" />
     <Compile Include="ReceivePipe.cs" />
-    <Compile Include="ReceivePipeCollection.cs" />
     <Compile Include="Registers\RegisterManager.cs" />
     <Compile Include="Registers\SetupAddressWidthRegister.cs" />
     <Compile Include="Registers\EnableAutoAcknowledgementRegister.cs" />
@@ -146,6 +151,9 @@
     <Compile Include="Registers\SetupRetransmissionRegister.cs" />
     <Compile Include="Registers\StatusRegister.cs" />
     <Compile Include="CommandProcessor.cs" />
+    <Compile Include="Roles\SendReceiveRole.cs" />
+    <Compile Include="Roles\SimpleReceiverRole.cs" />
+    <Compile Include="Roles\SimpleSendRole.cs" />
     <Compile Include="TransmitPipe.cs" />
     <Compile Include="Utilities.cs" />
     <EmbeddedResource Include="Properties\nRF24L01.rd.xml" />

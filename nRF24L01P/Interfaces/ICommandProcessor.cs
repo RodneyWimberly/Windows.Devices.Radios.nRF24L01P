@@ -1,16 +1,18 @@
 using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 
-namespace Windows.Devices.Radios.nRF24L01P
+namespace Windows.Devices.Radios.nRF24L01P.Interfaces
 {
     public interface ICommandProcessor
     {
+        bool CheckStatus { get; set; }
+
         Action<byte[]> StatusRegisterLoad { get; set; }
 
         /// <summary>
         /// write command with address to SPI
         /// </summary>
-        /// <param name="command"></param>
+        /// <param name="deviceCommand"></param>
         /// <param name="address"></param>
         /// <param name="value">32 bytes max, no exception handling here</param>
         /// <returns></returns>
@@ -19,14 +21,14 @@ namespace Windows.Devices.Radios.nRF24L01P
         /// <summary>
         /// write single command to SPI, return value is status register value
         /// </summary>
-        /// <param name="command"></param>
+        /// <param name="deviceCommand"></param>
         /// <param name="address"></param>
-        void ExecuteCommand(DeviceCommands deviceCommand, byte address);
+        byte ExecuteCommand(DeviceCommands deviceCommand, byte address);
 
         /// <summary>
         /// write single command to SPI, return value is status register value
         /// </summary>
-        /// <param name="command"></param>
-        void ExecuteCommand(DeviceCommands deviceCommand);
+        /// <param name="deviceCommand"></param>
+        byte ExecuteCommand(DeviceCommands deviceCommand);
     }
 }

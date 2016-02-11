@@ -1,4 +1,6 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Transmit/Receive address data pipe. 5 Bytes maximum length for transmit and receive 0 and 1 (LSByte is written first. Write the number of bytes defined by SETUP_AW)

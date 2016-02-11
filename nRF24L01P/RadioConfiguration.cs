@@ -1,15 +1,16 @@
 ﻿using Newtonsoft.Json;
 using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P
 {
-    public class RadioConfiguration
+    public class RadioConfiguration : IRadioConfiguration
     {
         private readonly ICommandProcessor _commandProcessor;
 
-        public RegisterManager Registers { get; private set; }
+        public RegisterManager Registers { get; }
 
         public RadioConfiguration(ICommandProcessor commandProcessor)
         {
@@ -63,7 +64,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             {
                 PowerLevels powerLevel = PowerLevels.Error;
                 bool low = Registers.RfSetupRegister.RF_PWR_LOW;
-                bool high = Registers.RfSetupRegister.RF_DR_HIGH;
+                bool high = Registers.RfSetupRegister.RF_PWR_HIGH;
                 if (low && high)
                     powerLevel = PowerLevels.Max;
                 else if (high)
@@ -79,20 +80,20 @@ namespace Windows.Devices.Radios.nRF24L01P
                 switch (value)
                 {
                     case PowerLevels.Max:
-                        Registers.RfSetupRegister.RF_DR_LOW = true;
-                        Registers.RfSetupRegister.RF_DR_HIGH = true;
+                        Registers.RfSetupRegister.RF_PWR_LOW = true;
+                        Registers.RfSetupRegister.RF_PWR_HIGH = true;
                         break;
                     case PowerLevels.High:
-                        Registers.RfSetupRegister.RF_DR_LOW = false;
-                        Registers.RfSetupRegister.RF_DR_HIGH = true;
+                        Registers.RfSetupRegister.RF_PWR_LOW = false;
+                        Registers.RfSetupRegister.RF_PWR_HIGH = true;
                         break;
                     case PowerLevels.Low:
-                        Registers.RfSetupRegister.RF_DR_LOW = true;
-                        Registers.RfSetupRegister.RF_DR_HIGH = false;
+                        Registers.RfSetupRegister.RF_PWR_LOW = true;
+                        Registers.RfSetupRegister.RF_PWR_HIGH = false;
                         break;
                     case PowerLevels.Min:
-                        Registers.RfSetupRegister.RF_DR_LOW = false;
-                        Registers.RfSetupRegister.RF_DR_HIGH = false;
+                        Registers.RfSetupRegister.RF_PWR_LOW = false;
+                        Registers.RfSetupRegister.RF_PWR_HIGH = false;
                         break;
                 }
                 Registers.RfSetupRegister.Save();
@@ -114,7 +115,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-        public bool IsPlusModel;
+        public bool IsPlusModel { get; set; }
         public RadioModels RadioModel => IsPlusModel ? RadioModels.nRF24L01Plus : RadioModels.nRF24L01;
 
         public bool CrcEnabled
