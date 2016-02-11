@@ -1,11 +1,13 @@
 ﻿using Newtonsoft.Json;
 using System;
+using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     public abstract class RegisterBase
     {
-        protected Radio Radio;
+        protected ICommandProcessor CommandProcessor;
 
         public byte[] Value { get; private set; }
 
@@ -14,11 +16,11 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public string Name { get; private set; }
         public bool IsDirty { get; private set; }
 
-        protected RegisterBase(Radio radio, int length, byte address, string name = "")
+        protected RegisterBase(ICommandProcessor commandProcessor, int length, byte address, string name = "")
         {
             Value = new byte[length];
             Name = string.IsNullOrEmpty(name) ? GetType().Name : name;
-            Radio = radio;
+            CommandProcessor = commandProcessor;
             Length = length;
             Address = address;
             IsDirty = false;
@@ -26,10 +28,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public void Load()
         {
-            byte[] request = new byte[Length + 1];
-            request[0] = (byte)(Commands.R_REGISTER | (Commands.REGISTER_MASK & Address));
-            Array.Copy(Value, 0, request, 1, Length);
-            Load(Radio.Transfer(request));
+            Load(CommandProcessor.ExecuteCommand(DeviceCommands.R_REGISTER, Address, Value));
         }
 
         public void Load(byte[] value)
@@ -40,10 +39,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public void Save()
         {
-            byte[] buffer = new byte[Length + 1];
-            buffer[0] = (byte)(Commands.W_REGISTER | (Commands.REGISTER_MASK & Address));
-            Array.Copy(Value, 0, buffer, 1, Length);
-            Radio.Transfer(buffer);
+            CommandProcessor.ExecuteCommand(DeviceCommands.W_REGISTER, Address, Value);
             IsDirty = false;
         }
 
@@ -61,12 +57,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         protected bool GetBitValue(byte mask)
         {
-            return (Value[0] & mask) > 0;
+            return (Value[0] & Utilities.BitValue(mask)) > 0;
         }
 
         protected void SetBitValue(byte mask, bool value)
         {
-            Value[0] = (byte)(value ? (Value[0] | mask) : (Value[0] & ~mask));
+            Value[0] = (byte)(value ? (Value[0] | Utilities.BitValue(mask)) : (Value[0] & ~Utilities.BitValue(mask)));
             IsDirty = true;
         }
 

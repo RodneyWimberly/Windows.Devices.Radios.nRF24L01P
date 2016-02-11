@@ -1,11 +1,13 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Enable 'Auto Acknowledgment' Function. Disable this functionality to be compatible with nRF2401.
     /// </summary>
     public class EnableAutoAcknowledgementRegister : RegisterBase
     {
-        public EnableAutoAcknowledgementRegister(Radio radio) : base(radio, 1, Addresses.EN_AA)
+        public EnableAutoAcknowledgementRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.EN_AA)
         {
 
         }

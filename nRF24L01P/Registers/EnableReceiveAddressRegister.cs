@@ -1,11 +1,13 @@
-﻿namespace Windows.Devices.Radios.nRF24L01P.Registers
+﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+
+namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
     ///   Enabled RX Addresses
     /// </summary>
     public class EnableReceiveAddressRegister : RegisterBase
     {
-        public EnableReceiveAddressRegister(Radio radio) : base(radio, 1, Addresses.EN_RXADDR)
+        public EnableReceiveAddressRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.EN_RXADDR)
         {
 
         }
