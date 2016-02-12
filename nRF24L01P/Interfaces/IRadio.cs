@@ -7,9 +7,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
     {
         ICommandProcessor CommandProcessor { get; }
         IRadioConfiguration Configuration { get; }
-        TransmitPipe TransmitPipe { get; }
-        IDictionary<int, ReceivePipe> ReceivePipes { get; }
-        string Name { get; }
+        ITransmitPipe TransmitPipe { get; }
+        IDictionary<int, IReceivePipe> ReceivePipes { get; }
         bool ChannelReceivedPowerDector { get; }
         DeviceStatus Status { get; set; }
         string ToString();

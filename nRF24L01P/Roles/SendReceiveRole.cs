@@ -9,8 +9,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
     public class SendReceiveRole : IRole
     {
         private Radio _radio;
-        private ReceivePipe _reader;
-        private TransmitPipe _writer;
+        private IReceivePipe _reader;
+        private ITransmitPipe _writer;
         private bool _isSending;
         private bool _isMaxRt;
         private readonly ManualResetEvent _sendCompleteEvent;

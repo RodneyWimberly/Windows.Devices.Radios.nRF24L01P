@@ -14,20 +14,20 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public bool EN_DPL
         {
-            get { return GetBitValue(Properties.EN_DPL); }
-            set { SetBitValue(Properties.EN_DPL, value); }
+            get { return GetBoolProperty(PropertyMasks.EN_DPL); }
+            set { SetBoolProperty(PropertyMasks.EN_DPL, value); }
         }
 
         public bool EN_ACK_PAY
         {
-            get { return GetBitValue(Properties.EN_ACK_PAY); }
-            set { SetBitValue(Properties.EN_ACK_PAY, value); }
+            get { return GetBoolProperty(PropertyMasks.EN_ACK_PAY); }
+            set { SetBoolProperty(PropertyMasks.EN_ACK_PAY, value); }
         }
 
         public bool EN_DYN_ACK
         {
-            get { return GetBitValue(Properties.EN_DYN_ACK); }
-            set { SetBitValue(Properties.EN_DYN_ACK, value); }
+            get { return GetBoolProperty(PropertyMasks.EN_DYN_ACK); }
+            set { SetBoolProperty(PropertyMasks.EN_DYN_ACK, value); }
         }
 
     }

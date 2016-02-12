@@ -108,7 +108,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Diagnostics.cs" />
+    <Compile Include="Enums\BitMasks.cs" />
     <Compile Include="Enums\DeviceCommands.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Interfaces\ICommandProcessor.cs" />
     <Compile Include="Interfaces\IDataPipe.cs" />
     <Compile Include="Interfaces\IRadioConfiguration.cs" />
@@ -118,7 +120,7 @@
     <Compile Include="Interfaces\ITransmitPipe.cs" />
     <Compile Include="RadioOld.cs" />
     <Compile Include="Registers\PipeRegisterBase.cs" />
-    <Compile Include="Registers\Properties.cs" />
+    <Compile Include="Registers\PropertyMasks.cs" />
     <Compile Include="Registers\AddressPipeRegister.cs" />
     <Compile Include="Registers\ReceivePayloadWidthPipeRegister.cs" />
     <Compile Include="Registers\RegisterAddresses.cs" />

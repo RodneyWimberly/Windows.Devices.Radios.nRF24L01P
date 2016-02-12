@@ -7,7 +7,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
     public class SimpleReceiverRole : IRole
     {
         private Radio _radio;
-        private ReceivePipe _reader;
+        private IReceivePipe _reader;
         public byte[] Address { get; set; }
         public bool IsRunning { get; set; }
         public delegate void DataArrivedDelegate(byte[] buffer);

@@ -14,8 +14,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public byte RF_CH
         {
-            get { return GetByteValue(6, Properties.RF_CH); }
-            set { SetByteValue(value, 6, Properties.RF_CH); }
+            get { return GetByteProperty(PropertyMasks.RF_CH); }
+            set { SetByteProperty(PropertyMasks.RF_CH, value); }
         }
     }
 }

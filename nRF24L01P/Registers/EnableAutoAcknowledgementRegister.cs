@@ -20,38 +20,38 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public bool ENAA_P5
         {
-            get { return GetBitValue(Properties.ENAA_P5); }
-            set { SetBitValue(Properties.ENAA_P5, value); }
+            get { return GetBoolProperty(PropertyMasks.ENAA_P5); }
+            set { SetBoolProperty(PropertyMasks.ENAA_P5, value); }
         }
 
         public bool ENAA_P4
         {
-            get { return GetBitValue(Properties.ENAA_P4); }
-            set { SetBitValue(Properties.ENAA_P4, value); }
+            get { return GetBoolProperty(PropertyMasks.ENAA_P4); }
+            set { SetBoolProperty(PropertyMasks.ENAA_P4, value); }
         }
 
         public bool ENAA_P3
         {
-            get { return GetBitValue(Properties.ENAA_P3); }
-            set { SetBitValue(Properties.ENAA_P3, value); }
+            get { return GetBoolProperty(PropertyMasks.ENAA_P3); }
+            set { SetBoolProperty(PropertyMasks.ENAA_P3, value); }
         }
 
         public bool ENAA_P2
         {
-            get { return GetBitValue(Properties.ENAA_P2); }
-            set { SetBitValue(Properties.ENAA_P2, value); }
+            get { return GetBoolProperty(PropertyMasks.ENAA_P2); }
+            set { SetBoolProperty(PropertyMasks.ENAA_P2, value); }
         }
 
         public bool ENAA_P1
         {
-            get { return GetBitValue(Properties.ENAA_P1); }
-            set { SetBitValue(Properties.ENAA_P1, value); }
+            get { return GetBoolProperty(PropertyMasks.ENAA_P1); }
+            set { SetBoolProperty(PropertyMasks.ENAA_P1, value); }
         }
 
         public bool ENAA_P0
         {
-            get { return GetBitValue(Properties.ENAA_P0); }
-            set { SetBitValue(Properties.ENAA_P0, value); }
+            get { return GetBoolProperty(PropertyMasks.ENAA_P0); }
+            set { SetBoolProperty(PropertyMasks.ENAA_P0, value); }
         }
     }
 }

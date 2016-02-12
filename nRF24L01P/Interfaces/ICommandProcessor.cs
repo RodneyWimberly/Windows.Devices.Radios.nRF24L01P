@@ -7,7 +7,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
     {
         bool CheckStatus { get; set; }
 
-        Action<byte[]> StatusRegisterLoad { get; set; }
+        Action<byte[]> LoadStatusRegister { get; set; }
 
         /// <summary>
         /// write command with address to SPI

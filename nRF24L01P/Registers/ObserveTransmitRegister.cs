@@ -14,14 +14,14 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public byte PLOS_CNT
         {
-            get { return GetByteValue(7, Properties.PLOS_CNT); }
-            set { SetByteValue(value, 7, Properties.PLOS_CNT); }
+            get { return GetByteProperty(PropertyMasks.PLOS_CNT); }
+            set { SetByteProperty(PropertyMasks.PLOS_CNT, value ); }
         }
 
         public byte ARC_CNT
         {
-            get { return GetByteValue(3, Properties.ARC_CNT); }
-            set { SetByteValue(value, 3, Properties.ARC_CNT); }
+            get { return GetByteProperty(PropertyMasks.ARC_CNT); }
+            set { SetByteProperty(PropertyMasks.ARC_CNT, value); }
         }
     }
 }

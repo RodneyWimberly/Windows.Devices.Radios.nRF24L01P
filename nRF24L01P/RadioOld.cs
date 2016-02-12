@@ -48,6 +48,14 @@
 //            CommandProcessor.StatusRegisterLoad = Configuration.Registers.StatusRegister.Load;
 //        }
 
+//private string FormatObserveTx(byte value)
+//{
+//    return string.Format("OBSERVE_TX={0:X2}: POLS_CNT={1} ARC_CNT={2}",
+//        value,
+//        (value >> (byte)PropertyMasks.PLOS_CNT) & 0xF,
+//        (value >> (byte)PropertyMasks.ARC_CNT) & 0xF);
+//}
+
 //        public override string ToString()
 //        {
 //            Diagnostics diagnostics = new Diagnostics(this);

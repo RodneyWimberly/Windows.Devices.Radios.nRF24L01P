@@ -7,7 +7,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 {
     public class TransmitPipe : ITransmitPipe
     {
-        private readonly Registers.RegisterManager _registers;
+        private readonly RegisterManager _registers;
         private readonly IRadioConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
         public TransmitPipe(IRadioConfiguration configuration, ICommandProcessor commandProcessor)

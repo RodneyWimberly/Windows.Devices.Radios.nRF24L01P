@@ -13,7 +13,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         protected readonly object SyncRoot;
 
-        public Action<byte[]> StatusRegisterLoad { get; set; }
+        public Action<byte[]> LoadStatusRegister { get; set; }
         public bool CheckStatus { get; set; }
 
         public CommandProcessor(SpiDevice spiDevice, IRadio radio, bool checkStatus = true)
@@ -59,7 +59,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
 
             // The STATUS register value is returned at first byte on each SPI call
-            StatusRegisterLoad?.Invoke(new[] { receiveBuffer[0] });
+            LoadStatusRegister?.Invoke(new[] { receiveBuffer[0] });
 
             // Populate result with the rest of the receive buffer
             if (value.Length > 1 && autoRevert && _revertBytes)

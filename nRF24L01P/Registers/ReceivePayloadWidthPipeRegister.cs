@@ -13,8 +13,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public byte PayloadWidth
         {
-            get { return GetByteValue(5, Properties.RX_PW_P0); }
-            set { SetByteValue(value, 5, Properties.RX_PW_P0); }
+            get { return GetByteProperty(PropertyMasks.RX_PW_P0); }
+            set { SetByteProperty(PropertyMasks.RX_PW_P0, value); }
         }
     }
 }

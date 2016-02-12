@@ -89,5 +89,10 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public void LoadRegisters() => AllRegisters.LoadAll();
 
         public void SaveRegisters() => AllRegisters.SaveAll();
+
+        public override string ToString()
+        {
+            return AllRegisters.ToString();
+        }
     }
 }

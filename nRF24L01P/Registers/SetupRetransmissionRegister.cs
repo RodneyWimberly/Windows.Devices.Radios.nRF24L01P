@@ -14,14 +14,14 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public byte ARD
         {
-            get { return GetByteValue(7, Properties.ARD); }
-            set { SetByteValue(value, 7, Properties.ARD); }
+            get { return GetByteProperty(PropertyMasks.ARD); }
+            set { SetByteProperty(PropertyMasks.ARD, value); }
         }
 
         public byte ARC
         {
-            get { return GetByteValue(3, Properties.ARC); }
-            set { SetByteValue(value, 3, Properties.ARC); }
+            get { return GetByteProperty(PropertyMasks.ARC); }
+            set { SetByteProperty(PropertyMasks.ARC, value); }
         }
     }
 }

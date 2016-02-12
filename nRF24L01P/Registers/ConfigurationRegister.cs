@@ -14,38 +14,44 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public bool MASK_RX_DR
         {
-            get { return GetBitValue(Properties.MASK_RX_DR); }
-            set { SetBitValue(Properties.MASK_RX_DR, value); }
+            get { return GetBoolProperty(PropertyMasks.MASK_RX_DR); }
+            set { SetBoolProperty(PropertyMasks.MASK_RX_DR, value); }
         }
+
         public bool MASK_TX_DS
         {
-            get { return GetBitValue(Properties.MASK_TX_DS); }
-            set { SetBitValue(Properties.MASK_TX_DS, value); }
+            get { return GetBoolProperty(PropertyMasks.MASK_TX_DS); }
+            set { SetBoolProperty(PropertyMasks.MASK_TX_DS, value); }
         }
+
         public bool MASK_MAX_RT
         {
-            get { return GetBitValue(Properties.MASK_MAX_RT); }
-            set { SetBitValue(Properties.MASK_MAX_RT, value); }
+            get { return GetBoolProperty(PropertyMasks.MASK_MAX_RT); }
+            set { SetBoolProperty(PropertyMasks.MASK_MAX_RT, value); }
         }
+
         public bool EN_CRC
         {
-            get { return GetBitValue(Properties.EN_CRC); }
-            set { SetBitValue(Properties.EN_CRC, value); }
+            get { return GetBoolProperty(PropertyMasks.EN_CRC); }
+            set { SetBoolProperty(PropertyMasks.EN_CRC, value); }
         }
+
         public bool CRCO
         {
-            get { return GetBitValue(Properties.CRCO); }
-            set { SetBitValue(Properties.CRCO, value); }
+            get { return GetBoolProperty(PropertyMasks.CRCO); }
+            set { SetBoolProperty(PropertyMasks.CRCO, value); }
         }
+
         public bool PWR_UP
         {
-            get { return GetBitValue(Properties.PWR_UP); }
-            set { SetBitValue(Properties.PWR_UP, value); }
+            get { return GetBoolProperty(PropertyMasks.PWR_UP); }
+            set { SetBoolProperty(PropertyMasks.PWR_UP, value); }
         }
+
         public bool PRIM_RX
         {
-            get { return GetBitValue(Properties.PRIM_RX); }
-            set { SetBitValue(Properties.PRIM_RX, value); }
+            get { return GetBoolProperty(PropertyMasks.PRIM_RX); }
+            set { SetBoolProperty(PropertyMasks.PRIM_RX, value); }
         }
     }
 }

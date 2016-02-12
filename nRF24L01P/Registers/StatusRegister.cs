@@ -16,24 +16,24 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         /// </summary>
         public bool RX_DR
         {
-            get { return GetBitValue(Properties.RX_DR); }
-            set { SetBitValue(Properties.RX_DR, value); }
+            get { return GetBoolProperty(PropertyMasks.RX_DR); }
+            set { SetBoolProperty(PropertyMasks.RX_DR, value); }
         }
 
         public bool TX_DS
         {
-            get { return GetBitValue(Properties.TX_DS); }
-            set { SetBitValue(Properties.TX_DS, value); }
+            get { return GetBoolProperty(PropertyMasks.TX_DS); }
+            set { SetBoolProperty(PropertyMasks.TX_DS, value); }
         }
 
         public bool MAX_RT
         {
-            get { return GetBitValue(Properties.MAX_RT); }
-            set { SetBitValue(Properties.MAX_RT, value); }
+            get { return GetBoolProperty(PropertyMasks.MAX_RT); }
+            set { SetBoolProperty(PropertyMasks.MAX_RT, value); }
         }
 
-        public byte RX_P_NO => GetByteValue(3, 1);
+        public byte RX_P_NO => GetByteProperty(PropertyMasks.RX_P_NO);
 
-        public bool TX_FULL => GetBitValue(Properties.TX_FULL);
+        public bool TX_FULL => GetBoolProperty(PropertyMasks.TX_FULL);
     }
 }

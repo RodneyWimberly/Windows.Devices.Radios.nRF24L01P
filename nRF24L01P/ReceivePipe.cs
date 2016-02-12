@@ -7,7 +7,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 {
     public class ReceivePipe : IReceivePipe
     {
-        private readonly Registers.RegisterManager _registers;
+        private readonly RegisterManager _registers;
         private readonly IRadioConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
         public int PipeId { get; }

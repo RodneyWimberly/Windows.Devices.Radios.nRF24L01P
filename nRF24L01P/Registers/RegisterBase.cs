@@ -55,65 +55,27 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
             throw new InvalidOperationException("Cannot convert register value to single byte while register length is greater than 1");
         }
 
-        protected bool GetBitValue(byte mask)
+        protected bool GetBoolProperty(BitMasks propertyMask)
         {
-            return (Value[0] & Utilities.BitValue(mask)) > 0;
+            return GetByteProperty(propertyMask) > 0;
         }
 
-        protected void SetBitValue(byte mask, bool value)
+        protected byte GetByteProperty(BitMasks propertyMask)
         {
-            Value[0] = (byte)(value ? (Value[0] | Utilities.BitValue(mask)) : (Value[0] & ~Utilities.BitValue(mask)));
-            IsDirty = true;
+            return (byte)(Value[0] & (byte)propertyMask);
         }
 
-        /// <summary>
-        /// extract the bits from byte
-        /// example: 
-        /// Value=1110 0000
-        /// start=7
-        /// end =5
-        /// Output=0000 0111
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="start"></param>
-        /// <param name="end"></param>
-        /// <returns></returns>
-        protected byte GetByteValue(int start, int end)
+        protected void SetBoolProperty(BitMasks propertyMask, bool value)
         {
-            return (byte)(Value[0] << (7 - start) >> (7 - (start - end)));
+            SetByteProperty(propertyMask, Convert.ToByte(value));
         }
 
-        /// <summary>
-        /// Fill the target byte with specified bits from source byte
-        /// Example:
-        /// target = 1111 1111
-        /// source = 0000 0000
-        /// start = 6
-        /// end = 3
-        /// Output= 1100 0011
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="source"></param>
-        /// <param name="start"></param>
-        /// <param name="end"></param>
-        /// <returns></returns>
-        protected void SetByteValue(byte source, int start, int end)
+        protected void SetByteProperty(BitMasks propertyMask, byte value)
         {
-            if (start < end)
-                throw new ArgumentOutOfRangeException("end", "end value cannot be larget than start value");
-            byte mask = CreateBitMask(start, end);
-            int maskedSource = (source & mask); //extract the source bits
-            int maskedTarget = (Value[0] & ~mask); //clear the bits at target byte
+            int maskedSource = (value & (byte)propertyMask);
+            int maskedTarget = (Value[0] & ~(byte)propertyMask);
             Value[0] = (byte)(maskedSource | maskedTarget);
             IsDirty = true;
-        }
-
-        protected byte CreateBitMask(int start, int end)
-        {
-            int result = 0;
-            for (int i = start; i >= end; i--)
-                result = result | 0X01 << i;
-            return (byte)result;
         }
 
         public override string ToString()

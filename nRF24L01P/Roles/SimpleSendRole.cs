@@ -10,8 +10,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
     {
         private Radio _radio;
 
-        private ReceivePipe _reader;
-        private TransmitPipe _writer;
+        private IReceivePipe _reader;
+        private ITransmitPipe _writer;
         private readonly ManualResetEvent _sentEvent;
         private bool _maxRt = false;
         public byte[] Address { get; set; }

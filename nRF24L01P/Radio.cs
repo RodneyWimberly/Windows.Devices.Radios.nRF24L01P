@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P.Enums;
@@ -15,15 +16,13 @@ namespace Windows.Devices.Radios.nRF24L01P
     {
         private readonly GpioPin _cePin;
 
-        public ICommandProcessor CommandProcessor { get; private set; }
+        public ICommandProcessor CommandProcessor { get; }
 
-        public IRadioConfiguration Configuration { get; private set; }
+        public IRadioConfiguration Configuration { get;  }
 
-        public TransmitPipe TransmitPipe { get; private set; }
+        public ITransmitPipe TransmitPipe { get; }
 
-        public IDictionary<int, ReceivePipe> ReceivePipes { get; private set; }
-
-        public string Name => Constants.RadioModels[(int)Configuration.RadioModel];
+        public IDictionary<int, IReceivePipe> ReceivePipes { get;  }
 
         public Radio(GpioPin cePin, SpiDevice spiDevice)
         {
@@ -33,9 +32,9 @@ namespace Windows.Devices.Radios.nRF24L01P
 
             CommandProcessor = new CommandProcessor(spiDevice, this, false);
             Configuration = new RadioConfiguration(CommandProcessor);
-            CommandProcessor.StatusRegisterLoad = Configuration.Registers.StatusRegister.Load;
+            CommandProcessor.LoadStatusRegister = Configuration.Registers.StatusRegister.Load;
             TransmitPipe = new TransmitPipe(Configuration, CommandProcessor);
-            ReceivePipes = new Dictionary<int, ReceivePipe>
+            ReceivePipes = new Dictionary<int, IReceivePipe>
             {
                 {0, new ReceivePipe(Configuration, CommandProcessor, 0)},
                 {1, new ReceivePipe(Configuration, CommandProcessor, 1)},
@@ -49,7 +48,9 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public override string ToString()
         {
-            return new Diagnostics(this).GetDetails();
+            return string.Format("{0}\r\n\r\n{1}", 
+                new Diagnostics(Configuration, CommandProcessor).GetDetails(),
+                 JsonConvert.SerializeObject(this, Formatting.Indented));
         }
 
         public void Initialize()
@@ -169,7 +170,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                             CommandProcessor.CheckStatus = true;
 
                             ChipEnable(true);
-                            Utilities.DelayMicroseconds(1000); //wait device to enter TX mode
+                            Utilities.DelayMicroseconds(1000); 
                             break;
                         }
                         throw new InvalidOperationException("Error status change, RXMode should from Standby mode only");
@@ -181,7 +182,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                             Configuration.Registers.ConfigurationRegister.Save();
                             CommandProcessor.CheckStatus = false;
                             ChipEnable(true);
-                            Utilities.DelayMicroseconds(1000); //wait device to enter RX mode
+                            Utilities.DelayMicroseconds(1000); 
                             break;
 
                         }
