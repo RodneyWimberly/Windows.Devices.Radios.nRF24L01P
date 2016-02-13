@@ -14,26 +14,26 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         /// <summary>
         /// Receive Data Ready6
         /// </summary>
-        public bool RX_DR
+        public bool ReceiveDataReady
         {
             get { return GetBoolProperty(PropertyMasks.RX_DR); }
             set { SetBoolProperty(PropertyMasks.RX_DR, value); }
         }
 
-        public bool TX_DS
+        public bool TransmitDataSent
         {
             get { return GetBoolProperty(PropertyMasks.TX_DS); }
             set { SetBoolProperty(PropertyMasks.TX_DS, value); }
         }
 
-        public bool MAX_RT
+        public bool MaximunTransmitRetries
         {
             get { return GetBoolProperty(PropertyMasks.MAX_RT); }
             set { SetBoolProperty(PropertyMasks.MAX_RT, value); }
         }
 
-        public byte RX_P_NO => GetByteProperty(PropertyMasks.RX_P_NO);
+        public byte ReceiveDataPipeNumber => GetByteProperty(PropertyMasks.RX_P_NO);
 
-        public bool TX_FULL => GetBoolProperty(PropertyMasks.TX_FULL);
+        public bool TransmitFifoFull => GetBoolProperty(PropertyMasks.TX_FULL);
     }
 }

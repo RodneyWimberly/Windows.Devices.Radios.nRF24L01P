@@ -12,7 +12,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
-        public byte AW
+        public byte AddressWidth
         {
             get { return GetByteProperty(PropertyMasks.AW); }
             set { SetByteProperty(PropertyMasks.AW, value); }

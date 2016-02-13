@@ -45,17 +45,17 @@ namespace Windows.Devices.Radios.nRF24L01P
                 switch (PipeId)
                 {
                     case 0:
-                        return _registers.EnableReceiveAddressRegister.ERX_P0;
+                        return _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe0;
                     case 1:
-                        return _registers.EnableReceiveAddressRegister.ERX_P1;
+                        return _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe1;
                     case 2:
-                        return _registers.EnableReceiveAddressRegister.ERX_P2;
+                        return _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe2;
                     case 3:
-                        return _registers.EnableReceiveAddressRegister.ERX_P3;
+                        return _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe3;
                     case 4:
-                        return _registers.EnableReceiveAddressRegister.ERX_P4;
+                        return _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe4;
                     case 5:
-                        return _registers.EnableReceiveAddressRegister.ERX_P5;
+                        return _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe5;
                     default:
                         throw new InvalidOperationException("Cannot get register value, invalid ID number for this Pipe");
                 }
@@ -66,27 +66,27 @@ namespace Windows.Devices.Radios.nRF24L01P
                 switch (PipeId)
                 {
                     case 0:
-                        _registers.EnableReceiveAddressRegister.ERX_P0 = value;
+                        _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe0 = value;
                         _registers.EnableReceiveAddressRegister.Save();
                         break;
                     case 1:
-                        _registers.EnableReceiveAddressRegister.ERX_P1 = value;
+                        _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe1 = value;
                         _registers.EnableReceiveAddressRegister.Save();
                         break;
                     case 2:
-                        _registers.EnableReceiveAddressRegister.ERX_P2 = value;
+                        _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe2 = value;
                         _registers.EnableReceiveAddressRegister.Save();
                         break;
                     case 3:
-                        _registers.EnableReceiveAddressRegister.ERX_P3 = value;
+                        _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe3 = value;
                         _registers.EnableReceiveAddressRegister.Save();
                         break;
                     case 4:
-                        _registers.EnableReceiveAddressRegister.ERX_P4 = value;
+                        _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe4 = value;
                         _registers.EnableReceiveAddressRegister.Save();
                         break;
                     case 5:
-                        _registers.EnableReceiveAddressRegister.ERX_P5 = value;
+                        _registers.EnableReceiveAddressRegister.EnableReceiveDataPipe5 = value;
                         _registers.EnableReceiveAddressRegister.Save();
                         break;
                     default:
@@ -103,17 +103,17 @@ namespace Windows.Devices.Radios.nRF24L01P
                 switch (PipeId)
                 {
                     case 0:
-                        return _registers.EnableAutoAcknowledgementRegister.ENAA_P0;
+                        return _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe0;
                     case 1:
-                        return _registers.EnableAutoAcknowledgementRegister.ENAA_P1;
+                        return _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe1;
                     case 2:
-                        return _registers.EnableAutoAcknowledgementRegister.ENAA_P2;
+                        return _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe2;
                     case 3:
-                        return _registers.EnableAutoAcknowledgementRegister.ENAA_P3;
+                        return _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe3;
                     case 4:
-                        return _registers.EnableAutoAcknowledgementRegister.ENAA_P4;
+                        return _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe4;
                     case 5:
-                        return _registers.EnableAutoAcknowledgementRegister.ENAA_P5;
+                        return _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe5;
                     default:
                         throw new InvalidOperationException("Cannot get DynamicPayloadEnabled for data pipe, invalid ID number for this Pipe");
                 }
@@ -123,27 +123,27 @@ namespace Windows.Devices.Radios.nRF24L01P
                 switch (PipeId)
                 {
                     case 0:
-                        _registers.EnableAutoAcknowledgementRegister.ENAA_P0 = value;
+                        _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe0 = value;
                         _registers.EnableAutoAcknowledgementRegister.Save();
                         break;
                     case 1:
-                        _registers.EnableAutoAcknowledgementRegister.ENAA_P1 = value;
+                        _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe1 = value;
                         _registers.EnableAutoAcknowledgementRegister.Save();
                         break;
                     case 2:
-                        _registers.EnableAutoAcknowledgementRegister.ENAA_P2 = value;
+                        _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe2 = value;
                         _registers.EnableAutoAcknowledgementRegister.Save();
                         break;
                     case 3:
-                        _registers.EnableAutoAcknowledgementRegister.ENAA_P3 = value;
+                        _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe3 = value;
                         _registers.EnableAutoAcknowledgementRegister.Save();
                         break;
                     case 4:
-                        _registers.EnableAutoAcknowledgementRegister.ENAA_P4 = value;
+                        _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe4 = value;
                         _registers.EnableAutoAcknowledgementRegister.Save();
                         break;
                     case 5:
-                        _registers.EnableAutoAcknowledgementRegister.ENAA_P5 = value;
+                        _registers.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe5 = value;
                         _registers.EnableAutoAcknowledgementRegister.Save();
                         break;
                     default:
@@ -159,17 +159,17 @@ namespace Windows.Devices.Radios.nRF24L01P
                 switch (PipeId)
                 {
                     case 0:
-                        return _registers.DynamicPayloadLengthRegister.DPL_P0;
+                        return _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe0;
                     case 1:
-                        return _registers.DynamicPayloadLengthRegister.DPL_P1;
+                        return _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe1;
                     case 2:
-                        return _registers.DynamicPayloadLengthRegister.DPL_P2;
+                        return _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe2;
                     case 3:
-                        return _registers.DynamicPayloadLengthRegister.DPL_P3;
+                        return _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe3;
                     case 4:
-                        return _registers.DynamicPayloadLengthRegister.DPL_P4;
+                        return _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe4;
                     case 5:
-                        return _registers.DynamicPayloadLengthRegister.DPL_P5;
+                        return _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe5;
                     default:
                         throw new InvalidOperationException("Cannot get DynamicPayloadLengthEnabled for data pipe, invalid ID number for this Pipe");
                 }
@@ -187,27 +187,27 @@ namespace Windows.Devices.Radios.nRF24L01P
                 switch (PipeId)
                 {
                     case 0:
-                        _registers.DynamicPayloadLengthRegister.DPL_P0 = value;
+                        _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe0 = value;
                         _registers.DynamicPayloadLengthRegister.Save();
                         break;
                     case 1:
-                        _registers.DynamicPayloadLengthRegister.DPL_P1 = value;
+                        _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe1 = value;
                         _registers.DynamicPayloadLengthRegister.Save();
                         break;
                     case 2:
-                        _registers.DynamicPayloadLengthRegister.DPL_P2 = value;
+                        _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe2 = value;
                         _registers.DynamicPayloadLengthRegister.Save();
                         break;
                     case 3:
-                        _registers.DynamicPayloadLengthRegister.DPL_P3 = value;
+                        _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe3 = value;
                         _registers.DynamicPayloadLengthRegister.Save();
                         break;
                     case 4:
-                        _registers.DynamicPayloadLengthRegister.DPL_P4 = value;
+                        _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe4 = value;
                         _registers.DynamicPayloadLengthRegister.Save();
                         break;
                     case 5:
-                        _registers.DynamicPayloadLengthRegister.DPL_P5 = value;
+                        _registers.DynamicPayloadLengthRegister.EnableDynamicPayloadPipe5 = value;
                         _registers.DynamicPayloadLengthRegister.Save();
                         break;
                     default:
@@ -233,9 +233,9 @@ namespace Windows.Devices.Radios.nRF24L01P
             get
             {
                 _registers.FifoStatusRegister.Load();
-                if (_registers.FifoStatusRegister.RX_FULL)
+                if (_registers.FifoStatusRegister.ReceiveFifoFull)
                     return FifoStatus.Full;
-                if (_registers.FifoStatusRegister.RX_EMPTY)
+                if (_registers.FifoStatusRegister.ReveiveFifoEmpty)
                     return FifoStatus.Empty;
                 return FifoStatus.InUse;
             }

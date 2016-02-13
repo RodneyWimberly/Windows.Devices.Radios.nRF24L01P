@@ -11,8 +11,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public byte[] Value { get; private set; }
 
-        public int Length { get; private set; }
-        public byte Address { get; private set; }
+        public int Length { get; }
+        public byte Address { get; }
         public string Name { get; private set; }
         public bool IsDirty { get; private set; }
 

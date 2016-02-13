@@ -50,10 +50,10 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
 
         private void radio_OnInterrupt(StatusRegister status)
         {
-            if (status.TX_DS || status.MAX_RT)// data sent
+            if (status.TransmitDataSent || status.MaximunTransmitRetries)// data sent
             {
                 _writer.FlushBuffer();
-                _maxRt = status.MAX_RT;
+                _maxRt = status.MaximunTransmitRetries;
                 _radio.Status = DeviceStatus.StandBy;
                 status.Save();
                 _radio.Status = DeviceStatus.TransmitMode;

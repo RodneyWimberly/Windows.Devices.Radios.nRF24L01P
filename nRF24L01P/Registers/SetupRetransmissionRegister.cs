@@ -12,13 +12,13 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
-        public byte ARD
+        public byte AutoRetransmitDelay
         {
             get { return GetByteProperty(PropertyMasks.ARD); }
             set { SetByteProperty(PropertyMasks.ARD, value); }
         }
 
-        public byte ARC
+        public byte AutoRetransmitCount
         {
             get { return GetByteProperty(PropertyMasks.ARC); }
             set { SetByteProperty(PropertyMasks.ARC, value); }

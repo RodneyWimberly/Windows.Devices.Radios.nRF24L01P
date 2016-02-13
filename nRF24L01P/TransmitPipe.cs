@@ -45,9 +45,9 @@ namespace Windows.Devices.Radios.nRF24L01P
             get
             {
                 _registers.FifoStatusRegister.Load();
-                if (_registers.FifoStatusRegister.TX_FULL)
+                if (_registers.FifoStatusRegister.TransmitFifoFull)
                     return FifoStatus.Full;
-                if (_registers.FifoStatusRegister.TX_EMPTY)
+                if (_registers.FifoStatusRegister.TransmitFifoEmpty)
                     return FifoStatus.Empty;
                 return FifoStatus.InUse;
             }

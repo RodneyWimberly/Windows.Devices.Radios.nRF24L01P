@@ -33,7 +33,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
 
         private void radio_OnInterrupt(StatusRegister status)
         {
-            if (status.RX_DR && DataArrived != null)
+            if (status.ReceiveDataReady && DataArrived != null)
             {
                 DataArrived(_reader.ReadBufferAll());
                 _radio.Status = DeviceStatus.StandBy;

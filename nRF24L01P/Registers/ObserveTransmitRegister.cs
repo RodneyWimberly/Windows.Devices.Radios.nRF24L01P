@@ -12,13 +12,13 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
-        public byte PLOS_CNT
+        public byte CountPacketLoss
         {
             get { return GetByteProperty(PropertyMasks.PLOS_CNT); }
             set { SetByteProperty(PropertyMasks.PLOS_CNT, value ); }
         }
 
-        public byte ARC_CNT
+        public byte CountRetransmitedPackets
         {
             get { return GetByteProperty(PropertyMasks.ARC_CNT); }
             set { SetByteProperty(PropertyMasks.ARC_CNT, value); }

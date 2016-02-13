@@ -12,43 +12,46 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
-        public bool MASK_RX_DR
+        public bool ReceiveDataReadyMask
         {
             get { return GetBoolProperty(PropertyMasks.MASK_RX_DR); }
             set { SetBoolProperty(PropertyMasks.MASK_RX_DR, value); }
         }
 
-        public bool MASK_TX_DS
+        public bool TransmitDataSentMask
         {
             get { return GetBoolProperty(PropertyMasks.MASK_TX_DS); }
             set { SetBoolProperty(PropertyMasks.MASK_TX_DS, value); }
         }
 
-        public bool MASK_MAX_RT
+        public bool MaximunTransmitRetriesMask
         {
             get { return GetBoolProperty(PropertyMasks.MASK_MAX_RT); }
             set { SetBoolProperty(PropertyMasks.MASK_MAX_RT, value); }
         }
 
-        public bool EN_CRC
+        public bool EnableCrc
         {
             get { return GetBoolProperty(PropertyMasks.EN_CRC); }
             set { SetBoolProperty(PropertyMasks.EN_CRC, value); }
         }
 
-        public bool CRCO
+        public bool CrcEncodingScheme
         {
             get { return GetBoolProperty(PropertyMasks.CRCO); }
             set { SetBoolProperty(PropertyMasks.CRCO, value); }
         }
 
-        public bool PWR_UP
+        public bool PowerUp
         {
             get { return GetBoolProperty(PropertyMasks.PWR_UP); }
             set { SetBoolProperty(PropertyMasks.PWR_UP, value); }
         }
 
-        public bool PRIM_RX
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool PrimaryReceiveMode
         {
             get { return GetBoolProperty(PropertyMasks.PRIM_RX); }
             set { SetBoolProperty(PropertyMasks.PRIM_RX, value); }

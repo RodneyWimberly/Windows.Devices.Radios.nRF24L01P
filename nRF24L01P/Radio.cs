@@ -85,9 +85,9 @@ namespace Windows.Devices.Radios.nRF24L01P
             // Reset current status
             // Notice reset and flush is the last thing we do
             StatusRegister statusRegister = Configuration.Registers.StatusRegister;
-            statusRegister.RX_DR = false;
-            statusRegister.TX_DS = false;
-            statusRegister.MAX_RT = false;
+            statusRegister.ReceiveDataReady = false;
+            statusRegister.TransmitDataSent = false;
+            statusRegister.MaximunTransmitRetries = false;
             statusRegister.Save();
 
             // Set up default configuration.  Callers can always change it later.
@@ -111,12 +111,12 @@ namespace Windows.Devices.Radios.nRF24L01P
             Utilities.DelayMicroseconds(5000);
         }
 
-        public bool ChannelReceivedPowerDector
+        public bool ChannelReceivedPowerDetector
         {
             get
             {
                 Configuration.Registers.ReceivedPowerDetectorRegister.Load();
-                return Configuration.Registers.ReceivedPowerDetectorRegister.RPD;
+                return Configuration.Registers.ReceivedPowerDetectorRegister.ReceivedPowerDetector;
             }
         }
 
@@ -140,7 +140,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                     case DeviceStatus.PowerDown:
                         if (lastStatus == DeviceStatus.StandBy)
                         {
-                            Configuration.Registers.ConfigurationRegister.PWR_UP = false;
+                            Configuration.Registers.ConfigurationRegister.PowerUp = false;
                             Configuration.Registers.ConfigurationRegister.Save();
                             break;
                         }
@@ -154,7 +154,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                         }
                         if (lastStatus == DeviceStatus.PowerDown)
                         {
-                            Configuration.Registers.ConfigurationRegister.PWR_UP = true;
+                            Configuration.Registers.ConfigurationRegister.PowerUp = true;
                             Configuration.Registers.ConfigurationRegister.Save();
                             Utilities.DelayMicroseconds(2000);
                             break;
@@ -165,7 +165,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                         if (lastStatus == DeviceStatus.StandBy)
                         {
                             CommandProcessor.CheckStatus = false;
-                            Configuration.Registers.ConfigurationRegister.PRIM_RX = false;
+                            Configuration.Registers.ConfigurationRegister.PrimaryReceiveMode = false;
                             Configuration.Registers.ConfigurationRegister.Save();
                             CommandProcessor.CheckStatus = true;
 
@@ -178,7 +178,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                         if (lastStatus == DeviceStatus.StandBy)
                         {
                             CommandProcessor.CheckStatus = false;
-                            Configuration.Registers.ConfigurationRegister.PRIM_RX = true;
+                            Configuration.Registers.ConfigurationRegister.PrimaryReceiveMode = true;
                             Configuration.Registers.ConfigurationRegister.Save();
                             CommandProcessor.CheckStatus = false;
                             ChipEnable(true);

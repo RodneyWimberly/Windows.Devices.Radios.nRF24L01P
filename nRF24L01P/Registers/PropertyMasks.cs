@@ -87,7 +87,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         internal const BitMasks RF_PWR_LOW = BitMasks.Bit1;
 
         // Setup Address Width Register
-        internal const BitMasks AW = BitMasks.Bit1;
+        internal const BitMasks AW = BitMasks.Bit0 | BitMasks.Bit1;
 
         // Setup Retransmission Register
         internal const BitMasks ARD = BitMasks.Bit4 | BitMasks.Bit5 | BitMasks.Bit6 | BitMasks.Bit7;

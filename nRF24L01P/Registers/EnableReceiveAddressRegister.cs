@@ -12,37 +12,37 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
-        public bool ERX_P5
+        public bool EnableReceiveDataPipe5
         {
             get { return GetBoolProperty(PropertyMasks.ERX_P5); }
             set { SetBoolProperty(PropertyMasks.ERX_P5, value); }
         }
 
-        public bool ERX_P4
+        public bool EnableReceiveDataPipe4
         {
             get { return GetBoolProperty(PropertyMasks.ERX_P4); }
             set { SetBoolProperty(PropertyMasks.ERX_P4, value); }
         }
 
-        public bool ERX_P3
+        public bool EnableReceiveDataPipe3
         {
             get { return GetBoolProperty(PropertyMasks.ERX_P3); }
             set { SetBoolProperty(PropertyMasks.ERX_P3, value); }
         }
 
-        public bool ERX_P2
+        public bool EnableReceiveDataPipe2
         {
             get { return GetBoolProperty(PropertyMasks.ERX_P2); }
             set { SetBoolProperty(PropertyMasks.ERX_P2, value); }
         }
 
-        public bool ERX_P1
+        public bool EnableReceiveDataPipe1
         {
             get { return GetBoolProperty(PropertyMasks.ERX_P1); }
             set { SetBoolProperty(PropertyMasks.ERX_P1, value); }
         }
 
-        public bool ERX_P0
+        public bool EnableReceiveDataPipe0
         {
             get { return GetBoolProperty(PropertyMasks.ERX_P0); }
             set { SetBoolProperty(PropertyMasks.ERX_P0, value); }

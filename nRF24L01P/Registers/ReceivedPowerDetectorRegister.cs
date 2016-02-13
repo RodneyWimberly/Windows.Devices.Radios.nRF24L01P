@@ -13,6 +13,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
-        public bool RPD => GetBoolProperty(PropertyMasks.RPD);
+        public bool ReceivedPowerDetector => GetBoolProperty(PropertyMasks.RPD);
     }
 }

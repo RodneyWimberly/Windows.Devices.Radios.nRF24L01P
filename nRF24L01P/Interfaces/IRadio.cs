@@ -9,7 +9,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         IRadioConfiguration Configuration { get; }
         ITransmitPipe TransmitPipe { get; }
         IDictionary<int, IReceivePipe> ReceivePipes { get; }
-        bool ChannelReceivedPowerDector { get; }
+        bool ChannelReceivedPowerDetector { get; }
         DeviceStatus Status { get; set; }
         string ToString();
         void Initialize();

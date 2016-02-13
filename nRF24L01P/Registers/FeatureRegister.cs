@@ -12,19 +12,19 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
-        public bool EN_DPL
+        public bool EnableDynamicPayloadLength
         {
             get { return GetBoolProperty(PropertyMasks.EN_DPL); }
             set { SetBoolProperty(PropertyMasks.EN_DPL, value); }
         }
 
-        public bool EN_ACK_PAY
+        public bool EnablePayloadWithAcknowledgement
         {
             get { return GetBoolProperty(PropertyMasks.EN_ACK_PAY); }
             set { SetBoolProperty(PropertyMasks.EN_ACK_PAY, value); }
         }
 
-        public bool EN_DYN_ACK
+        public bool EnableTransmitWithPayloadAcknowledgement
         {
             get { return GetBoolProperty(PropertyMasks.EN_DYN_ACK); }
             set { SetBoolProperty(PropertyMasks.EN_DYN_ACK, value); }

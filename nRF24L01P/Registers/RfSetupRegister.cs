@@ -11,37 +11,37 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         {
 
         }
-        public bool CONT_WAVE
+        public bool EnableContiuousCarrierTransmit
         {
             get { return GetBoolProperty(PropertyMasks.CONT_WAVE); }
             set { SetBoolProperty(PropertyMasks.CONT_WAVE, value); }
         }
 
-        public bool RF_DR_LOW
+        public bool DataRateLow
         {
             get { return GetBoolProperty(PropertyMasks.RF_DR_LOW); }
             set { SetBoolProperty(PropertyMasks.RF_DR_LOW, value); }
         }
 
-        public bool PLL_LOCK
+        public bool ForcePllSignalLock
         {
             get { return GetBoolProperty(PropertyMasks.PLL_LOCK); }
             set { SetBoolProperty(PropertyMasks.PLL_LOCK, value); }
         }
 
-        public bool RF_DR_HIGH
+        public bool DataRateHigh
         {
             get { return GetBoolProperty(PropertyMasks.RF_DR_HIGH); }
             set { SetBoolProperty(PropertyMasks.RF_DR_HIGH, value); }
         }
 
-        public bool RF_PWR_HIGH
+        public bool PowerLevelHigh
         {
             get { return GetBoolProperty(PropertyMasks.RF_PWR_HIGH); }
             set { SetBoolProperty(PropertyMasks.RF_PWR_HIGH, value); }
         }
 
-        public bool RF_PWR_LOW
+        public bool PowerLevelLow
         {
             get { return GetBoolProperty(PropertyMasks.RF_PWR_LOW); }
             set { SetBoolProperty(PropertyMasks.RF_PWR_LOW, value); }

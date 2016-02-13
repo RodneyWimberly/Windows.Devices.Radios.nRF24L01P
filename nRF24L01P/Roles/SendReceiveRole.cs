@@ -145,15 +145,15 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
 
         private void radio_OnInterrupt(StatusRegister status)
         {
-            if (status.MAX_RT)
+            if (status.MaximunTransmitRetries)
             {
                 _isMaxRt = true;
                 _sendCompleteEvent.Set();
             }
-            if (status.TX_DS)
+            if (status.TransmitDataSent)
                 _sendCompleteEvent.Set();
             _radio.Status = DeviceStatus.StandBy;
-            if (status.RX_DR)
+            if (status.ReceiveDataReady)
                 DataArrived?.Invoke(_reader.ReadBufferAll());
             status.Save();
             if (!_isSending)
