@@ -10,7 +10,7 @@ namespace Windows.Devices.Radios.nRF24L01P
     {
         private readonly ICommandProcessor _commandProcessor;
 
-        public RegisterManager Registers { get; }
+        public IRegisterManager Registers { get; }
 
         public RadioConfiguration(ICommandProcessor commandProcessor)
         {

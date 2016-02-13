@@ -13,6 +13,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
+        /// <summary>
+        /// Received Power Detector. This register is called 
+        /// CD(Carrier Detect) in the nRF24L01.The name is 
+        /// different in nRF24L01+ due to the different input
+        /// power level threshold for this bit.
+        /// </summary>
         public bool ReceivedPowerDetector => GetBoolProperty(PropertyMasks.RPD);
     }
 }

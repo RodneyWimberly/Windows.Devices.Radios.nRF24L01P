@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
-    public class RegisterCollection<T> : Dictionary<byte, T> where T : RegisterBase
+    public class RegisterCollection<T> : Dictionary<byte, T> where T : IRegisterBase
     {
         public void LoadAll()
         {

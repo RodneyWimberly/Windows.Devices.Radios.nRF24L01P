@@ -8,7 +8,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
     public class SendReceiveRole : IRole
     {
-        private Radio _radio;
+        private IRadio _radio;
         private IReceivePipe _reader;
         private ITransmitPipe _writer;
         private bool _isSending;
@@ -27,7 +27,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             _sendCompleteEvent = new ManualResetEvent(false);
         }
 
-        public void AttachDevice(Radio radio)
+        public void AttachDevice(IRadio radio)
         {
             _radio = radio;
         }

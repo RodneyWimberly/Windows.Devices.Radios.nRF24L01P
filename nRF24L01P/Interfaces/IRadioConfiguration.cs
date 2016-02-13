@@ -6,7 +6,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
     public interface IRadioConfiguration
     {
         bool IsPlusModel { get; set; }
-        RegisterManager Registers { get; }
+        IRegisterManager Registers { get; }
         DataRates DataRate { get; set; }
         PowerLevels PowerLevel { get; set; }
         uint Channel { get; set; }

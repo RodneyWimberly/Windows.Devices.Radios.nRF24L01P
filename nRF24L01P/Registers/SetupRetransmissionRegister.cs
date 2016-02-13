@@ -12,12 +12,25 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
+        /// <summary>
+        /// Setup of Automatic Retransmission 
+        /// Auto Retransmit Delay 
+        /// '0000' - Wait 250VS 
+        /// '0001 ' - Wait 
+        /// '0010' - Wait 7501-IS
+        /// (Delay defined from end of transmission to start of next transmission)
+        /// </summary>
         public byte AutoRetransmitDelay
         {
             get { return GetByteProperty(PropertyMasks.ARD); }
             set { SetByteProperty(PropertyMasks.ARD, value); }
         }
 
+        /// <summary>
+        /// Auto Retransmit Count 
+        /// '0000' —Re-Transmit disabled 
+        /// '0001' — Up to 1 Re-Transmit on fail of AA
+        /// </summary>
         public byte AutoRetransmitCount
         {
             get { return GetByteProperty(PropertyMasks.ARC); }

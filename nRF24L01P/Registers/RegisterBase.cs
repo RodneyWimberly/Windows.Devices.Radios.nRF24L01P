@@ -5,7 +5,7 @@ using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
-    public abstract class RegisterBase
+    public abstract class RegisterBase : IRegisterBase
     {
         protected ICommandProcessor CommandProcessor;
 

@@ -49,7 +49,7 @@ namespace Windows.Devices.Radios.nRF24L01P
         public override string ToString()
         {
             return string.Format("{0}\r\n\r\n{1}", 
-                new Diagnostics(Configuration, CommandProcessor).GetDetails(),
+                new Diagnostics(Configuration, CommandProcessor),
                  JsonConvert.SerializeObject(this, Formatting.Indented));
         }
 

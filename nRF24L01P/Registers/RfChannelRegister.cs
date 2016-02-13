@@ -12,6 +12,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
+        /// <summary>
+        /// Sets the frequency channel nRF24L01+ operates on
+        /// </summary>
         public byte RfChannel
         {
             get { return GetByteProperty(PropertyMasks.RF_CH); }

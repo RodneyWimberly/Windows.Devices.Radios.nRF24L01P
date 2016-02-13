@@ -12,12 +12,21 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
+        /// <summary>
+        /// Count lost packets. The counter is overflow pro- 
+        /// tected to 15, and discontinues at max until reset.
+        /// The counter is reset by writing to RF CH
+        /// </summary>
         public byte CountPacketLoss
         {
             get { return GetByteProperty(PropertyMasks.PLOS_CNT); }
-            set { SetByteProperty(PropertyMasks.PLOS_CNT, value ); }
+            set { SetByteProperty(PropertyMasks.PLOS_CNT, value); }
         }
 
+        /// <summary>
+        /// Count retransmitted packets. The counter is reset 
+        /// when transmission of a new packet starts.
+        /// </summary>
         public byte CountRetransmitedPackets
         {
             get { return GetByteProperty(PropertyMasks.ARC_CNT); }

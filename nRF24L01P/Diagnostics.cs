@@ -50,7 +50,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             return registerValue;
         }
 
-        public string GetDetails()
+        public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
 

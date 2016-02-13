@@ -12,6 +12,14 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         }
 
+        /// <summary>
+        /// RX/TX Address field width 
+        /// '00' - Illegal 
+        /// '01' - 3 bytes 
+        /// '10'-4 bytes 
+        /// '11' —5 bytes
+        /// LSByte is used if address width is below 5 bytes
+        /// </summary>
         public byte AddressWidth
         {
             get { return GetByteProperty(PropertyMasks.AW); }
