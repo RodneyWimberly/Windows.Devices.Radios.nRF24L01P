@@ -18,7 +18,6 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public CommandProcessor(SpiDevice spiDevice, IRadio radio, bool checkStatus = true)
         {
-            //chip uses LSByte first, we should revert byte array order on MSByte first CPU
             _revertBytes = BitConverter.IsLittleEndian;
             CheckStatus = checkStatus;
             SyncRoot = new object();

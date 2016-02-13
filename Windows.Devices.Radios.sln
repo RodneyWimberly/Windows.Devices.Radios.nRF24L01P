@@ -7,7 +7,6 @@ Project("{FF286327-C783-4F7A-AB73-9BCBAD0D4460}") = "NuGetPackage", "NuGetPackag
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7CA3C17B-B0B4-4A72-A731-A6C1CAB6D0DD}"
 	ProjectSection(SolutionItems) = preProject
-		Modul-Arduino-NRF24L01-transceiver-2.4GHz-TX-RX-microcontroler-AVR-328-N24l01-roboromania.pdf = Modul-Arduino-NRF24L01-transceiver-2.4GHz-TX-RX-microcontroler-AVR-328-N24l01-roboromania.pdf
 		README.md = README.md
 		wireless.png = wireless.png
 	EndProjectSection
