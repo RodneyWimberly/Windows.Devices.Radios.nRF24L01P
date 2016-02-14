@@ -13,14 +13,5 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
             base(commandProcessor, address, (byte)(pipeNumber <= 1 ? 5 : 1), pipeNumber)
         {
         }
-
-        /// <summary>
-        /// Data pipe address
-        /// </summary>
-        public byte[] Address
-        {
-            get { return this; }
-            set { Load(value); }
-        }
     }
 }

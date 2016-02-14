@@ -1,11 +1,12 @@
 using Windows.Devices.Radios.nRF24L01P.Enums;
-using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P.Interfaces
 {
     public interface IRadioConfiguration
     {
+        bool EnableContiuousCarrierTransmit { get; set; }
         bool IsPlusModel { get; set; }
+        bool EnableAutoAcknowledgement { get; set; }
         IRegisterManager Registers { get; }
         DataRates DataRate { get; set; }
         PowerLevels PowerLevel { get; set; }

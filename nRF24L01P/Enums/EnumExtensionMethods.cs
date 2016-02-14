@@ -50,7 +50,6 @@
         public static string GetName(this FifoStatus fifoStatus)
         {
             return _fifoStatus[(int)fifoStatus];
-
         }
 
         public static string GetName(this DeviceStatus deviceStatus)

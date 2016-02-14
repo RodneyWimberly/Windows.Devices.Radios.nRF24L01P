@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P.Interfaces
 {
@@ -9,10 +11,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         IRadioConfiguration Configuration { get; }
         ITransmitPipe TransmitPipe { get; }
         IDictionary<int, IReceivePipe> ReceivePipes { get; }
-        bool ChannelReceivedPowerDetector { get; }
+        bool ReceivedPowerDetector { get; }
         DeviceStatus Status { get; set; }
         string ToString();
+        string GetDiagnostics();
         void Initialize();
         void ChipEnable(bool enabled);
+        event EventHandler<StatusRegister> OnInterrupt;
     }
 }

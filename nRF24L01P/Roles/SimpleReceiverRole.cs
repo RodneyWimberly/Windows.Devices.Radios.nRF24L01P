@@ -1,64 +1,46 @@
-﻿using Windows.Devices.Radios.nRF24L01P.Enums;
+﻿using System;
+using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
-    public class SimpleReceiverRole : IRole
+    public class SimpleReceiverRole : RoleBase
     {
-        private IRadio _radio;
         private IReceivePipe _reader;
         public byte[] Address { get; set; }
-        public bool IsRunning { get; set; }
-        public delegate void DataArrivedDelegate(byte[] buffer);
-        public event DataArrivedDelegate DataArrived;
+        public event EventHandler<byte[]> DataArrived;
 
-        public void Start()
+        public override bool Start()
         {
-            if (IsRunning) return;
-            _radio.Status = DeviceStatus.PowerDown;
-            _reader = _radio.ReceivePipes[1];
+            if (base.Start()) return false;
+
+            _reader = Radio.ReceivePipes[1];
             _reader.AutoAcknowledgementEnabled = true;
-            _radio.Configuration.DynamicPayloadLengthEnabled = true;
             _reader.DynamicPayloadLengthEnabled = true;
             _reader.Address = Address;
             _reader.Enabled = true;
+
             _reader.FlushBuffer();
-            _radio.TransmitPipe.FlushBuffer();
-            //_radio.OnInterrupt += radio_OnInterrupt;
-            _radio.Status = DeviceStatus.StandBy;
-            _radio.Status = DeviceStatus.ReceiveMode;
+            Radio.TransmitPipe.FlushBuffer();
+
+            Radio.OnInterrupt += radio_OnInterrupt;
+            Radio.Status = DeviceStatus.StandBy;
+            Radio.Status = DeviceStatus.ReceiveMode;
             IsRunning = true;
+
+            return IsRunning;
         }
 
-        private void radio_OnInterrupt(StatusRegister status)
+        protected virtual void radio_OnInterrupt(object sender, StatusRegister status)
         {
             if (status.ReceiveDataReady && DataArrived != null)
             {
-                DataArrived(_reader.ReadBufferAll());
-                _radio.Status = DeviceStatus.StandBy;
+                DataArrived(this, _reader.ReadBufferAll());
+                Radio.Status = DeviceStatus.StandBy;
                 status.Save();
-                _radio.Status = DeviceStatus.ReceiveMode;
+                Radio.Status = DeviceStatus.ReceiveMode;
             }
-        }
-
-        public void Stop()
-        {
-            if (!IsRunning) return;
-            //_radio.OnInterrupt -= radio_OnInterrupt;
-            _radio.Status = DeviceStatus.StandBy;
-            _radio.Status = DeviceStatus.PowerDown;
-            IsRunning = false;
-        }
-
-        public void AttachDevice(IRadio radio)
-        {
-            _radio = radio;
-        }
-
-        public void DetachDevice()
-        {
-            _radio = null;
         }
     }
 }

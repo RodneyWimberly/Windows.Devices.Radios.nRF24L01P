@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
@@ -15,20 +16,31 @@ namespace Windows.Devices.Radios.nRF24L01P
     public class Radio : IRadio
     {
         private readonly GpioPin _cePin;
+        private readonly GpioPin _irqPin;
 
         public ICommandProcessor CommandProcessor { get; }
 
-        public IRadioConfiguration Configuration { get;  }
+        public IRadioConfiguration Configuration { get; }
 
         public ITransmitPipe TransmitPipe { get; }
 
-        public IDictionary<int, IReceivePipe> ReceivePipes { get;  }
+        public IDictionary<int, IReceivePipe> ReceivePipes { get; }
 
-        public Radio(GpioPin cePin, SpiDevice spiDevice)
+        public event EventHandler<StatusRegister> OnInterrupt;
+
+        public Radio(SpiDevice spiDevice, GpioPin cePin, GpioPin irqPin = null)
         {
+            if (irqPin != null)
+            {
+                _irqPin = irqPin;
+                _irqPin.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 50);
+                _irqPin.ValueChanged += irqPin_ValueChanged;
+            }
+            Task.Delay(100).Wait();
+
             _cePin = cePin;
-            _cePin.SetDriveMode(GpioPinDriveMode.Output);
             ChipEnable(false);
+            _status = DeviceStatus.PowerDown;
 
             CommandProcessor = new CommandProcessor(spiDevice, this, false);
             Configuration = new RadioConfiguration(CommandProcessor);
@@ -43,59 +55,38 @@ namespace Windows.Devices.Radios.nRF24L01P
                 {4, new ReceivePipe(Configuration, CommandProcessor, 4)},
                 {5, new ReceivePipe(Configuration, CommandProcessor, 5)}
             };
-            _status = DeviceStatus.PowerDown;
+
+            // Attempt to set DataRate to 250Kbps to determine if this is a plus model
+            DataRates oldDataRate = Configuration.DataRate;
+            Configuration.DataRate = DataRates.DataRate250Kbps;
+            Configuration.IsPlusModel = Configuration.DataRate == DataRates.DataRate250Kbps;
+            Configuration.DataRate = oldDataRate;
+
+            Utilities.DelayMicroseconds(1000);
+            Status = DeviceStatus.StandBy;
         }
 
-        public override string ToString()
+        private void irqPin_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
         {
-            return string.Format("{0}\r\n\r\n{1}", 
-                new Diagnostics(Configuration, CommandProcessor),
-                 JsonConvert.SerializeObject(this, Formatting.Indented));
+            if (args.Edge != GpioPinEdge.FallingEdge) return;
+
+            Configuration.Registers.StatusRegister.Load();
+            OnInterrupt?.Invoke(this, Configuration.Registers.StatusRegister);
         }
 
         public void Initialize()
         {
-            // Shut down device for config
-            Status = DeviceStatus.StandBy;
-            ChipEnable(false);
 
-            // Set 1500uS (minimum for 32B payload in ESB@250KBPS) timeouts, to make testing a little easier
-            // WARNING: If this is ever lowered, either 250KBS mode with AA is broken or maximum packet
-            // sizes must never be used. See documentation for a more complete explanation.
-            Configuration.AutoRetransmitDelay = AutoRetransmitDelays.Delay1500uS;
-            Configuration.AutoRetransmitCount = 15;
+        }
 
-            // Restore our default PA level
-            Configuration.PowerLevel = PowerLevels.Max;
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
 
-            // Attempt to set DataRate to 250Kbps to determine if this is a plus model
-            Configuration.DataRate = DataRates.DataRate250Kbps;
-            Configuration.IsPlusModel = Configuration.DataRate == DataRates.DataRate250Kbps;
-
-            // Then set the data rate to the slowest (and most reliable) speed supported by all hardware.
-            Configuration.DataRate = DataRates.DataRate1Mbps;
-
-            // Initialize CRC and request 2-byte (16bit) CRC
-            Configuration.CrcEncodingScheme = CrcEncodingSchemes.DualBytes;
-            Configuration.CrcEnabled = true;
-
-            // Disable dynamic payload lengths
-            Configuration.DynamicPayloadLengthEnabled = false;
-
-            // Reset current status
-            // Notice reset and flush is the last thing we do
-            StatusRegister statusRegister = Configuration.Registers.StatusRegister;
-            statusRegister.ReceiveDataReady = false;
-            statusRegister.TransmitDataSent = false;
-            statusRegister.MaximunTransmitRetries = false;
-            statusRegister.Save();
-
-            // Set up default configuration.  Callers can always change it later.
-            // This channel should be universally safe and not bleed over into adjacent spectrum.
-            Configuration.Channel = 76;
-
-            ReceivePipes[0].FlushBuffer();
-            TransmitPipe.FlushBuffer();
+        public string GetDiagnostics()
+        {
+            return new Diagnostics(this, Configuration, CommandProcessor).ToString();
         }
 
         public void ChipEnable(bool enabled)
@@ -111,7 +102,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             Utilities.DelayMicroseconds(5000);
         }
 
-        public bool ChannelReceivedPowerDetector
+        public bool ReceivedPowerDetector
         {
             get
             {
@@ -170,7 +161,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                             CommandProcessor.CheckStatus = true;
 
                             ChipEnable(true);
-                            Utilities.DelayMicroseconds(1000); 
+                            Utilities.DelayMicroseconds(1000);
                             break;
                         }
                         throw new InvalidOperationException("Error status change, RXMode should from Standby mode only");
@@ -182,7 +173,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                             Configuration.Registers.ConfigurationRegister.Save();
                             CommandProcessor.CheckStatus = false;
                             ChipEnable(true);
-                            Utilities.DelayMicroseconds(1000); 
+                            Utilities.DelayMicroseconds(1000);
                             break;
 
                         }

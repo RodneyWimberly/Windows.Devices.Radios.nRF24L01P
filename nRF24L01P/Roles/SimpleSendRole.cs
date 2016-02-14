@@ -6,16 +6,13 @@ using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
-    public class SimpleSendRole : IRole
+    public class SimpleSendRole : RoleBase
     {
-        private IRadio _radio;
-
         private IReceivePipe _reader;
         private ITransmitPipe _writer;
         private readonly ManualResetEvent _sentEvent;
         private bool _maxRt = false;
         public byte[] Address { get; set; }
-        public bool IsRunning { get; private set; }
 
         public SimpleSendRole()
         {
@@ -23,61 +20,39 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             _sentEvent = new ManualResetEvent(false);
         }
 
-        public void Start()
+        public override bool Start()
         {
-            if (IsRunning) return;
-            _radio.Status = DeviceStatus.PowerDown;
-            _reader = _radio.ReceivePipes[0];
-            _writer = _radio.TransmitPipe;
-            _radio.Configuration.DynamicPayloadLengthEnabled = true;
+            if (!base.Start()) return false;
 
+            _reader = Radio.ReceivePipes[0];
             _reader.AutoAcknowledgementEnabled = true;
             _reader.DynamicPayloadLengthEnabled = true;
             _reader.Address = Address;
             _reader.Enabled = true;
 
+            _writer = Radio.TransmitPipe;
             _writer.Address = Address;
 
             _reader.FlushBuffer();
             _writer.FlushBuffer();
 
-            //_radio.OnInterrupt += device_OnInterrupt;
-
-            _radio.Status = DeviceStatus.StandBy;
-            _radio.Status = DeviceStatus.TransmitMode;
+            Radio.OnInterrupt += Radio_OnInterrupt;
+            Radio.Status = DeviceStatus.StandBy;
+            Radio.Status = DeviceStatus.TransmitMode;
             IsRunning = true;
+
+            return IsRunning;
         }
 
-        private void radio_OnInterrupt(StatusRegister status)
+        protected override void Radio_OnInterrupt(object sender, StatusRegister status)
         {
-            if (status.TransmitDataSent || status.MaximunTransmitRetries)// data sent
-            {
-                _writer.FlushBuffer();
-                _maxRt = status.MaximunTransmitRetries;
-                _radio.Status = DeviceStatus.StandBy;
-                status.Save();
-                _radio.Status = DeviceStatus.TransmitMode;
-                _sentEvent.Set();
-            }
-        }
-
-        public void Stop()
-        {
-            if (!IsRunning) return;
-            //_radio.OnInterrupt -= radio_OnInterrupt;
-            _radio.Status = DeviceStatus.StandBy;
-            _radio.Status = DeviceStatus.PowerDown;
-            IsRunning = false;
-        }
-
-        public void AttachDevice(IRadio radio)
-        {
-            _radio = radio;
-        }
-
-        public void DetachDevice()
-        {
-            _radio = null;
+            if (!status.TransmitDataSent && !status.MaximunTransmitRetries) return;
+            _writer.FlushBuffer();
+            _maxRt = status.MaximunTransmitRetries;
+            Radio.Status = DeviceStatus.StandBy;
+            status.Save();
+            Radio.Status = DeviceStatus.TransmitMode;
+            _sentEvent.Set();
         }
 
         public void SendAsync(byte[] buffer)

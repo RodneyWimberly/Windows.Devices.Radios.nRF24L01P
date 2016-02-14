@@ -4,7 +4,7 @@
     {
         void AttachDevice(IRadio radio);
         void DetachDevice();
-        void Start();
+        bool Start();
         void Stop();
     }
 }

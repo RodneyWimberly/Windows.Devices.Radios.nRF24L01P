@@ -2,43 +2,27 @@
 using System.Threading;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
-using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
-    public class SendReceiveRole : IRole
+    public class SendReceiveRole : RoleBase
     {
-        private IRadio _radio;
         private IReceivePipe _reader;
         private ITransmitPipe _writer;
         private bool _isSending;
         private bool _isMaxRt;
         private readonly ManualResetEvent _sendCompleteEvent;
-        public bool IsRunning { get; private set; }
-        public delegate void DataArrivedDelegate(byte[] data);
-        public event DataArrivedDelegate DataArrived;
+        public event EventHandler<byte[]> DataArrived;
 
         public SendReceiveRole()
         {
-            IsRunning = false;
             DataArrived = null;
             _isMaxRt = false;
             _isSending = false;
             _sendCompleteEvent = new ManualResetEvent(false);
         }
 
-        public void AttachDevice(IRadio radio)
-        {
-            _radio = radio;
-        }
-
-        public void DetachDevice()
-        {
-            _radio = null;
-        }
-
         private byte[] _sendAddress;
-
         public byte[] SendAddress
         {
             get { return _sendAddress; }
@@ -50,7 +34,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         }
 
         private byte[] _receiveAddress;
-
         public byte[] ReceiveAddress
         {
             get { return _receiveAddress; }
@@ -65,41 +48,47 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         {
             if (IsRunning) throw new InvalidOperationException("Please call this method before you call the Start method");
             if (pipeId > 5 || pipeId < 2) throw new ArgumentOutOfRangeException(nameof(pipeId), "pipeId should be 2-5");
-            _radio.ReceivePipes[pipeId].Address = new byte[1] { address };
-            _radio.ReceivePipes[pipeId].AutoAcknowledgementEnabled = true;
-            _radio.ReceivePipes[pipeId].DynamicPayloadLengthEnabled = true;
-            _radio.ReceivePipes[pipeId].Enabled = true;
+            Radio.ReceivePipes[pipeId].Address = new byte[1] { address };
+            Radio.ReceivePipes[pipeId].AutoAcknowledgementEnabled = true;
+            Radio.ReceivePipes[pipeId].DynamicPayloadLengthEnabled = true;
+            Radio.ReceivePipes[pipeId].Enabled = true;
         }
 
         public void DisableReceivePipe(int pipeId)
         {
             if (IsRunning) throw new InvalidOperationException("Please call this method before you call the Start method");
             if (pipeId > 5 || pipeId < 2) throw new ArgumentOutOfRangeException(nameof(pipeId), "pipeId should be 2-5");
-            _radio.ReceivePipes[pipeId].Enabled = false;
+            Radio.ReceivePipes[pipeId].Enabled = false;
         }
 
-        public void Start()
+        public override bool Start()
         {
-            if (IsRunning) return;
             if (SendAddress == null || ReceiveAddress == null) throw new InvalidOperationException("Please set the SendAddress and ReceiveAddress before Start");
-            _radio.Status = DeviceStatus.StandBy;
-            _radio.Configuration.DynamicPayloadLengthEnabled = true;
-            _radio.ReceivePipes[0].AutoAcknowledgementEnabled = true;
-            _radio.ReceivePipes[0].DynamicPayloadLengthEnabled = true;
-            _radio.ReceivePipes[0].Address = this.SendAddress;
-            _radio.ReceivePipes[0].Enabled = true;
-            _writer = _radio.TransmitPipe;
+
+            base.Start();
+
+            Radio.ReceivePipes[0].AutoAcknowledgementEnabled = true;
+            Radio.ReceivePipes[0].DynamicPayloadLengthEnabled = true;
+            Radio.ReceivePipes[0].Address = SendAddress;
+            Radio.ReceivePipes[0].Enabled = true;
+
+            _writer = Radio.TransmitPipe;
             _writer.Address = SendAddress;
-            _reader = _radio.ReceivePipes[1];
+
+            _reader = Radio.ReceivePipes[1];
             _reader.AutoAcknowledgementEnabled = true;
             _reader.DynamicPayloadLengthEnabled = true;
-            _reader.Address = this.ReceiveAddress;
+            _reader.Address = ReceiveAddress;
             _reader.Enabled = true;
+
             _reader.FlushBuffer();
             _writer.FlushBuffer();
-            //_radio.OnInterrupt += radio_OnInterrupt;
-            _radio.Status = DeviceStatus.ReceiveMode;
+
+            Radio.OnInterrupt += Radio_OnInterrupt;
+            Radio.Status = DeviceStatus.ReceiveMode;
             IsRunning = true;
+
+            return true;
         }
 
         /// <summary>
@@ -118,9 +107,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             _isMaxRt = false;
             _isSending = true;
             int length = buffer.Length;
-            _radio.Status = DeviceStatus.StandBy;
+            Radio.Status = DeviceStatus.StandBy;
             _writer.FlushBuffer();
-            _radio.Status = DeviceStatus.TransmitMode;
+            Radio.Status = DeviceStatus.TransmitMode;
             while (bytesLeft > 0)
             {
                 int sendBufferLength = Math.Min(bytesLeft, 32);
@@ -137,36 +126,28 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
                     break;
                 }
             }
-            _radio.Status = DeviceStatus.StandBy;
-            _radio.Status = DeviceStatus.ReceiveMode;
+            Radio.Status = DeviceStatus.StandBy;
+            Radio.Status = DeviceStatus.ReceiveMode;
             _isSending = false;
             return result;
         }
 
-        private void radio_OnInterrupt(StatusRegister status)
+        protected override void Radio_OnInterrupt(object sender, Registers.StatusRegister e)
         {
-            if (status.MaximunTransmitRetries)
+            base.Radio_OnInterrupt(sender, e);
+            if (e.MaximunTransmitRetries)
             {
                 _isMaxRt = true;
                 _sendCompleteEvent.Set();
             }
-            if (status.TransmitDataSent)
+            if (e.TransmitDataSent)
                 _sendCompleteEvent.Set();
-            _radio.Status = DeviceStatus.StandBy;
-            if (status.ReceiveDataReady)
-                DataArrived?.Invoke(_reader.ReadBufferAll());
-            status.Save();
+            Radio.Status = DeviceStatus.StandBy;
+            if (e.ReceiveDataReady)
+                DataArrived?.Invoke(this, _reader.ReadBufferAll());
+            e.Save();
             if (!_isSending)
-                _radio.Status = DeviceStatus.ReceiveMode;
-        }
-
-        public void Stop()
-        {
-            if (!IsRunning) return;
-            //_radio.OnInterrupt -= radio_OnInterrupt;
-            _radio.Status = DeviceStatus.StandBy;
-            _radio.Status = DeviceStatus.PowerDown;
-            IsRunning = false;
+                Radio.Status = DeviceStatus.ReceiveMode;
         }
     }
 }

@@ -8,11 +8,13 @@ namespace Windows.Devices.Radios.nRF24L01P
 {
     public class Diagnostics
     {
+        private readonly IRadio _radio;
         private readonly IRadioConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
 
-        public Diagnostics(IRadioConfiguration configuration, ICommandProcessor commandProcessor)
+        public Diagnostics(IRadio radio, IRadioConfiguration configuration, ICommandProcessor commandProcessor)
         {
+            _radio = radio;
             _configuration = configuration;
             _commandProcessor = commandProcessor;
         }
@@ -81,9 +83,12 @@ namespace Windows.Devices.Radios.nRF24L01P
             sb.AppendLine("CRC Enabled\t\t = " + _configuration.CrcEnabled);
             sb.AppendLine("CRC Encoding\t = " + _configuration.CrcEncodingScheme.GetName());
             sb.AppendLine("PA Power\t\t = " + _configuration.PowerLevel.GetName());
-
+            sb.AppendLine("Retransmit Delay = " + _configuration.AutoRetransmitDelay.GetName());
+            sb.AppendLine("Device Status\t = " + _radio.Status.GetName());
+            sb.AppendLine("Transmit FIFO\t = " + _radio.TransmitPipe.FifoStatus.GetName());
+            sb.AppendLine("Receive FIFO\t = " + _radio.ReceivePipes[0].FifoStatus.GetName());
+            sb.AppendLine("Power Detector\t = " + _radio.Configuration.Registers.ReceivedPowerDetectorRegister.ReceivedPowerDetector);
             return sb.ToString();
         }
-
     }
 }

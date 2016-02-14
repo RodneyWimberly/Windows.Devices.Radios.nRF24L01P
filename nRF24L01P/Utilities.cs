@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Windows.Devices.Radios.nRF24L01P
@@ -29,5 +30,17 @@ namespace Windows.Devices.Radios.nRF24L01P
             int low = bits & 0x0F;
             return "0x" + new string(new char[] { hex[high], hex[low] });
         }
+
+        public static void DumpBytes(byte[] value, StringBuilder sb)
+        {
+            foreach (byte t in value)
+            {
+                sb.Append(Utilities.Byte2Hex(t));
+                sb.Append(" ");
+            }
+            sb.Length--;
+            sb.AppendLine();
+        }
+
     }
 }

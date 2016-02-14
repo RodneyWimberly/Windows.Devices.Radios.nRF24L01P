@@ -20,6 +20,37 @@ namespace Windows.Devices.Radios.nRF24L01P
             Registers.LoadRegisters();
         }
 
+        public bool EnableContiuousCarrierTransmit
+        {
+            get
+            {
+                RfSetupRegister rfSetupRegister = Registers.RfSetupRegister;
+                return rfSetupRegister.EnableContiuousCarrierTransmit && rfSetupRegister.ForcePllSignalLock;
+            }
+            set
+            {
+                RfSetupRegister rfSetupRegister = Registers.RfSetupRegister;
+                rfSetupRegister.EnableContiuousCarrierTransmit = value;
+                rfSetupRegister.ForcePllSignalLock = value;
+                rfSetupRegister.Save();
+            }
+        }
+
+        public bool EnableAutoAcknowledgement
+        {
+            get
+            {
+                EnableAutoAcknowledgementRegister autoAckRegister = Registers.EnableAutoAcknowledgementRegister;
+                return autoAckRegister.EnableAutoAcknowledgement;
+            }
+            set
+            {
+                EnableAutoAcknowledgementRegister autoAckRegister = Registers.EnableAutoAcknowledgementRegister;
+                autoAckRegister.EnableAutoAcknowledgement = value;
+                autoAckRegister.Save();
+            }
+        }
+
         public DataRates DataRate
         {
             get

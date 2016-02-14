@@ -57,7 +57,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         protected bool GetBoolProperty(BitMasks propertyMask)
         {
-            return GetByteProperty(propertyMask) > 0;
+            return (Value[0] & (byte)propertyMask) > 0;
+            //return GetByteProperty(propertyMask) > 0;
         }
 
         protected byte GetByteProperty(BitMasks propertyMask)
@@ -67,7 +68,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         protected void SetBoolProperty(BitMasks propertyMask, bool value)
         {
-            SetByteProperty(propertyMask, Convert.ToByte(value));
+            Value[0] = (byte)(value ? (Value[0] | (byte)propertyMask) : (Value[0] & ~(byte)propertyMask));
         }
 
         protected void SetByteProperty(BitMasks propertyMask, byte value)
