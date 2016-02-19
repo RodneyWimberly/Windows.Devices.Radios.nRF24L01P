@@ -17,6 +17,14 @@ namespace Windows.Devices.Radios.nRF24L01P
             _commandProcessor = commandProcessor;
             _registerManager = registerManager;
             _payloadWidth = Constants.MaxPayloadWidth;
+
+            // Attempt to set DataRate to 250Kbps to determine if this is a plus model
+            DataRates oldDataRate = DataRate;
+            DataRate = DataRates.DataRate250Kbps;
+            IsPlusModel = DataRate == DataRates.DataRate250Kbps;
+            DataRate = oldDataRate;
+
+            _commandProcessor.ControllerName = RadioModel.GetName();
         }
 
         public bool EnableContiuousCarrierTransmit

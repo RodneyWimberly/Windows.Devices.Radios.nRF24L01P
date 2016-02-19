@@ -17,12 +17,21 @@ namespace Windows.Devices.Radios.nRF24L01P
         public Func<DeviceStatus> GetDeviceStatus { get; set; }
         public bool CheckStatus { get; set; }
 
+        public int ChipSelectLine
+        {
+            get { return _spiDevice.ConnectionSettings.ChipSelectLine; }
+            set { _spiDevice.ConnectionSettings.ChipSelectLine = value; }
+        }
+
+        public string ControllerName { get; set; }
+
         public CommandProcessor(SpiDevice spiDevice, bool checkStatus = true)
         {
             _revertBytes = BitConverter.IsLittleEndian;
             CheckStatus = checkStatus;
             SyncRoot = new object();
             _spiDevice = spiDevice;
+
         }
 
         public byte[] ExecuteCommand(DeviceCommands deviceCommand, byte address, byte[] value, bool autoRevert = true)
@@ -98,6 +107,11 @@ namespace Windows.Devices.Radios.nRF24L01P
             DeviceStatus? status = GetDeviceStatus?.Invoke();
             if (CheckStatus && status.HasValue && (deviceCommand == DeviceCommands.W_REGISTER && !(status == DeviceStatus.StandBy || status == DeviceStatus.PowerDown)))
                 throw new InvalidOperationException("Writing register should only in Standby or PowerDown mode");
+        }
+
+        public void Dispose()
+        {
+            _spiDevice.Dispose();
         }
     }
 }

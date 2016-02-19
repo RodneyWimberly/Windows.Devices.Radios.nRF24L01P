@@ -120,6 +120,7 @@
     <Compile Include="Interfaces\ITransmitPipe.cs" />
     <Compile Include="Interfaces\IRegisterManager.cs" />
     <Compile Include="Interfaces\IRegisterBase.cs" />
+    <Compile Include="InterruptedEventArgs.cs" />
     <Compile Include="Registers\PipeRegisterBase.cs" />
     <Compile Include="Registers\PropertyMasks.cs" />
     <Compile Include="Registers\AddressPipeRegister.cs" />

@@ -30,7 +30,7 @@
   <Import Project="$(NuProjPath)\NuProj.props" Condition="Exists('$(NuProjPath)\NuProj.props')" />
   <PropertyGroup Label="Configuration">
     <Id>Windows.Devices.Radios.nRF24L01P</Id>
-    <Version>1.0.5</Version>
+    <Version>1.1.0</Version>
     <Title>nRF24L01P</Title>
     <Authors>Rodney Wimberly</Authors>
     <Owners>Rodney Wimberly</Owners>

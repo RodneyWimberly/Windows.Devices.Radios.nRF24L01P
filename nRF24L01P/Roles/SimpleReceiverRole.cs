@@ -1,7 +1,6 @@
 ﻿using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
-using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
@@ -24,7 +23,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             _reader.FlushBuffer();
             Radio.TransmitPipe.FlushBuffer();
 
-            Radio.OnInterrupt += radio_OnInterrupt;
+            Radio.Interrupted += Radio_Interrupted;
             Radio.Status = DeviceStatus.StandBy;
             Radio.Status = DeviceStatus.ReceiveMode;
             IsRunning = true;
@@ -32,13 +31,13 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             return IsRunning;
         }
 
-        protected virtual void radio_OnInterrupt(object sender, StatusRegister status)
+        protected override void Radio_Interrupted(object sender, InterruptedEventArgs e)
         {
-            if (status.ReceiveDataReady && DataArrived != null)
+            if (e.StatusRegister.ReceiveDataReady && DataArrived != null)
             {
                 DataArrived(this, _reader.ReadBufferAll());
                 Radio.Status = DeviceStatus.StandBy;
-                status.Save();
+                e.StatusRegister.Save();
                 Radio.Status = DeviceStatus.ReceiveMode;
             }
         }

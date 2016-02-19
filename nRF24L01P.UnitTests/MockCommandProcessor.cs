@@ -48,6 +48,10 @@ namespace nRF24L01P.UnitTests
             }
         }
 
+        public int ChipSelectLine { get; set; }
+
+        public string ControllerName { get; set; }
+
         public byte[] ExecuteCommandReturns;
         public byte ExecuteCommand(DeviceCommands deviceCommand)
         {
@@ -62,6 +66,10 @@ namespace nRF24L01P.UnitTests
         public byte[] ExecuteCommand(DeviceCommands deviceCommand, byte address, byte[] value, bool autoRevert = true)
         {
             return ExecuteCommandReturns;
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

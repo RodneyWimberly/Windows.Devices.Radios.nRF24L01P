@@ -1,11 +1,11 @@
+using Microsoft.IoT.DeviceCore;
 using System;
 using System.Collections.Generic;
 using Windows.Devices.Radios.nRF24L01P.Enums;
-using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P.Interfaces
 {
-    public interface IRadio
+    public interface IRadio : IDevice
     {
         IRegisterManager RegisterManager { get; }
         IRadioConfiguration Configuration { get; }
@@ -14,6 +14,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         DeviceStatus Status { get; set; }
         string ToString();
         string GetDiagnostics();
-        event EventHandler<StatusRegister> OnInterrupt;
+        event EventHandler<InterruptedEventArgs> Interrupted;
     }
 }

@@ -15,13 +15,14 @@ namespace Windows.Devices.Radios.nRF24L01P
     public class Radio : IRadio
     {
         private readonly GpioPin _cePin;
+        private readonly GpioPin _irqPin;
         private readonly ICommandProcessor _commandProcessor;
 
         public IRegisterManager RegisterManager { get; }
         public IRadioConfiguration Configuration { get; }
         public ITransmitPipe TransmitPipe { get; }
         public IDictionary<int, IReceivePipe> ReceivePipes { get; }
-        public event EventHandler<StatusRegister> OnInterrupt;
+        public event EventHandler<InterruptedEventArgs> Interrupted;
 
         public Radio(ICommandProcessor commandProcessor, GpioPin cePin, GpioPin irqPin = null)
         {
@@ -52,16 +53,11 @@ namespace Windows.Devices.Radios.nRF24L01P
                 {5, new ReceivePipe(Configuration, _commandProcessor, RegisterManager, 5)}
             };
 
-            // Attempt to set DataRate to 250Kbps to determine if this is a plus model
-            DataRates oldDataRate = Configuration.DataRate;
-            Configuration.DataRate = DataRates.DataRate250Kbps;
-            Configuration.IsPlusModel = Configuration.DataRate == DataRates.DataRate250Kbps;
-            Configuration.DataRate = oldDataRate;
-
             if (irqPin != null)
             {
-                irqPin.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 50);
-                irqPin.ValueChanged += irqPin_ValueChanged;
+                _irqPin = irqPin;
+                _irqPin.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 50);
+                _irqPin.ValueChanged += irqPin_ValueChanged;
             }
 
             Task.Delay(1).Wait();
@@ -73,12 +69,19 @@ namespace Windows.Devices.Radios.nRF24L01P
             if (args.Edge != GpioPinEdge.FallingEdge) return;
 
             RegisterManager.StatusRegister.Load();
-            OnInterrupt?.Invoke(this, RegisterManager.StatusRegister);
+            Interrupted?.Invoke(this, new InterruptedEventArgs { StatusRegister = RegisterManager.StatusRegister });
         }
 
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+        public void Dispose()
+        {
+            _commandProcessor?.Dispose();
+            _cePin?.Dispose();
+            _irqPin?.Dispose();
         }
 
         public string GetDiagnostics()
@@ -116,7 +119,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                 switch (_status)
                 {
                     case DeviceStatus.Undefined:
-                        throw new InvalidOperationException("WTF???");
+                        throw new InvalidOperationException("Undefined Device Status");
                     case DeviceStatus.PowerDown:
                         if (lastStatus == DeviceStatus.StandBy)
                         {

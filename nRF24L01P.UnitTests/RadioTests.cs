@@ -36,19 +36,17 @@ namespace nRF24L01P.UnitTests
         }
 
         [TestMethod]
-        public void TestMethod1()
+        public void GetDiagnosticsTest()
         {
             Debug.WriteLine(_radio.GetDiagnostics());
 
-            SendReceiveRole sendReceive = new SendReceiveRole();
-            sendReceive.AttachDevice(_radio);
-            sendReceive.DataArrived += SendReceive_DataArrived;
-            sendReceive.SendAddress = new byte[] { 0x54, 0x4d, 0x52, 0x68, 0x7C };
-            sendReceive.ReceiveAddress = new byte[] { 0xAB, 0xCD, 0xAB, 0xCD, 0x71 };
-            sendReceive.Start();
+            //SendReceiveRole sendReceive = new SendReceiveRole();
+            //sendReceive.AttachDevice(_radio);
+            //sendReceive.DataArrived += SendReceive_DataArrived;
+            //sendReceive.SendAddress = new byte[] { 0x54, 0x4d, 0x52, 0x68, 0x7C };
+            //sendReceive.ReceiveAddress = new byte[] { 0xAB, 0xCD, 0xAB, 0xCD, 0x71 };
+            //sendReceive.Start();
         }
-
-
 
         [TestMethod]
         public void ConstantCarrierWaveOutputForTestinng()

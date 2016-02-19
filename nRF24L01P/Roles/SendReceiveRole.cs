@@ -84,7 +84,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             _reader.FlushBuffer();
             _writer.FlushBuffer();
 
-            Radio.OnInterrupt += Radio_OnInterrupt;
+            Radio.Interrupted += Radio_Interrupted;
             Radio.Status = DeviceStatus.ReceiveMode;
             IsRunning = true;
 
@@ -132,20 +132,20 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             return result;
         }
 
-        protected override void Radio_OnInterrupt(object sender, Registers.StatusRegister e)
+        protected override void Radio_Interrupted(object sender, InterruptedEventArgs e)
         {
-            base.Radio_OnInterrupt(sender, e);
-            if (e.MaximunTransmitRetries)
+            base.Radio_Interrupted(sender, e);
+            if (e.StatusRegister.MaximunTransmitRetries)
             {
                 _isMaxRt = true;
                 _sendCompleteEvent.Set();
             }
-            if (e.TransmitDataSent)
+            if (e.StatusRegister.TransmitDataSent)
                 _sendCompleteEvent.Set();
             Radio.Status = DeviceStatus.StandBy;
-            if (e.ReceiveDataReady)
+            if (e.StatusRegister.ReceiveDataReady)
                 DataArrived?.Invoke(this, _reader.ReadBufferAll());
-            e.Save();
+            e.StatusRegister.Save();
             if (!_isSending)
                 Radio.Status = DeviceStatus.ReceiveMode;
         }
