@@ -13,7 +13,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
 
         public override bool Start()
         {
-            if (base.Start()) return false;
+            if (!base.Start()) return false;
 
             _reader = Radio.ReceivePipes[1];
             _reader.AutoAcknowledgementEnabled = true;

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P;
+using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 using Windows.Devices.Radios.nRF24L01P.Roles;
@@ -19,6 +20,7 @@ namespace nRF24L01P.UnitTests
         private static GpioPin _cePin;
         private static SpiDevice _spiDevice;
         private static IRadio _radio;
+        private static ICommandProcessor _commandProcessor;
 
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
@@ -29,8 +31,8 @@ namespace nRF24L01P.UnitTests
 
             DeviceInformationCollection devicesInfo = DeviceInformation.FindAllAsync(SpiDevice.GetDeviceSelector("SPI0")).GetAwaiter().GetResult();
             _spiDevice = SpiDevice.FromIdAsync(devicesInfo[0].Id, new SpiConnectionSettings(0)).GetAwaiter().GetResult();
-
-            _radio = new Radio(_spiDevice, _cePin, _irqPin);
+            _commandProcessor = new CommandProcessor(_spiDevice); // new MockCommandProcessor();
+            _radio = new Radio(_commandProcessor, _cePin, _irqPin);
         }
 
         [TestMethod]
@@ -46,28 +48,30 @@ namespace nRF24L01P.UnitTests
             sendReceive.Start();
         }
 
+
+
         [TestMethod]
         public void ConstantCarrierWaveOutputForTestinng()
         {
             Debug.WriteLine(_radio.GetDiagnostics());
-            ConfigurationRegister configurationRegister = _radio.Configuration.Registers.ConfigurationRegister;
+            ConfigurationRegister configurationRegister = _radio.RegisterManager.ConfigurationRegister;
             configurationRegister.PowerUp = true;
             configurationRegister.PrimaryReceiveMode = false;
             configurationRegister.Save();
             Task.Delay(150).Wait();
 
-            RfSetupRegister rfSetupRegister = _radio.Configuration.Registers.RfSetupRegister;
+            RfSetupRegister rfSetupRegister = _radio.RegisterManager.RfSetupRegister;
             rfSetupRegister.EnableContiuousCarrierTransmit = true;
             rfSetupRegister.ForcePllSignalLock = true;
             rfSetupRegister.PowerLevelHigh = true;
             rfSetupRegister.PowerLevelLow = true;
             rfSetupRegister.Save();
 
-            RfChannelRegister rfChannelRegister = _radio.Configuration.Registers.RfChannelRegister;
+            RfChannelRegister rfChannelRegister = _radio.RegisterManager.RfChannelRegister;
             rfChannelRegister.RfChannel = 76;
             rfChannelRegister.Save();
 
-            _radio.ChipEnable(true);
+            _radio.Status = DeviceStatus.ReceiveMode;
         }
 
         private void SendReceive_DataArrived(object sender, byte[] data)

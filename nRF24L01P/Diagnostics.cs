@@ -11,12 +11,14 @@ namespace Windows.Devices.Radios.nRF24L01P
         private readonly IRadio _radio;
         private readonly IRadioConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
+        private readonly IRegisterManager _registerManager;
 
-        public Diagnostics(IRadio radio, IRadioConfiguration configuration, ICommandProcessor commandProcessor)
+        public Diagnostics(IRadio radio, IRadioConfiguration configuration, ICommandProcessor commandProcessor, IRegisterManager registerManager)
         {
             _radio = radio;
             _configuration = configuration;
             _commandProcessor = commandProcessor;
+            _registerManager = registerManager;
         }
 
         private string GetAddressRegister(string name, byte register, int quantity)
@@ -56,7 +58,7 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             StringBuilder sb = new StringBuilder();
 
-            byte status = _configuration.Registers.StatusRegister;
+            byte status = _registerManager.StatusRegister;
             sb.AppendFormat("STATUS\t\t\t = 0x{0} RX_DR={1} TX_DS={2} MAX_RT={3} RX_P_NO={4} TX_FULL={5}\r\n",
                 status.ToString("X"),
                 (status & (byte)PropertyMasks.RX_DR),
@@ -64,7 +66,6 @@ namespace Windows.Devices.Radios.nRF24L01P
                 (status & (byte)PropertyMasks.MAX_RT),
                 (status & (byte)PropertyMasks.RX_P_NO),
                 (status & (byte)PropertyMasks.TX_FULL));
-            //(status << (4) >> (5)),
 
             sb.AppendLine(GetAddressRegister("RX_ADDR_P0-1", RegisterAddresses.RX_ADDR_P0, 2));
             sb.AppendLine(GetByteRegister("RX_ADDR_P2-5", RegisterAddresses.RX_ADDR_P2, 4));
@@ -87,7 +88,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             sb.AppendLine("Device Status\t = " + _radio.Status.GetName());
             sb.AppendLine("Transmit FIFO\t = " + _radio.TransmitPipe.FifoStatus.GetName());
             sb.AppendLine("Receive FIFO\t = " + _radio.ReceivePipes[0].FifoStatus.GetName());
-            sb.AppendLine("Power Detector\t = " + _radio.Configuration.Registers.ReceivedPowerDetectorRegister.ReceivedPowerDetector);
+            sb.AppendLine("Power Detector\t = " + _registerManager.ReceivedPowerDetectorRegister.ReceivedPowerDetector);
             return sb.ToString();
         }
     }

@@ -80,9 +80,11 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         // RF Setup register
         internal const BitMasks CONT_WAVE = BitMasks.Bit7;
+        internal const BitMasks RF_DR = BitMasks.Bit5 | BitMasks.Bit3;
         internal const BitMasks RF_DR_LOW = BitMasks.Bit5;
         internal const BitMasks PLL_LOCK = BitMasks.Bit4;
         internal const BitMasks RF_DR_HIGH = BitMasks.Bit3;
+        internal const BitMasks RF_PWR = BitMasks.Bit1 | BitMasks.Bit2;
         internal const BitMasks RF_PWR_HIGH = BitMasks.Bit2;
         internal const BitMasks RF_PWR_LOW = BitMasks.Bit1;
 

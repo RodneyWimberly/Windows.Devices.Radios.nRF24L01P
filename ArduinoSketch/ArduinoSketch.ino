@@ -1,4 +1,4 @@
-﻿/*
+/*
 TMRh20 2014
 
 This program is free software; you can redistribute it and/or
@@ -7,7 +7,7 @@ version 2 as published by the Free Software Foundation.
 */
 
 /*
- General Data Transfer Rate Test
+General Data Transfer Rate Test
 This example demonstrates basic data transfer functionality with the
 updated library. This example will display the transfer rates acheived using
 the slower form of high-speed transfer using blocking-writes.
@@ -19,7 +19,7 @@ the slower form of high-speed transfer using blocking-writes.
 
 /*************  USER Configuration *****************************/
 // Hardware configuration
-RF24 radio(7, 8);                        // Set up nRF24L01 radio on SPI bus plus pins 7 & 8
+RF24 radio(5, 8);// Set up nRF24L01 radio on SPI bus plus pins 7 & 8
 
 /***************************************************************/
 
@@ -56,10 +56,10 @@ void setup(void) {
 	radio.powerUp();                        //Power up the radio
 }
 
-void loop(void){
+void loop(void) {
 
 
-	if (role == TX){
+	if (role == TX) {
 
 		delay(2000);
 		sendString("Hello world");
@@ -68,7 +68,7 @@ void loop(void){
 
 
 
-	if (role == RX){
+	if (role == RX) {
 		readLine();
 	}
 	if (Serial.available())
@@ -101,33 +101,33 @@ void sendString(String s)
 	char sendBuffer[1];
 
 	char endSignal[8] = "1234567";
-	for (int i = 0; i<length; i++)
+	for (int i = 0; i < length; i++)
 	{
 		sendBuffer[0] = buffer[i];
 		//radio.writeFast(&sendBuffer,1);
-		//radio.txStandBy();//flush FIFO 
+		//radio.txStandBy();//flush FIFO
 	}
 
 	//for (int i=0;i<3;i++)
 	//{
 	radio.writeFast(&endSignal, 8);
-	radio.txStandBy();//flush FIFO 
-	//}
+	radio.txStandBy();//flush FIFO
+					  //}
 
-	//    radio.txStandBy();//flush FIFO 
+					  //    radio.txStandBy();//flush FIFO
 }
 
 void readLine()
 {
 
-	
+
 	char buffer1[8] = "7654321";
 
 
-	while (radio.available()){
+	while (radio.available()) {
 		byte payloadSize = radio.getDynamicPayloadSize();
-                char buffer[payloadSize+1];
-                buffer[payloadSize]=0; //to support receiving data from Netduino, need to fix this at Netduino side
+		char buffer[payloadSize + 1];
+		buffer[payloadSize] = 0; //to support receiving data from Netduino, need to fix this at Netduino side
 		radio.read(&buffer, payloadSize);
 		Serial.println(buffer);
 		//      Serial.print("|");

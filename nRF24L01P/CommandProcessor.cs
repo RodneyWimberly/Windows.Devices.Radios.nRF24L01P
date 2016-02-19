@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Spi;
@@ -9,29 +10,21 @@ namespace Windows.Devices.Radios.nRF24L01P
     {
         private readonly bool _revertBytes;
         private readonly SpiDevice _spiDevice;
-        private readonly IRadio _radio;
 
         protected readonly object SyncRoot;
 
         public Action<byte[]> LoadStatusRegister { get; set; }
+        public Func<DeviceStatus> GetDeviceStatus { get; set; }
         public bool CheckStatus { get; set; }
 
-        public CommandProcessor(SpiDevice spiDevice, IRadio radio, bool checkStatus = true)
+        public CommandProcessor(SpiDevice spiDevice, bool checkStatus = true)
         {
             _revertBytes = BitConverter.IsLittleEndian;
             CheckStatus = checkStatus;
             SyncRoot = new object();
             _spiDevice = spiDevice;
-            _radio = radio;
         }
 
-        /// <summary>
-        /// write command with address to SPI
-        /// </summary>
-        /// <param name="deviceCommand"></param>
-        /// <param name="address"></param>
-        /// <param name="value">32 bytes max, no exception handling here</param>
-        /// <returns></returns>
         public byte[] ExecuteCommand(DeviceCommands deviceCommand, byte address, byte[] value, bool autoRevert = true)
         {
             CanExecuteCommand(deviceCommand);
@@ -57,6 +50,8 @@ namespace Windows.Devices.Radios.nRF24L01P
                 _spiDevice.TransferFullDuplex(sendBuffer, receiveBuffer);
             }
 
+            Task.Delay(1).Wait();
+
             // The STATUS register value is returned at first byte on each SPI call
             LoadStatusRegister?.Invoke(new[] { receiveBuffer[0] });
 
@@ -70,11 +65,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             return result;
         }
 
-        /// <summary>
-        /// write single command to SPI, return value is status register value
-        /// </summary>
-        /// <param name="deviceCommand"></param>
-        /// <param name="address"></param>
         public byte ExecuteCommand(DeviceCommands deviceCommand, byte address)
         {
             CanExecuteCommand(deviceCommand);
@@ -89,10 +79,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             return receiveBuffer[0];
         }
 
-        /// <summary>
-        /// write single command to SPI, return value is status register value
-        /// </summary>
-        /// <param name="deviceCommand"></param>
         public byte ExecuteCommand(DeviceCommands deviceCommand)
         {
             CanExecuteCommand(deviceCommand);
@@ -109,8 +95,8 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         private void CanExecuteCommand(DeviceCommands deviceCommand)
         {
-            // Can we write at this time
-            if (CheckStatus && (deviceCommand == DeviceCommands.W_REGISTER && !(_radio.Status == DeviceStatus.StandBy || _radio.Status == DeviceStatus.PowerDown)))
+            DeviceStatus? status = GetDeviceStatus?.Invoke();
+            if (CheckStatus && status.HasValue && (deviceCommand == DeviceCommands.W_REGISTER && !(status == DeviceStatus.StandBy || status == DeviceStatus.PowerDown)))
                 throw new InvalidOperationException("Writing register should only in Standby or PowerDown mode");
         }
     }

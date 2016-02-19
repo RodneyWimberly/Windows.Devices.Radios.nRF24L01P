@@ -7,31 +7,32 @@ namespace Windows.Devices.Radios.nRF24L01P
 {
     public class TransmitPipe : ITransmitPipe
     {
-        private readonly IRegisterManager _registers;
+        private readonly IRegisterManager _registerManager;
         private readonly IRadioConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
-        public TransmitPipe(IRadioConfiguration configuration, ICommandProcessor commandProcessor)
+
+        public TransmitPipe(IRadioConfiguration configuration, ICommandProcessor commandProcessor, IRegisterManager registerManager)
         {
             _configuration = configuration;
             _commandProcessor = commandProcessor;
-            _registers = configuration.Registers;
+            _registerManager = registerManager;
         }
 
         public byte[] Address
         {
             get
             {
-                return _registers.TransmitAddressRegister;
+                return _registerManager.TransmitAddressRegister;
             }
             set
             {
                 int addressWidth = _configuration.AddressWidth;
                 if (value.Length < addressWidth)
                     throw new InvalidOperationException("Address length should equal or greater than device.Config.AddressWidth");
-                else if (value.Length > addressWidth)
+                if (value.Length > addressWidth)
                     Array.Resize(ref value, addressWidth);
-                _registers.TransmitAddressRegister.Load(value);
-                _registers.TransmitAddressRegister.Save();
+                _registerManager.TransmitAddressRegister.Load(value);
+                _registerManager.TransmitAddressRegister.Save();
             }
         }
 
@@ -44,10 +45,10 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                _registers.FifoStatusRegister.Load();
-                if (_registers.FifoStatusRegister.TransmitFifoFull)
+                _registerManager.FifoStatusRegister.Load();
+                if (_registerManager.FifoStatusRegister.TransmitFifoFull)
                     return FifoStatus.Full;
-                if (_registers.FifoStatusRegister.TransmitFifoEmpty)
+                if (_registerManager.FifoStatusRegister.TransmitFifoEmpty)
                     return FifoStatus.Empty;
                 return FifoStatus.InUse;
             }

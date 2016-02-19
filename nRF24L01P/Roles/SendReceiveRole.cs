@@ -65,7 +65,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         {
             if (SendAddress == null || ReceiveAddress == null) throw new InvalidOperationException("Please set the SendAddress and ReceiveAddress before Start");
 
-            base.Start();
+            if (!base.Start()) return false;
 
             Radio.ReceivePipes[0].AutoAcknowledgementEnabled = true;
             Radio.ReceivePipes[0].DynamicPayloadLengthEnabled = true;
@@ -88,7 +88,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Radio.Status = DeviceStatus.ReceiveMode;
             IsRunning = true;
 
-            return true;
+            return IsRunning;
         }
 
         /// <summary>

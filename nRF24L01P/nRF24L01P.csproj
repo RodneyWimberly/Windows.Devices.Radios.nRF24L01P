@@ -160,7 +160,6 @@
     <Compile Include="Roles\SimpleReceiverRole.cs" />
     <Compile Include="Roles\SimpleSendRole.cs" />
     <Compile Include="TransmitPipe.cs" />
-    <Compile Include="Utilities.cs" />
     <EmbeddedResource Include="Properties\nRF24L01.rd.xml" />
   </ItemGroup>
   <ItemGroup>

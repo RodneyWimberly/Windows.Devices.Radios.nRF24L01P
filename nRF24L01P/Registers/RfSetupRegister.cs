@@ -7,10 +7,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class RfSetupRegister : RegisterBase
     {
-        public RfSetupRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.RF_SETUP)
-        {
-
-        }
+        public RfSetupRegister(ICommandProcessor commandProcessor) :
+            base(commandProcessor, 1, RegisterAddresses.RF_SETUP)
+        { }
 
         /// <summary>
         /// Enables continuous carrier transmit when high. 
@@ -23,6 +22,16 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         }
 
         /// <summary>
+        /// Force PLL lock signal Only used in test 
+        /// </summary>
+        public bool ForcePllSignalLock
+        {
+            get { return GetBoolProperty(PropertyMasks.PLL_LOCK); }
+            set { SetBoolProperty(PropertyMasks.PLL_LOCK, value); }
+        }
+
+        /// <summary>
+        /// DataRate Low Bit
         /// Set RF Data Rate to 250kbps. 
         /// See RF DR HIGH for encoding.
         /// </summary>
@@ -33,15 +42,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         }
 
         /// <summary>
-        /// Force PLL lock signal Only used in test 
-        /// </summary>
-        public bool ForcePllSignalLock
-        {
-            get { return GetBoolProperty(PropertyMasks.PLL_LOCK); }
-            set { SetBoolProperty(PropertyMasks.PLL_LOCK, value); }
-        }
-
-        /// <summary>
+        /// DataRate High Bit
         /// Select between the high speed data rates. This bit 
         /// is don't care if DataRateLow is set. 
         /// Encoding: 
@@ -58,6 +59,37 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         }
 
         /// <summary>
+        /// Select between the high speed data rates. This bit 
+        /// is don't care if DataRateLow is set. 
+        /// Encoding: 
+        /// (DataRateLow, DataRateHigh): 
+        /// '00' — 1Mbps 
+        /// '01' - 2Mbps 
+        /// '10' - 250kbps 
+        /// '11' — Reserved
+        /// </summary>
+        public byte DataRate
+        {
+            get { return GetByteProperty(PropertyMasks.RF_DR); }
+            set { SetByteProperty(PropertyMasks.RF_DR, value); }
+        }
+
+        /// <summary>
+        /// RF output power Low Bit
+        /// Set RF output power in TX mode
+        ///' 00' - -18dBm 
+        /// '01' - -12dBm
+        /// '10' - -6dBm
+        /// '11' - OdBm
+        /// </summary>
+        public bool PowerLevelLow
+        {
+            get { return GetBoolProperty(PropertyMasks.RF_PWR_LOW); }
+            set { SetBoolProperty(PropertyMasks.RF_PWR_LOW, value); }
+        }
+
+        /// <summary>
+        /// RF output power High Bit
         /// Set RF output power in TX mode
         ///' 00' - -18dBm 
         /// '01' - -12dBm
@@ -77,10 +109,10 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         /// '10' - -6dBm
         /// '11' - OdBm
         /// </summary>
-        public bool PowerLevelLow
+        public byte PowerLevel
         {
-            get { return GetBoolProperty(PropertyMasks.RF_PWR_LOW); }
-            set { SetBoolProperty(PropertyMasks.RF_PWR_LOW, value); }
+            get { return GetByteProperty(PropertyMasks.RF_PWR); }
+            set { SetByteProperty(PropertyMasks.RF_PWR, value); }
         }
     }
 }

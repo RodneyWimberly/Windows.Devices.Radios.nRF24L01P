@@ -7,10 +7,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class FifoStatusRegister : RegisterBase
     {
-        public FifoStatusRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.FIFO_STATUS)
-        {
-
-        }
+        public FifoStatusRegister(ICommandProcessor commandProcessor) :
+            base(commandProcessor, 1, RegisterAddresses.FIFO_STATUS)
+        { }
 
         /// <summary>
         /// Used for a P TX device 

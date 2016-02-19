@@ -7,10 +7,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class RfChannelRegister : RegisterBase
     {
-        public RfChannelRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.RF_CH)
-        {
-
-        }
+        public RfChannelRegister(ICommandProcessor commandProcessor) :
+            base(commandProcessor, 1, RegisterAddresses.RF_CH)
+        { }
 
         /// <summary>
         /// Sets the frequency channel nRF24L01+ operates on

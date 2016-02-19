@@ -10,11 +10,10 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         protected ICommandProcessor CommandProcessor;
 
         public byte[] Value { get; private set; }
-
+        public bool IsDirty { get; private set; }
         public int Length { get; }
         public byte Address { get; }
-        public string Name { get; private set; }
-        public bool IsDirty { get; private set; }
+        public string Name { get; }
 
         protected RegisterBase(ICommandProcessor commandProcessor, int length, byte address, string name = "")
         {
@@ -69,13 +68,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         protected void SetBoolProperty(BitMasks propertyMask, bool value)
         {
             Value[0] = (byte)(value ? (Value[0] | (byte)propertyMask) : (Value[0] & ~(byte)propertyMask));
+            IsDirty = true;
         }
 
         protected void SetByteProperty(BitMasks propertyMask, byte value)
         {
-            int maskedSource = (value & (byte)propertyMask);
-            int maskedTarget = (Value[0] & ~(byte)propertyMask);
-            Value[0] = (byte)(maskedSource | maskedTarget);
+            Value[0] = (byte)((value & (byte)propertyMask) | (Value[0] & ~(byte)propertyMask));
             IsDirty = true;
         }
 

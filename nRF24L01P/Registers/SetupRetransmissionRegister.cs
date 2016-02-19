@@ -7,16 +7,15 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class SetupRetransmissionRegister : RegisterBase
     {
-        public SetupRetransmissionRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.SETUP_RETR)
-        {
-
-        }
+        public SetupRetransmissionRegister(ICommandProcessor commandProcessor) :
+            base(commandProcessor, 1, RegisterAddresses.SETUP_RETR)
+        { }
 
         /// <summary>
         /// Setup of Automatic Retransmission 
         /// Auto Retransmit Delay 
         /// '0000' - Wait 250VS 
-        /// '0001 ' - Wait 
+        /// '0001' - Wait 
         /// '0010' - Wait 7501-IS
         /// (Delay defined from end of transmission to start of next transmission)
         /// </summary>
@@ -28,7 +27,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         /// <summary>
         /// Auto Retransmit Count 
-        /// '0000' —Re-Transmit disabled 
+        /// '0000' — Re-Transmit disabled 
         /// '0001' — Up to 1 Re-Transmit on fail of AA
         /// </summary>
         public byte AutoRetransmitCount

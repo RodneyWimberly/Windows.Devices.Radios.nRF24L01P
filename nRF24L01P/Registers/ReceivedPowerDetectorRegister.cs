@@ -8,10 +8,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
     public class ReceivedPowerDetectorRegister : RegisterBase
     {
-        public ReceivedPowerDetectorRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.RPD)
-        {
-
-        }
+        public ReceivedPowerDetectorRegister(ICommandProcessor commandProcessor) :
+            base(commandProcessor, 1, RegisterAddresses.RPD)
+        { }
 
         /// <summary>
         /// Received Power Detector. This register is called 

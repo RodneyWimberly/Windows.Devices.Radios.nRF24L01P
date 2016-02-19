@@ -7,10 +7,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class FeatureRegister : RegisterBase
     {
-        public FeatureRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.FEATURE)
-        {
-
-        }
+        public FeatureRegister(ICommandProcessor commandProcessor) :
+            base(commandProcessor, 1, RegisterAddresses.FEATURE)
+        { }
 
         /// <summary>
         /// Enables Dynamic Payload Length

@@ -7,10 +7,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class EnableReceiveAddressRegister : RegisterBase
     {
-        public EnableReceiveAddressRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.EN_RXADDR)
-        {
-
-        }
+        public EnableReceiveAddressRegister(ICommandProcessor commandProcessor) :
+            base(commandProcessor, 1, RegisterAddresses.EN_RXADDR)
+        { }
 
         /// <summary>
         /// Enable data pipes

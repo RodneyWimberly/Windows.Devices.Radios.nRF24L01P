@@ -143,10 +143,14 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         /// </summary>
         public const byte FEATURE = 0x1D;
 
-
+        /// <summary>
+        ///   Register Address Mask used for BitWise operations 
+        /// </summary>
         public const byte REGISTER_MASK = 0x1F;
 
+        /// <summary>
+        ///   Empty Address used for DataPipe commands
+        /// </summary>
         public const byte EMPTY_ADDRESS = 0x00;
-
     }
 }

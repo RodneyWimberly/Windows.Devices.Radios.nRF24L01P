@@ -7,7 +7,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         bool EnableContiuousCarrierTransmit { get; set; }
         bool IsPlusModel { get; set; }
         bool EnableAutoAcknowledgement { get; set; }
-        IRegisterManager Registers { get; }
         DataRates DataRate { get; set; }
         PowerLevels PowerLevel { get; set; }
         uint Channel { get; set; }

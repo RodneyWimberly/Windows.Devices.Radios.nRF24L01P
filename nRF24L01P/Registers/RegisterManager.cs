@@ -84,6 +84,11 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
                 {RegisterAddresses.DYNPD, DynamicPayloadLengthRegister},
                 {RegisterAddresses.FEATURE, FeatureRegister}
             };
+
+            // Set the LoadStatusRegister Action of the ICommandProcessor to call 
+            // StatusRegister.Load. This will ensure that the Status register is 
+            // automatically updated after call ICommandProcessor.ExecuteCommand()
+            commandProcessor.LoadStatusRegister = StatusRegister.Load;
         }
 
         public void LoadRegisters() => AllRegisters.LoadAll();

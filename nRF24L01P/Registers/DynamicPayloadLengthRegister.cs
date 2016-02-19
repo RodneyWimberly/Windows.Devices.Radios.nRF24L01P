@@ -7,10 +7,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class DynamicPayloadLengthRegister : RegisterBase
     {
-        public DynamicPayloadLengthRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.DYNPD)
-        {
-
-        }
+        public DynamicPayloadLengthRegister(ICommandProcessor commandProcessor) :
+            base(commandProcessor, 1, RegisterAddresses.DYNPD)
+        { }
 
         /// <summary>
         /// Enable dynamic payload length data pipe 5. 

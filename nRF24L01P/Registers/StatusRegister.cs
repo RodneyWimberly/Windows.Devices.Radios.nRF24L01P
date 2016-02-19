@@ -7,9 +7,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class StatusRegister : RegisterBase
     {
-        public StatusRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.STATUS)
-        {
-        }
+        public StatusRegister(ICommandProcessor commandProcessor) :
+            base(commandProcessor, 1, RegisterAddresses.STATUS)
+        { }
 
         /// <summary>
         /// Data Ready RX FIFO interrupt. Asserted when 

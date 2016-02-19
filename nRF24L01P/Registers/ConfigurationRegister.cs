@@ -7,10 +7,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class ConfigurationRegister : RegisterBase
     {
-        public ConfigurationRegister(ICommandProcessor commandProcessor) : base(commandProcessor, 1, RegisterAddresses.CONFIG)
-        {
-
-        }
+        public ConfigurationRegister(ICommandProcessor commandProcessor) :
+            base(commandProcessor, 1, RegisterAddresses.CONFIG)
+        { }
 
         /// <summary>
         /// Mask interrupt caused by RX DR 

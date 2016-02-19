@@ -12,7 +12,7 @@
 
         static EnumExtensionMethods()
         {
-            _dataRates = new[] { "1 Mbps", "2 Mbps", "250 Kbps" };
+            _dataRates = new[] { "1 Mbps", "2 Mbps", "2.5 Mbps" };
             _crcEncodingSchemes = new[] { "Single Byte", "Double Byte" };
             _powerLevels = new[] { "Minimum (-18dBm)", "Low (-12dBm)", "High (-6dBm)", "Maximum (0dBm)", "Error" };
             _radioModels = new[] { "nRF24L01", "nRF24L01+" };
