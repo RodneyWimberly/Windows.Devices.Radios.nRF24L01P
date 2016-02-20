@@ -1,26 +1,23 @@
 ﻿using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
-using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
     public class SimpleReceiverRole : RoleBase
     {
-        private IReceivePipe _reader;
-        public byte[] Address { get; set; }
         public event EventHandler<byte[]> DataArrived;
 
         public override bool Start()
         {
             if (!base.Start()) return false;
 
-            _reader = Radio.ReceivePipes[1];
-            _reader.AutoAcknowledgementEnabled = true;
-            _reader.DynamicPayloadLengthEnabled = true;
-            _reader.Address = Address;
-            _reader.Enabled = true;
+            Reader = Radio.ReceivePipes[1];
+            Reader.AutoAcknowledgementEnabled = true;
+            Reader.DynamicPayloadLengthEnabled = true;
+            Reader.Address = ReceiveAddress;
+            Reader.Enabled = true;
 
-            _reader.FlushBuffer();
+            Reader.FlushBuffer();
             Radio.TransmitPipe.FlushBuffer();
 
             Radio.Interrupted += Radio_Interrupted;
@@ -35,7 +32,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         {
             if (e.StatusRegister.ReceiveDataReady && DataArrived != null)
             {
-                DataArrived(this, _reader.ReadBufferAll());
+                DataArrived(this, Reader.ReadBufferAll());
                 Radio.Status = DeviceStatus.StandBy;
                 e.StatusRegister.Save();
                 Radio.Status = DeviceStatus.ReceiveMode;

@@ -1,21 +1,18 @@
 ﻿using System;
 using System.Threading;
 using Windows.Devices.Radios.nRF24L01P.Enums;
-using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
     public class SimpleSendRole : RoleBase
     {
-        private IReceivePipe _reader;
-        private ITransmitPipe _writer;
+
         private readonly ManualResetEvent _sentEvent;
-        private bool _maxRt = false;
-        public byte[] Address { get; set; }
+        private bool _maxRetries;
 
         public SimpleSendRole()
         {
-            _maxRt = false;
+            _maxRetries = false;
             _sentEvent = new ManualResetEvent(false);
         }
 
@@ -23,17 +20,17 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         {
             if (!base.Start()) return false;
 
-            _reader = Radio.ReceivePipes[0];
-            _reader.AutoAcknowledgementEnabled = true;
-            _reader.DynamicPayloadLengthEnabled = true;
-            _reader.Address = Address;
-            _reader.Enabled = true;
+            Reader = Radio.ReceivePipes[0];
+            Reader.AutoAcknowledgementEnabled = true;
+            Reader.DynamicPayloadLengthEnabled = true;
+            Reader.Address = SendAddress;
+            Reader.Enabled = true;
 
-            _writer = Radio.TransmitPipe;
-            _writer.Address = Address;
+            Writer = Radio.TransmitPipe;
+            Writer.Address = SendAddress;
 
-            _reader.FlushBuffer();
-            _writer.FlushBuffer();
+            Reader.FlushBuffer();
+            Writer.FlushBuffer();
 
             Radio.Interrupted += Radio_Interrupted;
             Radio.Status = DeviceStatus.StandBy;
@@ -46,8 +43,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         protected override void Radio_Interrupted(object sender, InterruptedEventArgs e)
         {
             if (!e.StatusRegister.TransmitDataSent && !e.StatusRegister.MaximunTransmitRetries) return;
-            _writer.FlushBuffer();
-            _maxRt = e.StatusRegister.MaximunTransmitRetries;
+            Writer.FlushBuffer();
+            _maxRetries = e.StatusRegister.MaximunTransmitRetries;
             Radio.Status = DeviceStatus.StandBy;
             e.StatusRegister.Save();
             Radio.Status = DeviceStatus.TransmitMode;
@@ -57,7 +54,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         public void SendAsync(byte[] buffer)
         {
             if (buffer.Length > 32) throw new ArgumentOutOfRangeException(nameof(buffer), "Buffer should less than 32 bytes");
-            _writer.Write(buffer);
+            Writer.Write(buffer);
         }
 
         public bool Send(byte[] buffer, int timeOut = 1000)
@@ -65,7 +62,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             if (buffer.Length > 32) throw new ArgumentOutOfRangeException(nameof(buffer), "Buffer should less than 32 bytes");
             _sentEvent.Reset();
             SendAsync(buffer);
-            return _sentEvent.WaitOne(timeOut) && !_maxRt;
+            return _sentEvent.WaitOne(timeOut) && !_maxRetries;
         }
     }
 }

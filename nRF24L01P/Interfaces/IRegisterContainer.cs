@@ -2,7 +2,7 @@ using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P.Interfaces
 {
-    public interface IRegisterManager
+    public interface IRegisterContainer
     {
         ConfigurationRegister ConfigurationRegister { get; }
         EnableAutoAcknowledgementRegister EnableAutoAcknowledgementRegister { get; }
@@ -18,9 +18,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         FifoStatusRegister FifoStatusRegister { get; }
         DynamicPayloadLengthRegister DynamicPayloadLengthRegister { get; }
         FeatureRegister FeatureRegister { get; }
-        RegisterCollection<IRegisterBase> AllRegisters { get; }
-        RegisterCollection<AddressPipeRegister> ReceiveAddressPipeRegisters { get; }
-        RegisterCollection<ReceivePayloadWidthPipeRegister> ReceivePayloadWidthPipeRegisters { get; }
+        IRegisterCollection<IRegisterBase> AllRegisters { get; }
+        IRegisterCollection<AddressPipeRegister> ReceiveAddressPipeRegisters { get; }
+        IRegisterCollection<ReceivePayloadWidthPipeRegister> ReceivePayloadWidthPipeRegisters { get; }
         void LoadRegisters();
         void SaveRegisters();
         string ToString();

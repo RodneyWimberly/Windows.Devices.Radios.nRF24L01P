@@ -17,12 +17,13 @@ namespace Windows.Devices.Radios.nRF24L01P
         private readonly GpioPin _cePin;
         private readonly GpioPin _irqPin;
         private readonly ICommandProcessor _commandProcessor;
+        public IRegisterContainer RegisterContainer { get; }
 
-        public IRegisterManager RegisterManager { get; }
-        public IRadioConfiguration Configuration { get; }
+        public event EventHandler<InterruptedEventArgs> Interrupted;
+
+        public IConfiguration Configuration { get; }
         public ITransmitPipe TransmitPipe { get; }
         public IDictionary<int, IReceivePipe> ReceivePipes { get; }
-        public event EventHandler<InterruptedEventArgs> Interrupted;
 
         public Radio(ICommandProcessor commandProcessor, GpioPin cePin, GpioPin irqPin = null)
         {
@@ -30,27 +31,22 @@ namespace Windows.Devices.Radios.nRF24L01P
             _cePin = cePin;
             EnableReceiver(false);
 
-            // Set the ICommandProcessor GetDeviceStatus Function Pointer to GetStatus() 
-            // (I wish I could just point it to _status field or Status property but can't
-            // figure out how so I created the GetStatus() method to return _status.)
-            // This is used for the ICommandProcessor to determine if its a proper status 
-            // if before Executing Commands if ICommandProcessor.CheckStatus is true
             commandProcessor.GetDeviceStatus = GetStatus;
             _commandProcessor = commandProcessor;
 
-            RegisterManager = new RegisterManager(_commandProcessor);
-            RegisterManager.LoadRegisters();
+            RegisterContainer = new RegisterContainer(_commandProcessor);
+            RegisterContainer.LoadRegisters();
 
-            Configuration = new RadioConfiguration(_commandProcessor, RegisterManager);
-            TransmitPipe = new TransmitPipe(Configuration, _commandProcessor, RegisterManager);
+            Configuration = new Configuration(_commandProcessor, RegisterContainer);
+            TransmitPipe = new TransmitPipe(Configuration, _commandProcessor, RegisterContainer);
             ReceivePipes = new Dictionary<int, IReceivePipe>
             {
-                {0, new ReceivePipe(Configuration, _commandProcessor, RegisterManager, 0)},
-                {1, new ReceivePipe(Configuration, _commandProcessor, RegisterManager, 1)},
-                {2, new ReceivePipe(Configuration, _commandProcessor, RegisterManager, 2)},
-                {3, new ReceivePipe(Configuration, _commandProcessor, RegisterManager, 3)},
-                {4, new ReceivePipe(Configuration, _commandProcessor, RegisterManager, 4)},
-                {5, new ReceivePipe(Configuration, _commandProcessor, RegisterManager, 5)}
+                {0, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 0)},
+                {1, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 1)},
+                {2, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 2)},
+                {3, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 3)},
+                {4, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 4)},
+                {5, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 5)}
             };
 
             if (irqPin != null)
@@ -68,8 +64,8 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             if (args.Edge != GpioPinEdge.FallingEdge) return;
 
-            RegisterManager.StatusRegister.Load();
-            Interrupted?.Invoke(this, new InterruptedEventArgs { StatusRegister = RegisterManager.StatusRegister });
+            RegisterContainer.StatusRegister.Load();
+            Interrupted?.Invoke(this, new InterruptedEventArgs { StatusRegister = RegisterContainer.StatusRegister });
         }
 
         public override string ToString()
@@ -86,7 +82,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public string GetDiagnostics()
         {
-            return new Diagnostics(this, Configuration, _commandProcessor, RegisterManager).ToString();
+            return new Diagnostics(this, Configuration, _commandProcessor, RegisterContainer).ToString();
         }
 
         private void EnableReceiver(bool enabled)
@@ -100,6 +96,15 @@ namespace Windows.Devices.Radios.nRF24L01P
             // Technically we require 4.5ms + 14us as a worst case. We'll just call it 5ms for good measure.
             // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
             Task.Delay(5).Wait();
+        }
+
+        public bool ReceivedPowerDetector
+        {
+            get
+            {
+                RegisterContainer.ReceivedPowerDetectorRegister.Load();
+                return RegisterContainer.ReceivedPowerDetectorRegister.ReceivedPowerDetector;
+            }
         }
 
         private DeviceStatus GetStatus() { return _status; }
@@ -123,8 +128,8 @@ namespace Windows.Devices.Radios.nRF24L01P
                     case DeviceStatus.PowerDown:
                         if (lastStatus == DeviceStatus.StandBy)
                         {
-                            RegisterManager.ConfigurationRegister.PowerUp = false;
-                            RegisterManager.ConfigurationRegister.Save();
+                            RegisterContainer.ConfigurationRegister.PowerUp = false;
+                            RegisterContainer.ConfigurationRegister.Save();
                             break;
                         }
                         throw new InvalidOperationException(
@@ -137,8 +142,8 @@ namespace Windows.Devices.Radios.nRF24L01P
                         }
                         if (lastStatus == DeviceStatus.PowerDown)
                         {
-                            RegisterManager.ConfigurationRegister.PowerUp = true;
-                            RegisterManager.ConfigurationRegister.Save();
+                            RegisterContainer.ConfigurationRegister.PowerUp = true;
+                            RegisterContainer.ConfigurationRegister.Save();
                             Task.Delay(2).Wait();
                             break;
                         }
@@ -149,8 +154,8 @@ namespace Windows.Devices.Radios.nRF24L01P
                         {
                             bool checkStatus = _commandProcessor.CheckStatus;
                             _commandProcessor.CheckStatus = false;
-                            RegisterManager.ConfigurationRegister.PrimaryReceiveMode = false;
-                            RegisterManager.ConfigurationRegister.Save();
+                            RegisterContainer.ConfigurationRegister.PrimaryReceiveMode = false;
+                            RegisterContainer.ConfigurationRegister.Save();
                             _commandProcessor.CheckStatus = checkStatus;
 
                             EnableReceiver(true);
@@ -162,8 +167,8 @@ namespace Windows.Devices.Radios.nRF24L01P
                         {
                             bool checkStatus = _commandProcessor.CheckStatus;
                             _commandProcessor.CheckStatus = false;
-                            RegisterManager.ConfigurationRegister.PrimaryReceiveMode = true;
-                            RegisterManager.ConfigurationRegister.Save();
+                            RegisterContainer.ConfigurationRegister.PrimaryReceiveMode = true;
+                            RegisterContainer.ConfigurationRegister.Save();
                             _commandProcessor.CheckStatus = checkStatus;
 
                             EnableReceiver(true);

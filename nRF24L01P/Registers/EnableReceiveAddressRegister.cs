@@ -12,12 +12,29 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         { }
 
         /// <summary>
-        /// Enable data pipes
+        /// Enable all receive data pipes
         /// </summary>
-        public byte EnableReceiveDataPipe
+        public bool EnableReceiveDataPipe
         {
-            get { return GetByteProperty(PropertyMasks.ERX); }
-            set { SetByteProperty(PropertyMasks.ERX, value); }
+            get
+            {
+                return EnableReceiveDataPipe0 &&
+                       EnableReceiveDataPipe1 &&
+                       EnableReceiveDataPipe2 &&
+                       EnableReceiveDataPipe3 &&
+                       EnableReceiveDataPipe4 &&
+                       EnableReceiveDataPipe5;
+            }
+            set
+            {
+                EnableReceiveDataPipe0 =
+                       EnableReceiveDataPipe1 =
+                       EnableReceiveDataPipe2 =
+                       EnableReceiveDataPipe3 =
+                       EnableReceiveDataPipe4 =
+                       EnableReceiveDataPipe5 =
+                       value;
+            }
         }
 
         /// <summary>

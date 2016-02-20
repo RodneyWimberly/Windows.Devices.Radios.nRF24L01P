@@ -59,55 +59,11 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         }
 
         /// <summary>
-        /// Select between the high speed data rates. This bit 
-        /// is don't care if DataRateLow is set. 
-        /// Encoding: 
-        /// (DataRateLow, DataRateHigh): 
-        /// '00' — 1Mbps 
-        /// '01' - 2Mbps 
-        /// '10' - 250kbps 
-        /// '11' — Reserved
-        /// </summary>
-        public byte DataRate
-        {
-            get { return GetByteProperty(PropertyMasks.RF_DR); }
-            set { SetByteProperty(PropertyMasks.RF_DR, value); }
-        }
-
-        /// <summary>
-        /// RF output power Low Bit
         /// Set RF output power in TX mode
-        ///' 00' - -18dBm 
-        /// '01' - -12dBm
-        /// '10' - -6dBm
-        /// '11' - OdBm
-        /// </summary>
-        public bool PowerLevelLow
-        {
-            get { return GetBoolProperty(PropertyMasks.RF_PWR_LOW); }
-            set { SetBoolProperty(PropertyMasks.RF_PWR_LOW, value); }
-        }
-
-        /// <summary>
-        /// RF output power High Bit
-        /// Set RF output power in TX mode
-        ///' 00' - -18dBm 
-        /// '01' - -12dBm
-        /// '10' - -6dBm
-        /// '11' - OdBm
-        /// </summary>
-        public bool PowerLevelHigh
-        {
-            get { return GetBoolProperty(PropertyMasks.RF_PWR_HIGH); }
-            set { SetBoolProperty(PropertyMasks.RF_PWR_HIGH, value); }
-        }
-
-        /// <summary>
-        /// Set RF output power in TX mode
-        ///' 00' - -18dBm 
-        /// '01' - -12dBm
-        /// '10' - -6dBm
-        /// '11' - OdBm
+        ///' 00' = -18dBm 
+        /// '01' = -12dBm
+        /// '10' = -6dBm
+        /// '11' = OdBm
         /// </summary>
         public byte PowerLevel
         {

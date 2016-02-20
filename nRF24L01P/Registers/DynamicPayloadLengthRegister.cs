@@ -12,6 +12,32 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         { }
 
         /// <summary>
+        /// Enable dynamic payload length on all data pipes
+        /// </summary>
+        public bool EnableDynamicPayload
+        {
+            get
+            {
+                return EnableDynamicPayloadPipe0 &&
+                       EnableDynamicPayloadPipe1 &&
+                       EnableDynamicPayloadPipe2 &&
+                       EnableDynamicPayloadPipe3 &&
+                       EnableDynamicPayloadPipe4 &&
+                       EnableDynamicPayloadPipe5;
+            }
+            set
+            {
+                EnableDynamicPayloadPipe0 =
+                    EnableDynamicPayloadPipe1 =
+                    EnableDynamicPayloadPipe2 =
+                    EnableDynamicPayloadPipe3 =
+                    EnableDynamicPayloadPipe4 =
+                    EnableDynamicPayloadPipe5 =
+                    value;
+            }
+        }
+
+        /// <summary>
         /// Enable dynamic payload length data pipe 5. 
         /// (Requires EnableDynamicPayloadLength and EnableAutoAcknowledgementPipe5) 
         /// </summary>

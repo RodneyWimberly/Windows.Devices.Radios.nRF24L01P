@@ -2,7 +2,7 @@ using Windows.Devices.Radios.nRF24L01P.Enums;
 
 namespace Windows.Devices.Radios.nRF24L01P.Interfaces
 {
-    public interface IRadioConfiguration
+    public interface IConfiguration
     {
         bool EnableContiuousCarrierTransmit { get; set; }
         bool IsPlusModel { get; set; }

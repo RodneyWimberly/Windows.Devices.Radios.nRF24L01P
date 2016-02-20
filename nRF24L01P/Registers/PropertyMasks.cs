@@ -30,7 +30,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         internal const BitMasks ENAA_P0 = BitMasks.Bit0;
 
         // Enable Receive Address Register
-        internal const BitMasks ERX = BitMasks.Bit0 | BitMasks.Bit1 | BitMasks.Bit2 | BitMasks.Bit3 | BitMasks.Bit4 | BitMasks.Bit5;
         internal const BitMasks ERX_P5 = BitMasks.Bit5;
         internal const BitMasks ERX_P4 = BitMasks.Bit4;
         internal const BitMasks ERX_P3 = BitMasks.Bit3;
@@ -80,13 +79,10 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         // RF Setup register
         internal const BitMasks CONT_WAVE = BitMasks.Bit7;
-        internal const BitMasks RF_DR = BitMasks.Bit5 | BitMasks.Bit3;
         internal const BitMasks RF_DR_LOW = BitMasks.Bit5;
         internal const BitMasks PLL_LOCK = BitMasks.Bit4;
         internal const BitMasks RF_DR_HIGH = BitMasks.Bit3;
         internal const BitMasks RF_PWR = BitMasks.Bit1 | BitMasks.Bit2;
-        internal const BitMasks RF_PWR_HIGH = BitMasks.Bit2;
-        internal const BitMasks RF_PWR_LOW = BitMasks.Bit1;
 
         // Setup Address Width Register
         internal const BitMasks AW = BitMasks.Bit0 | BitMasks.Bit1;

@@ -12,7 +12,7 @@
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion>10.0.10586.0</TargetPlatformVersion>
-    <TargetPlatformMinVersion>10.0.10240.0</TargetPlatformMinVersion>
+    <TargetPlatformMinVersion>10.0.10586.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -113,14 +113,15 @@
     <Compile Include="Enums\EnumExtensionMethods.cs" />
     <Compile Include="Interfaces\ICommandProcessor.cs" />
     <Compile Include="Interfaces\IDataPipe.cs" />
-    <Compile Include="Interfaces\IRadioConfiguration.cs" />
+    <Compile Include="Interfaces\IConfiguration.cs" />
     <Compile Include="Interfaces\IRole.cs" />
     <Compile Include="Interfaces\IRadio.cs" />
     <Compile Include="Interfaces\IReceivePipe.cs" />
     <Compile Include="Interfaces\ITransmitPipe.cs" />
-    <Compile Include="Interfaces\IRegisterManager.cs" />
+    <Compile Include="Interfaces\IRegisterContainer.cs" />
     <Compile Include="Interfaces\IRegisterBase.cs" />
     <Compile Include="InterruptedEventArgs.cs" />
+    <Compile Include="Interfaces\IRegisterCollection.cs" />
     <Compile Include="Registers\PipeRegisterBase.cs" />
     <Compile Include="Registers\PropertyMasks.cs" />
     <Compile Include="Registers\AddressPipeRegister.cs" />
@@ -130,9 +131,9 @@
     <Compile Include="Enums\CrcEncodingSchemes.cs" />
     <Compile Include="Enums\DeviceStatus.cs" />
     <Compile Include="Enums\FifoStatus.cs" />
-    <Compile Include="RadioConfiguration.cs" />
+    <Compile Include="Configuration.cs" />
     <Compile Include="ReceivePipe.cs" />
-    <Compile Include="Registers\RegisterManager.cs" />
+    <Compile Include="Registers\RegisterContainer.cs" />
     <Compile Include="Registers\SetupAddressWidthRegister.cs" />
     <Compile Include="Registers\EnableAutoAcknowledgementRegister.cs" />
     <Compile Include="Registers\RfChannelRegister.cs" />

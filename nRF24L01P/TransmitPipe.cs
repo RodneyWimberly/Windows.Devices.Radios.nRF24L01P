@@ -7,22 +7,22 @@ namespace Windows.Devices.Radios.nRF24L01P
 {
     public class TransmitPipe : ITransmitPipe
     {
-        private readonly IRegisterManager _registerManager;
-        private readonly IRadioConfiguration _configuration;
+        private readonly IRegisterContainer _registerContainer;
+        private readonly IConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
 
-        public TransmitPipe(IRadioConfiguration configuration, ICommandProcessor commandProcessor, IRegisterManager registerManager)
+        public TransmitPipe(IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer)
         {
             _configuration = configuration;
             _commandProcessor = commandProcessor;
-            _registerManager = registerManager;
+            _registerContainer = registerContainer;
         }
 
         public byte[] Address
         {
             get
             {
-                return _registerManager.TransmitAddressRegister;
+                return _registerContainer.TransmitAddressRegister;
             }
             set
             {
@@ -31,8 +31,8 @@ namespace Windows.Devices.Radios.nRF24L01P
                     throw new InvalidOperationException("Address length should equal or greater than device.Config.AddressWidth");
                 if (value.Length > addressWidth)
                     Array.Resize(ref value, addressWidth);
-                _registerManager.TransmitAddressRegister.Load(value);
-                _registerManager.TransmitAddressRegister.Save();
+                _registerContainer.TransmitAddressRegister.Load(value);
+                _registerContainer.TransmitAddressRegister.Save();
             }
         }
 
@@ -45,10 +45,10 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                _registerManager.FifoStatusRegister.Load();
-                if (_registerManager.FifoStatusRegister.TransmitFifoFull)
+                _registerContainer.FifoStatusRegister.Load();
+                if (_registerContainer.FifoStatusRegister.TransmitFifoFull)
                     return FifoStatus.Full;
-                if (_registerManager.FifoStatusRegister.TransmitFifoEmpty)
+                if (_registerContainer.FifoStatusRegister.TransmitFifoEmpty)
                     return FifoStatus.Empty;
                 return FifoStatus.InUse;
             }

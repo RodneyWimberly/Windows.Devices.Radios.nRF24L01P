@@ -2,7 +2,7 @@
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
-    public class RegisterManager : IRegisterManager
+    public class RegisterContainer : IRegisterContainer
     {
         public ConfigurationRegister ConfigurationRegister { get; }
         public EnableAutoAcknowledgementRegister EnableAutoAcknowledgementRegister { get; }
@@ -18,10 +18,10 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public FifoStatusRegister FifoStatusRegister { get; }
         public DynamicPayloadLengthRegister DynamicPayloadLengthRegister { get; }
         public FeatureRegister FeatureRegister { get; }
-        public RegisterCollection<IRegisterBase> AllRegisters { get; }
-        public RegisterCollection<AddressPipeRegister> ReceiveAddressPipeRegisters { get; }
-        public RegisterCollection<ReceivePayloadWidthPipeRegister> ReceivePayloadWidthPipeRegisters { get; }
-        public RegisterManager(ICommandProcessor commandProcessor)
+        public IRegisterCollection<IRegisterBase> AllRegisters { get; }
+        public IRegisterCollection<AddressPipeRegister> ReceiveAddressPipeRegisters { get; }
+        public IRegisterCollection<ReceivePayloadWidthPipeRegister> ReceivePayloadWidthPipeRegisters { get; }
+        public RegisterContainer(ICommandProcessor commandProcessor)
         {
             ConfigurationRegister = new ConfigurationRegister(commandProcessor);
             EnableAutoAcknowledgementRegister = new EnableAutoAcknowledgementRegister(commandProcessor);
@@ -95,9 +95,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public void SaveRegisters() => AllRegisters.SaveAll();
 
-        public override string ToString()
-        {
-            return AllRegisters.ToString();
-        }
+        public override string ToString() => AllRegisters.ToString();
     }
 }

@@ -12,12 +12,29 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         { }
 
         /// <summary>
-        /// Enable auto acknowledgement
+        /// Enable auto acknowledgement on all pipes
         /// </summary>
         public bool EnableAutoAcknowledgement
         {
-            get { return Value[0] != 0x0; }
-            set { Value[0] = (byte)(value ? 0x3F : 0x0); }
+            get
+            {
+                return EnableAutoAcknowledgementPipe0 &&
+                       EnableAutoAcknowledgementPipe1 &&
+                       EnableAutoAcknowledgementPipe2 &&
+                       EnableAutoAcknowledgementPipe3 &&
+                       EnableAutoAcknowledgementPipe4 &&
+                       EnableAutoAcknowledgementPipe5;
+            }
+            set
+            {
+                EnableAutoAcknowledgementPipe0 =
+                    EnableAutoAcknowledgementPipe1 =
+                    EnableAutoAcknowledgementPipe2 =
+                    EnableAutoAcknowledgementPipe3 =
+                    EnableAutoAcknowledgementPipe4 =
+                    EnableAutoAcknowledgementPipe5 =
+                    value;
+            }
         }
 
         /// <summary>

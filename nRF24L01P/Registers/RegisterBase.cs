@@ -38,6 +38,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public void Save()
         {
+            if (!IsDirty) return;
             CommandProcessor.ExecuteCommand(DeviceCommands.W_REGISTER, Address, Value);
             IsDirty = false;
         }
@@ -56,25 +57,49 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         protected bool GetBoolProperty(BitMasks propertyMask)
         {
-            return (Value[0] & (byte)propertyMask) > 0;
-            //return GetByteProperty(propertyMask) > 0;
+            return GetByteProperty(propertyMask) > 0;
         }
 
         protected byte GetByteProperty(BitMasks propertyMask)
         {
-            return (byte)(Value[0] & (byte)propertyMask);
+            return (byte)((Value[0] & (byte)propertyMask) >> GetShiftLevel(propertyMask));
         }
 
         protected void SetBoolProperty(BitMasks propertyMask, bool value)
         {
-            Value[0] = (byte)(value ? (Value[0] | (byte)propertyMask) : (Value[0] & ~(byte)propertyMask));
+            byte mask = (byte)propertyMask;
+            Value[0] = (byte)(value ? (Value[0] | mask) : (Value[0] & ~mask));
             IsDirty = true;
         }
 
         protected void SetByteProperty(BitMasks propertyMask, byte value)
         {
-            Value[0] = (byte)((value & (byte)propertyMask) | (Value[0] & ~(byte)propertyMask));
+            value = (byte)(value << GetShiftLevel(propertyMask));
+            byte mask = (byte)propertyMask;
+            Value[0] = (byte)((value & mask) | (Value[0] & ~mask));
             IsDirty = true;
+        }
+
+        private int GetShiftLevel(BitMasks propertyMask)
+        {
+            int shiftLevel = 0;
+            if (propertyMask.HasFlag(BitMasks.Bit0))
+                shiftLevel = 0;
+            else if (propertyMask.HasFlag(BitMasks.Bit1))
+                shiftLevel = 1;
+            else if (propertyMask.HasFlag(BitMasks.Bit2))
+                shiftLevel = 2;
+            else if (propertyMask.HasFlag(BitMasks.Bit3))
+                shiftLevel = 3;
+            else if (propertyMask.HasFlag(BitMasks.Bit4))
+                shiftLevel = 4;
+            else if (propertyMask.HasFlag(BitMasks.Bit5))
+                shiftLevel = 5;
+            else if (propertyMask.HasFlag(BitMasks.Bit6))
+                shiftLevel = 6;
+            else if (propertyMask.HasFlag(BitMasks.Bit7))
+                shiftLevel = 7;
+            return shiftLevel;
         }
 
         public override string ToString()

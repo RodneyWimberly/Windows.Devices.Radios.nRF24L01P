@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Threading;
 using Windows.Devices.Radios.nRF24L01P.Enums;
-using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
     public class SendReceiveRole : RoleBase
     {
-        private IReceivePipe _reader;
-        private ITransmitPipe _writer;
         private bool _isSending;
         private bool _isMaxRt;
         private readonly ManualResetEvent _sendCompleteEvent;
@@ -20,28 +17,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             _isMaxRt = false;
             _isSending = false;
             _sendCompleteEvent = new ManualResetEvent(false);
-        }
-
-        private byte[] _sendAddress;
-        public byte[] SendAddress
-        {
-            get { return _sendAddress; }
-            set
-            {
-                if (IsRunning) throw new InvalidOperationException("SendAddress is read-only while Running");
-                _sendAddress = value;
-            }
-        }
-
-        private byte[] _receiveAddress;
-        public byte[] ReceiveAddress
-        {
-            get { return _receiveAddress; }
-            set
-            {
-                if (IsRunning) throw new InvalidOperationException("ReceiveAddress is read-only while Running");
-                _receiveAddress = value;
-            }
         }
 
         public void EnableReceivePipe(int pipeId, byte address)
@@ -72,17 +47,17 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Radio.ReceivePipes[0].Address = SendAddress;
             Radio.ReceivePipes[0].Enabled = true;
 
-            _writer = Radio.TransmitPipe;
-            _writer.Address = SendAddress;
+            Writer = Radio.TransmitPipe;
+            Writer.Address = SendAddress;
 
-            _reader = Radio.ReceivePipes[1];
-            _reader.AutoAcknowledgementEnabled = true;
-            _reader.DynamicPayloadLengthEnabled = true;
-            _reader.Address = ReceiveAddress;
-            _reader.Enabled = true;
+            Reader = Radio.ReceivePipes[1];
+            Reader.AutoAcknowledgementEnabled = true;
+            Reader.DynamicPayloadLengthEnabled = true;
+            Reader.Address = ReceiveAddress;
+            Reader.Enabled = true;
 
-            _reader.FlushBuffer();
-            _writer.FlushBuffer();
+            Reader.FlushBuffer();
+            Writer.FlushBuffer();
 
             Radio.Interrupted += Radio_Interrupted;
             Radio.Status = DeviceStatus.ReceiveMode;
@@ -108,7 +83,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             _isSending = true;
             int length = buffer.Length;
             Radio.Status = DeviceStatus.StandBy;
-            _writer.FlushBuffer();
+            Writer.FlushBuffer();
             Radio.Status = DeviceStatus.TransmitMode;
             while (bytesLeft > 0)
             {
@@ -118,7 +93,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
                 Array.Copy(buffer, sendPos, sendBuffer, 0, sendBufferLength);
                 sendPos += sendBufferLength;
                 bytesLeft -= sendBufferLength;
-                _writer.Write(sendBuffer);
+                Writer.Write(sendBuffer);
                 _sendCompleteEvent.Reset();
                 if (!(_sendCompleteEvent.WaitOne(timeOut) && !_isMaxRt))
                 {
@@ -144,7 +119,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
                 _sendCompleteEvent.Set();
             Radio.Status = DeviceStatus.StandBy;
             if (e.StatusRegister.ReceiveDataReady)
-                DataArrived?.Invoke(this, _reader.ReadBufferAll());
+                DataArrived?.Invoke(this, Reader.ReadBufferAll());
             e.StatusRegister.Save();
             if (!_isSending)
                 Radio.Status = DeviceStatus.ReceiveMode;

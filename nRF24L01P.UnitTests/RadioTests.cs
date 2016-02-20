@@ -52,21 +52,20 @@ namespace nRF24L01P.UnitTests
         public void ConstantCarrierWaveOutputForTestinng()
         {
             Debug.WriteLine(_radio.GetDiagnostics());
-            ConfigurationRegister configurationRegister = _radio.RegisterManager.ConfigurationRegister;
+            ConfigurationRegister configurationRegister = _radio.RegisterContainer.ConfigurationRegister;
             configurationRegister.PowerUp = true;
             configurationRegister.PrimaryReceiveMode = false;
             configurationRegister.Save();
             Task.Delay(150).Wait();
 
-            RfSetupRegister rfSetupRegister = _radio.RegisterManager.RfSetupRegister;
+            RfSetupRegister rfSetupRegister = _radio.RegisterContainer.RfSetupRegister;
             rfSetupRegister.EnableContiuousCarrierTransmit = true;
             rfSetupRegister.ForcePllSignalLock = true;
-            rfSetupRegister.PowerLevelHigh = true;
-            rfSetupRegister.PowerLevelLow = true;
+            rfSetupRegister.PowerLevel = 3;
             rfSetupRegister.Save();
 
-            RfChannelRegister rfChannelRegister = _radio.RegisterManager.RfChannelRegister;
-            rfChannelRegister.RfChannel = 76;
+            RfChannelRegister rfChannelRegister = _radio.RegisterContainer.RfChannelRegister;
+            rfChannelRegister.RfChannel = 1;
             rfChannelRegister.Save();
 
             _radio.Status = DeviceStatus.ReceiveMode;

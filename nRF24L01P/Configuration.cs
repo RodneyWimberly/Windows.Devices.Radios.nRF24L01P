@@ -6,16 +6,16 @@ using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P
 {
-    public class RadioConfiguration : IRadioConfiguration
+    public class Configuration : IConfiguration
     {
         private readonly ICommandProcessor _commandProcessor;
 
-        private readonly IRegisterManager _registerManager;
+        private readonly IRegisterContainer _registerContainer;
 
-        public RadioConfiguration(ICommandProcessor commandProcessor, IRegisterManager registerManager)
+        public Configuration(ICommandProcessor commandProcessor, IRegisterContainer registerContainer)
         {
             _commandProcessor = commandProcessor;
-            _registerManager = registerManager;
+            _registerContainer = registerContainer;
             _payloadWidth = Constants.MaxPayloadWidth;
 
             // Attempt to set DataRate to 250Kbps to determine if this is a plus model
@@ -31,13 +31,13 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                RfSetupRegister rfSetupRegister = _registerManager.RfSetupRegister;
+                RfSetupRegister rfSetupRegister = _registerContainer.RfSetupRegister;
                 rfSetupRegister.Load();
                 return rfSetupRegister.EnableContiuousCarrierTransmit && rfSetupRegister.ForcePllSignalLock;
             }
             set
             {
-                RfSetupRegister rfSetupRegister = _registerManager.RfSetupRegister;
+                RfSetupRegister rfSetupRegister = _registerContainer.RfSetupRegister;
                 rfSetupRegister.EnableContiuousCarrierTransmit = value;
                 rfSetupRegister.ForcePllSignalLock = value;
                 rfSetupRegister.Save();
@@ -48,13 +48,13 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                EnableAutoAcknowledgementRegister autoAckRegister = _registerManager.EnableAutoAcknowledgementRegister;
+                EnableAutoAcknowledgementRegister autoAckRegister = _registerContainer.EnableAutoAcknowledgementRegister;
                 autoAckRegister.Load();
                 return autoAckRegister.EnableAutoAcknowledgement;
             }
             set
             {
-                EnableAutoAcknowledgementRegister autoAckRegister = _registerManager.EnableAutoAcknowledgementRegister;
+                EnableAutoAcknowledgementRegister autoAckRegister = _registerContainer.EnableAutoAcknowledgementRegister;
                 autoAckRegister.EnableAutoAcknowledgement = value;
                 autoAckRegister.Save();
             }
@@ -65,7 +65,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             get
             {
                 DataRates dataRate = DataRates.DataRate1Mbps;
-                RfSetupRegister rfSetupRegister = _registerManager.RfSetupRegister;
+                RfSetupRegister rfSetupRegister = _registerContainer.RfSetupRegister;
                 rfSetupRegister.Load();
                 bool low = rfSetupRegister.DataRateLow;
                 bool high = rfSetupRegister.DataRateHigh;
@@ -78,7 +78,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
             set
             {
-                RfSetupRegister rfSetupRegister = _registerManager.RfSetupRegister;
+                RfSetupRegister rfSetupRegister = _registerContainer.RfSetupRegister;
                 switch (value)
                 {
                     case DataRates.DataRate1Mbps:
@@ -96,7 +96,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                     default:
                         throw new InvalidOperationException("Invalid data rate value");
                 }
-                _registerManager.RfSetupRegister.Save();
+                _registerContainer.RfSetupRegister.Save();
             }
         }
 
@@ -104,43 +104,17 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                PowerLevels powerLevel = PowerLevels.Error;
-                RfSetupRegister rfSetupRegister = _registerManager.RfSetupRegister;
+                PowerLevels powerLevel;
+                RfSetupRegister rfSetupRegister = _registerContainer.RfSetupRegister;
                 rfSetupRegister.Load();
-                bool low = rfSetupRegister.PowerLevelLow;
-                bool high = rfSetupRegister.PowerLevelHigh;
-                if (low && high)
-                    powerLevel = PowerLevels.Max;
-                else if (high)
-                    powerLevel = PowerLevels.High;
-                else if (low)
-                    powerLevel = PowerLevels.Low;
-                else
-                    powerLevel = PowerLevels.Min;
+                if (!Enum.TryParse(rfSetupRegister.PowerLevel.ToString(), out powerLevel))
+                    powerLevel = PowerLevels.Error;
                 return powerLevel;
             }
             set
             {
-                RfSetupRegister rfSetupRegister = _registerManager.RfSetupRegister;
-                switch (value)
-                {
-                    case PowerLevels.Max:
-                        rfSetupRegister.PowerLevelLow = true;
-                        rfSetupRegister.PowerLevelHigh = true;
-                        break;
-                    case PowerLevels.High:
-                        rfSetupRegister.PowerLevelLow = false;
-                        rfSetupRegister.PowerLevelHigh = true;
-                        break;
-                    case PowerLevels.Low:
-                        rfSetupRegister.PowerLevelLow = true;
-                        rfSetupRegister.PowerLevelHigh = false;
-                        break;
-                    case PowerLevels.Min:
-                        rfSetupRegister.PowerLevelLow = false;
-                        rfSetupRegister.PowerLevelHigh = false;
-                        break;
-                }
+                RfSetupRegister rfSetupRegister = _registerContainer.RfSetupRegister;
+                rfSetupRegister.PowerLevel = (byte)value;
                 rfSetupRegister.Save();
             }
         }
@@ -149,15 +123,15 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                _registerManager.RfChannelRegister.Load();
-                return _registerManager.RfChannelRegister.RfChannel;
+                _registerContainer.RfChannelRegister.Load();
+                return _registerContainer.RfChannelRegister.RfChannel;
             }
             set
             {
                 if (Channel > Constants.MaxRfChannel)
                     throw new ArgumentOutOfRangeException(string.Format("Channel", "Channel should be 0 - {0}", Constants.MaxRfChannel));
-                _registerManager.RfChannelRegister.RfChannel = (byte)value;
-                _registerManager.RfChannelRegister.Save();
+                _registerContainer.RfChannelRegister.RfChannel = (byte)value;
+                _registerContainer.RfChannelRegister.Save();
             }
         }
 
@@ -168,13 +142,13 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                _registerManager.ConfigurationRegister.Load();
-                return _registerManager.ConfigurationRegister.EnableCrc;
+                _registerContainer.ConfigurationRegister.Load();
+                return _registerContainer.ConfigurationRegister.EnableCrc;
             }
             set
             {
-                _registerManager.ConfigurationRegister.EnableCrc = value;
-                _registerManager.ConfigurationRegister.Save();
+                _registerContainer.ConfigurationRegister.EnableCrc = value;
+                _registerContainer.ConfigurationRegister.Save();
             }
         }
 
@@ -182,13 +156,13 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                _registerManager.ConfigurationRegister.Load();
-                return _registerManager.ConfigurationRegister.CrcEncodingScheme ? CrcEncodingSchemes.DualBytes : CrcEncodingSchemes.SingleByte;
+                _registerContainer.ConfigurationRegister.Load();
+                return _registerContainer.ConfigurationRegister.CrcEncodingScheme ? CrcEncodingSchemes.DualBytes : CrcEncodingSchemes.SingleByte;
             }
             set
             {
-                _registerManager.ConfigurationRegister.CrcEncodingScheme = (value == CrcEncodingSchemes.DualBytes);
-                _registerManager.ConfigurationRegister.Save();
+                _registerContainer.ConfigurationRegister.CrcEncodingScheme = (value == CrcEncodingSchemes.DualBytes);
+                _registerContainer.ConfigurationRegister.Save();
             }
         }
 
@@ -196,13 +170,13 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                _registerManager.SetupRetransmissionRegister.Load();
-                return (AutoRetransmitDelays)_registerManager.SetupRetransmissionRegister.AutoRetransmitDelay;
+                _registerContainer.SetupRetransmissionRegister.Load();
+                return (AutoRetransmitDelays)_registerContainer.SetupRetransmissionRegister.AutoRetransmitDelay;
             }
             set
             {
-                _registerManager.SetupRetransmissionRegister.AutoRetransmitDelay = (byte)value;
-                _registerManager.SetupRetransmissionRegister.Save();
+                _registerContainer.SetupRetransmissionRegister.AutoRetransmitDelay = (byte)value;
+                _registerContainer.SetupRetransmissionRegister.Save();
             }
         }
 
@@ -210,15 +184,15 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                _registerManager.SetupRetransmissionRegister.Load();
-                return _registerManager.SetupRetransmissionRegister.AutoRetransmitCount;
+                _registerContainer.SetupRetransmissionRegister.Load();
+                return _registerContainer.SetupRetransmissionRegister.AutoRetransmitCount;
             }
             set
             {
                 if (value > 15)
                     throw new ArgumentOutOfRangeException(nameof(AutoRetransmitCount), "AutoRetransmitCount should be 0 - 15");
-                _registerManager.SetupRetransmissionRegister.AutoRetransmitCount = value;
-                _registerManager.SetupRetransmissionRegister.Save();
+                _registerContainer.SetupRetransmissionRegister.AutoRetransmitCount = value;
+                _registerContainer.SetupRetransmissionRegister.Save();
             }
         }
 
@@ -226,8 +200,8 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                _registerManager.AddressWidthRegister.Load();
-                switch ((int)_registerManager.AddressWidthRegister.AddressWidth)
+                _registerContainer.AddressWidthRegister.Load();
+                switch ((int)_registerContainer.AddressWidthRegister.AddressWidth)
                 {
                     case 1:
                         return 3;   //01 = 3 bytes
@@ -244,18 +218,18 @@ namespace Windows.Devices.Radios.nRF24L01P
                 switch (value)
                 {
                     case 3:
-                        _registerManager.AddressWidthRegister.AddressWidth = (byte)1;
+                        _registerContainer.AddressWidthRegister.AddressWidth = (byte)1;
                         break;
                     case 4:
-                        _registerManager.AddressWidthRegister.AddressWidth = (byte)2;
+                        _registerContainer.AddressWidthRegister.AddressWidth = (byte)2;
                         break;
                     case 5:
-                        _registerManager.AddressWidthRegister.AddressWidth = (byte)3;
+                        _registerContainer.AddressWidthRegister.AddressWidth = (byte)3;
                         break;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(value), "AddressWidth should be 3,4,5 only");
                 }
-                _registerManager.AddressWidthRegister.Save();
+                _registerContainer.AddressWidthRegister.Save();
             }
         }
 
@@ -263,13 +237,13 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                _registerManager.FeatureRegister.Load();
-                return _registerManager.FeatureRegister.EnableDynamicPayloadLength;
+                _registerContainer.FeatureRegister.Load();
+                return _registerContainer.FeatureRegister.EnableDynamicPayloadLength;
             }
             set
             {
-                _registerManager.FeatureRegister.EnableDynamicPayloadLength = value;
-                _registerManager.FeatureRegister.Save();
+                _registerContainer.FeatureRegister.EnableDynamicPayloadLength = value;
+                _registerContainer.FeatureRegister.Save();
             }
         }
 

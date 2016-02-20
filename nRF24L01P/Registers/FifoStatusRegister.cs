@@ -12,61 +12,52 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         { }
 
         /// <summary>
-        /// Used for a P TX device 
-        /// Pulse the rfce high for at least lops to Reuse last
-        /// transmitted payload.TX payload reuse is active
-        /// until W TX PAYLOAD or FLUSH TX is executed.
-        /// TX REUSE is set by the SPI command
-        /// REUSE TX PL, and is reset by the SPI commands
-        /// W TX PAYLOAD or FLUSH TX
+        /// Used for a PTX device 
+        /// Pulse the rfce high for at least 10us to Reuse last transmitted payload.
         /// </summary>
-        public bool TransmitPayloadReuse
-        {
-            get { return GetBoolProperty(PropertyMasks.TX_REUSE); }
-            set { SetBoolProperty(PropertyMasks.TX_REUSE, value); }
-        }
+        /// <remarks> 
+        /// TX payload reuse is active
+        /// until W_TX_PAYLOAD or FLUSH_TX is executed.
+        /// TX_REUSE is set by the SPI command
+        /// REUSE_TX_PL, and is reset by the SPI commands
+        /// W_TX_PAYLOAD or FLUSH_TX
+        /// </remarks>
+        public bool TransmitPayloadReuse => GetBoolProperty(PropertyMasks.TX_REUSE);
 
         /// <summary>
-        /// TX FIFO full flag. 1: TX FIFO full. O: Available loca 
-        /// tions in TX FIFO.
+        /// TX FIFO full flag.
         /// </summary>
-        public bool TransmitFifoFull
-        {
-            get { return GetBoolProperty(PropertyMasks.TX_FULL); }
-            set { SetBoolProperty(PropertyMasks.TX_FULL, value); }
-        }
+        /// <returns>
+        /// 1: TX FIFO full. 
+        /// O: Available locations in TX FIFO.
+        /// </returns>
+        public bool TransmitFifoFull => GetBoolProperty(PropertyMasks.TX_FULL);
 
         /// <summary>
         /// TX FIFO empty flag. 
+        /// </summary>
+        /// <returns>
         /// 1: TX FIFO empty.
         /// O: Data in TX FIFO.     
-        /// </summary>
-        public bool TransmitFifoEmpty
-        {
-            get { return GetBoolProperty(PropertyMasks.TX_EMPTY); }
-            set { SetBoolProperty(PropertyMasks.TX_EMPTY, value); }
-        }
+        /// </returns>
+        public bool TransmitFifoEmpty => GetBoolProperty(PropertyMasks.TX_EMPTY);
 
         /// <summary>
         /// RX FIFO full flag. 
+        /// </summary>
+        /// <returns>
         /// 1: RX FIFO full.
         /// 0: Available locations in RX FIFO.
-        /// </summary>
-        public bool ReceiveFifoFull
-        {
-            get { return GetBoolProperty(PropertyMasks.RX_FULL); }
-            set { SetBoolProperty(PropertyMasks.RX_FULL, value); }
-        }
+        /// </returns>
+        public bool ReceiveFifoFull => GetBoolProperty(PropertyMasks.RX_FULL);
 
         /// <summary>
         /// RX FIFO empty flag. 
+        /// </summary>
+        /// <returns>
         /// 1: RX FIFO empty.
         /// O: Data in RX FIFO.
-        /// </summary>
-        public bool ReveiveFifoEmpty
-        {
-            get { return GetBoolProperty(PropertyMasks.RX_EMPTY); }
-            set { SetBoolProperty(PropertyMasks.RX_EMPTY, value); }
-        }
+        /// </returns>
+        public bool ReveiveFifoEmpty => GetBoolProperty(PropertyMasks.RX_EMPTY);
     }
 }

@@ -4,7 +4,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
     public interface IReceivePipe : IDataPipe
     {
         int PipeId { get; }
-        bool ReceivedPowerDetector { get; }
         bool Enabled { get; set; }
         bool AutoAcknowledgementEnabled { get; set; }
         bool DynamicPayloadLengthEnabled { get; set; }

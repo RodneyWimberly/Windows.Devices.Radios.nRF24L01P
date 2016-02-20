@@ -3,8 +3,12 @@
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     /// <summary>
-    ///   Status Register (In parallel to the SPI command word applied on the MOSI pin, the STATUS register is shifted serially out on the MISO pin)
+    ///   Status Register 
     /// </summary>
+    /// <remarks>
+    /// (In parallel to the SPI command word applied on the MOSI pin,
+    /// the STATUS register is shifted serially out on the MISO pin)
+    /// </remarks>
     public class StatusRegister : RegisterBase
     {
         public StatusRegister(ICommandProcessor commandProcessor) :
@@ -14,8 +18,10 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         /// <summary>
         /// Data Ready RX FIFO interrupt. Asserted when 
         /// new data arrives RX FIFOC.
-        /// Write 1 to clear bit.
         /// </summary>
+        /// <remarks>
+        /// Write 1 to clear bit.
+        /// </remarks>
         public bool ReceiveDataReady
         {
             get { return GetBoolProperty(PropertyMasks.RX_DR); }
@@ -24,11 +30,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         /// <summary>
         /// Data Sent TX FIFO interrupt. Asserted when 
-        /// packet transmitted on TX.If AUTO ACK is acti- 
-        /// vated, this bit is set high only when ACK is 
-        /// received.
-        /// Write 1 to clear bit.
+        /// packet transmitted on TX.If AUTO ACK is activated,
+        /// this bit is set high only when ACK is received.
         /// </summary>
+        /// <remarks>
+        /// Write 1 to clear bit.
+        /// </remarks>
         public bool TransmitDataSent
         {
             get { return GetBoolProperty(PropertyMasks.TX_DS); }
@@ -37,9 +44,11 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         /// <summary>
         /// Maximum number of TX retransmits interrupt 
+        /// </summary>
+        /// <remarks>
         /// Write 1 to clear bit.If MP„x RT is asserted it must
         /// be cleared to enable further communication.
-        /// </summary>
+        /// </remarks>
         public bool MaximunTransmitRetries
         {
             get { return GetBoolProperty(PropertyMasks.MAX_RT); }
@@ -49,17 +58,21 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         /// <summary>
         /// Data pipe number for the payload available for 
         /// reading from RX FIFO 
+        /// </summary>
+        /// <returns>
         /// 000-101: Data Pipe Number 
         /// 110: Not Used 
         /// 111: RX FIFO Empty
-        /// </summary>
+        /// </returns>
         public byte ReceiveDataPipeNumber => GetByteProperty(PropertyMasks.RX_P_NO);
 
         /// <summary>
         /// TX FIFO full flag. 
+        /// </summary>
+        /// <returns>
         /// 1: TX FIFO full.
         /// 0: Available locations in TX FIFO.
-        /// </summary>
+        /// </returns>
         public bool TransmitFifoFull => GetBoolProperty(PropertyMasks.TX_FULL);
     }
 }
