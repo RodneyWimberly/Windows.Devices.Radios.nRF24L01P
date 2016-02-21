@@ -41,8 +41,8 @@ namespace nRF24L01P.TestHarness
 
             //ConstantCarrierWaveOutputForTesting();
             //SimpleSendTest();
-            //SimpleReceiveTest();
-            SimpleSendReceiveTest();
+            SimpleReceiveTest();
+            //SimpleSendReceiveTest();
         }
 
         public byte[] GetBytes()

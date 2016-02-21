@@ -75,13 +75,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public override string ToString()
         {
-            return string.Format("Radio\r\n" +
-                "{{\r\n" +
-                "\t\"Status\" : \"{0}\"\r\n" +
-                "\t\"TransmitFIFO\" : \"{1}\"\r\n" +
-                "\t\"ReceiveFIFO\" : \"{2}\"\r\n" +
-                "}}\r\n" +
-                "{3}{4}",
+            return string.Format("Radio\r\n" + "{{\"Status\":\"{0}\",\"TransmitFIFO\":\"{1}\",\"ReceiveFIFO\":\"{2}\"}}\r\n" + "{3}{4}",
                 TransmitPipe.FifoStatus.GetName(),
                 ReceivePipes[0].FifoStatus.GetName(),
                 Status.GetName(),

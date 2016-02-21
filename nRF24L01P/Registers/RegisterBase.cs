@@ -9,13 +9,13 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public abstract class RegisterBase : IRegisterBase
     {
         protected ICommandProcessor CommandProcessor;
-        public byte[] Value { get; protected set; }
+        protected byte[] Buffer;
 
-        public string HexValue
+        public string Value
         {
             get
             {
-                return Value.Aggregate("0x", (hex, part) => hex + part.ToString("X").PadLeft(2, '0'));
+                return Buffer.Aggregate("0x", (hex, part) => hex + part.ToString("X").PadLeft(2, '0'));
             }
         }
 
@@ -26,7 +26,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         protected RegisterBase(ICommandProcessor commandProcessor, int length, byte address, string name = "")
         {
-            Value = new byte[length];
+            Buffer = new byte[length];
             Name = string.IsNullOrEmpty(name) ? GetType().Name : name;
             CommandProcessor = commandProcessor;
             Length = length;
@@ -36,14 +36,14 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public void Load()
         {
-            Load(CommandProcessor.ExecuteCommand(DeviceCommands.R_REGISTER, Address, Value));
+            Load(CommandProcessor.ExecuteCommand(DeviceCommands.R_REGISTER, Address, Buffer));
             // We called Load after reading from Register so we know the value is not dirty
             IsDirty = false;
         }
 
         public void Load(byte[] value)
         {
-            Value = value;
+            Buffer = value;
             // Value was set externally so we need to mark the buffer as dirty.
             IsDirty = true;
         }
@@ -51,19 +51,19 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public void Save()
         {
             if (!IsDirty) return;
-            CommandProcessor.ExecuteCommand(DeviceCommands.W_REGISTER, Address, Value);
+            CommandProcessor.ExecuteCommand(DeviceCommands.W_REGISTER, Address, Buffer);
             IsDirty = false;
         }
 
         public static implicit operator byte[] (RegisterBase source)
         {
-            return source.Value;
+            return source.Buffer;
         }
 
         public static implicit operator byte(RegisterBase source)
         {
             if (source.Length == 1)
-                return source.Value[0];
+                return source.Buffer[0];
             throw new InvalidOperationException("Cannot convert register value to single byte while register length is greater than 1");
         }
 
@@ -74,13 +74,13 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         protected byte GetByteProperty(BitMasks propertyMask)
         {
-            return (byte)((Value[0] & (byte)propertyMask) >> GetShiftLevel(propertyMask));
+            return (byte)((Buffer[0] & (byte)propertyMask) >> GetShiftLevel(propertyMask));
         }
 
         protected void SetBoolProperty(BitMasks propertyMask, bool value)
         {
             byte mask = (byte)propertyMask;
-            Value[0] = (byte)(value ? (Value[0] | mask) : (Value[0] & ~mask));
+            Buffer[0] = (byte)(value ? (Buffer[0] | mask) : (Buffer[0] & ~mask));
             IsDirty = true;
         }
 
@@ -88,7 +88,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         {
             byte mask = (byte)propertyMask;
             value = (byte)(value << GetShiftLevel(propertyMask));
-            Value[0] = (byte)((value & mask) | (Value[0] & ~mask));
+            Buffer[0] = (byte)((value & mask) | (Buffer[0] & ~mask));
             IsDirty = true;
         }
 
@@ -116,7 +116,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public override string ToString()
         {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
+            return JsonConvert.SerializeObject(this, Formatting.None);
         }
     }
 }

@@ -2,8 +2,7 @@
 {
     public interface IRegisterBase
     {
-        byte[] Value { get; }
-        string HexValue { get; }
+        string Value { get; }
         int Length { get; }
         byte Address { get; }
         string Name { get; }

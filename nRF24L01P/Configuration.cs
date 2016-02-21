@@ -274,7 +274,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public override string ToString()
         {
-            return string.Format("{0}\r\n{1}\r\n", GetType().Name, JsonConvert.SerializeObject(this, Formatting.Indented));
+            return string.Format("{0}\r\n{1}\r\n", GetType().Name, JsonConvert.SerializeObject(this, Formatting.None));
         }
     }
 }
