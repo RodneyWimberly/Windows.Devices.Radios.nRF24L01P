@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Windows.Devices.Gpio;
@@ -49,12 +48,18 @@ namespace Windows.Devices.Radios.nRF24L01P
                 {5, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 5)}
             };
 
-            if (irqPin != null)
+            bool useIrq = irqPin != null;
+            if (useIrq)
             {
                 _irqPin = irqPin;
                 _irqPin.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 50);
                 _irqPin.ValueChanged += irqPin_ValueChanged;
             }
+            ConfigurationRegister configurationRegister = RegisterContainer.ConfigurationRegister;
+            configurationRegister.MaximunTransmitRetriesMask = !useIrq;
+            configurationRegister.ReceiveDataReadyMask = !useIrq;
+            configurationRegister.TransmitDataSentMask = !useIrq;
+            configurationRegister.Save();
 
             Task.Delay(1).Wait();
             Status = DeviceStatus.StandBy;
@@ -70,7 +75,18 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public override string ToString()
         {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
+            return string.Format("Radio\r\n" +
+                "{{\r\n" +
+                "\t\"Status\" : \"{0}\"\r\n" +
+                "\t\"TransmitFIFO\" : \"{1}\"\r\n" +
+                "\t\"ReceiveFIFO\" : \"{2}\"\r\n" +
+                "}}\r\n" +
+                "{3}{4}",
+                TransmitPipe.FifoStatus.GetName(),
+                ReceivePipes[0].FifoStatus.GetName(),
+                Status.GetName(),
+                Configuration,
+                RegisterContainer);
         }
 
         public void Dispose()

@@ -41,8 +41,8 @@ namespace nRF24L01P.TestHarness
 
             //ConstantCarrierWaveOutputForTesting();
             //SimpleSendTest();
-            SimpleReceiveTest();
-            //SimpleSendReceiveTest();
+            //SimpleReceiveTest();
+            SimpleSendReceiveTest();
         }
 
         public byte[] GetBytes()
@@ -58,7 +58,7 @@ namespace nRF24L01P.TestHarness
         public void ConstantCarrierWaveOutputForTesting()
         {
             ConstantCarrierWaveRole ccwRole = new ConstantCarrierWaveRole();
-            ccwRole.AttachDevice(_radio);
+            ccwRole.AttachRadio(_radio);
             ccwRole.Start();
             PrintDiagnostics();
         }
@@ -66,7 +66,7 @@ namespace nRF24L01P.TestHarness
         public void SimpleReceiveTest()
         {
             SimpleReceiverRole receiver = new SimpleReceiverRole();
-            receiver.AttachDevice(_radio);
+            receiver.AttachRadio(_radio);
             receiver.ReceiveAddress = _receiveAddress;
             receiver.DataArrived += DataArrived; ;
             receiver.Start();
@@ -77,7 +77,7 @@ namespace nRF24L01P.TestHarness
         public void SimpleSendTest()
         {
             SimpleSendRole sender = new SimpleSendRole();
-            sender.AttachDevice(_radio);
+            sender.AttachRadio(_radio);
             sender.SendAddress = _sendAddress;
             sender.Start();
             int count = 0;
@@ -96,7 +96,7 @@ namespace nRF24L01P.TestHarness
         public void SimpleSendReceiveTest()
         {
             SendReceiveRole sendReceive = new SendReceiveRole();
-            sendReceive.AttachDevice(_radio);
+            sendReceive.AttachRadio(_radio);
             sendReceive.DataArrived += DataArrived; ;
             sendReceive.SendAddress = _sendAddress;
             sendReceive.ReceiveAddress = _receiveAddress;
@@ -121,7 +121,7 @@ namespace nRF24L01P.TestHarness
         {
             StringBuilder sb = new StringBuilder();
             foreach (byte value in data)
-                sb.AppendFormat("0x{0} ", value.ToString("X"));
+                sb.AppendFormat("0x{0} ", value.ToString("X").PadLeft(2, '0'));
             Debug.WriteLine("Data Received, Data =" + sb);
         }
 

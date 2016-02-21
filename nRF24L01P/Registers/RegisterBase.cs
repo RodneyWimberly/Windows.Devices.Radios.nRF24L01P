@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Linq;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
@@ -8,12 +9,20 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public abstract class RegisterBase : IRegisterBase
     {
         protected ICommandProcessor CommandProcessor;
+        public byte[] Value { get; protected set; }
 
-        public byte[] Value { get; private set; }
-        public bool IsDirty { get; private set; }
-        public int Length { get; }
-        public byte Address { get; }
-        public string Name { get; }
+        public string HexValue
+        {
+            get
+            {
+                return Value.Aggregate("0x", (hex, part) => hex + part.ToString("X").PadLeft(2, '0'));
+            }
+        }
+
+        public bool IsDirty { get; protected set; }
+        public int Length { get; protected set; }
+        public byte Address { get; protected set; }
+        public string Name { get; protected set; }
 
         protected RegisterBase(ICommandProcessor commandProcessor, int length, byte address, string name = "")
         {
@@ -28,12 +37,15 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public void Load()
         {
             Load(CommandProcessor.ExecuteCommand(DeviceCommands.R_REGISTER, Address, Value));
+            // We called Load after reading from Register so we know the value is not dirty
+            IsDirty = false;
         }
 
         public void Load(byte[] value)
         {
             Value = value;
-            IsDirty = false;
+            // Value was set externally so we need to mark the buffer as dirty.
+            IsDirty = true;
         }
 
         public void Save()
@@ -74,8 +86,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         protected void SetByteProperty(BitMasks propertyMask, byte value)
         {
-            value = (byte)(value << GetShiftLevel(propertyMask));
             byte mask = (byte)propertyMask;
+            value = (byte)(value << GetShiftLevel(propertyMask));
             Value[0] = (byte)((value & mask) | (Value[0] & ~mask));
             IsDirty = true;
         }

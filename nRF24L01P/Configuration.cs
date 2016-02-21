@@ -60,6 +60,8 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
+        public string DateRateName => DataRate.GetName();
+
         public DataRates DataRate
         {
             get
@@ -100,6 +102,8 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
+        public string PowerLevelName => PowerLevel.GetName();
+
         public PowerLevels PowerLevel
         {
             get
@@ -136,6 +140,7 @@ namespace Windows.Devices.Radios.nRF24L01P
         }
 
         public bool IsPlusModel { get; set; }
+        public string RadioModelName => RadioModel.GetName();
         public RadioModels RadioModel => IsPlusModel ? RadioModels.nRF24L01Plus : RadioModels.nRF24L01;
 
         public bool CrcEnabled
@@ -152,6 +157,8 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
+        public string CrcEncodingSchemeName => CrcEncodingScheme.GetName();
+
         public CrcEncodingSchemes CrcEncodingScheme
         {
             get
@@ -165,6 +172,8 @@ namespace Windows.Devices.Radios.nRF24L01P
                 _registerContainer.ConfigurationRegister.Save();
             }
         }
+
+        public string AutoRetransmitDelayName => AutoRetransmitDelay.GetName();
 
         public AutoRetransmitDelays AutoRetransmitDelay
         {
@@ -265,7 +274,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public override string ToString()
         {
-            return GetType().Name + ":\r\n" + JsonConvert.SerializeObject(this, Formatting.Indented);
+            return string.Format("{0}\r\n{1}\r\n", GetType().Name, JsonConvert.SerializeObject(this, Formatting.Indented));
         }
     }
 }

@@ -23,9 +23,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Radio.Interrupted += Radio_Interrupted;
             Radio.Status = DeviceStatus.StandBy;
             Radio.Status = DeviceStatus.ReceiveMode;
-            IsRunning = true;
 
-            return IsRunning;
+            return IsRunning = true;
         }
 
         protected override void Radio_Interrupted(object sender, InterruptedEventArgs e)

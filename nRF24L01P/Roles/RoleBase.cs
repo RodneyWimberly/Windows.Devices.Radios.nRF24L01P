@@ -6,8 +6,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
     public abstract class RoleBase : IRole
     {
-        protected ulong[] Pipes = { 0xABCDABCD71, 0x544d52687C };
-
         protected IRadio Radio;
         public bool IsRunning { get; protected set; }
 
@@ -36,12 +34,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         protected IReceivePipe Reader;
         protected ITransmitPipe Writer;
 
-        public virtual void AttachDevice(IRadio radio)
+        public virtual void AttachRadio(IRadio radio)
         {
             Radio = radio;
         }
 
-        public virtual void DetachDevice()
+        public virtual void DetachRadio()
         {
             Radio = null;
         }
@@ -63,10 +61,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             config.CrcEnabled = true;
             config.DynamicPayloadLengthEnabled = true;
 
-            Radio.Interrupted += Radio_Interrupted;
-            IsRunning = true;
-
-            return IsRunning;
+            return IsRunning = true;
         }
 
         protected virtual void Radio_Interrupted(object sender, InterruptedEventArgs e)
@@ -81,7 +76,5 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Radio.Status = DeviceStatus.PowerDown;
             IsRunning = false;
         }
-
-
     }
 }

@@ -7,14 +7,14 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
     public class SendReceiveRole : RoleBase
     {
         private bool _isSending;
-        private bool _isMaxRt;
+        private bool _isMaxRetries;
         private readonly ManualResetEvent _sendCompleteEvent;
         public event EventHandler<byte[]> DataArrived;
 
         public SendReceiveRole()
         {
             DataArrived = null;
-            _isMaxRt = false;
+            _isMaxRetries = false;
             _isSending = false;
             _sendCompleteEvent = new ManualResetEvent(false);
         }
@@ -61,9 +61,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
 
             Radio.Interrupted += Radio_Interrupted;
             Radio.Status = DeviceStatus.ReceiveMode;
-            IsRunning = true;
 
-            return IsRunning;
+            return IsRunning = true;
         }
 
         /// <summary>
@@ -79,7 +78,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             int bytesLeft = buffer.Length;
             int sendPos = 0;
             bool result = true;
-            _isMaxRt = false;
+            _isMaxRetries = false;
             _isSending = true;
             int length = buffer.Length;
             Radio.Status = DeviceStatus.StandBy;
@@ -95,7 +94,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
                 bytesLeft -= sendBufferLength;
                 Writer.Write(sendBuffer);
                 _sendCompleteEvent.Reset();
-                if (!(_sendCompleteEvent.WaitOne(timeOut) && !_isMaxRt))
+                if (!(_sendCompleteEvent.WaitOne(timeOut) && !_isMaxRetries))
                 {
                     result = false;
                     break;
@@ -112,7 +111,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             base.Radio_Interrupted(sender, e);
             if (e.StatusRegister.MaximunTransmitRetries)
             {
-                _isMaxRt = true;
+                _isMaxRetries = true;
                 _sendCompleteEvent.Set();
             }
             if (e.StatusRegister.TransmitDataSent)

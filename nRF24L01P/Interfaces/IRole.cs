@@ -2,8 +2,8 @@
 {
     public interface IRole
     {
-        void AttachDevice(IRadio radio);
-        void DetachDevice();
+        void AttachRadio(IRadio radio);
+        void DetachRadio();
         bool Start();
         void Stop();
     }
