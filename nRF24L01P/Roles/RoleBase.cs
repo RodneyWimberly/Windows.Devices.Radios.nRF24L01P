@@ -58,9 +58,14 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             config.AutoRetransmitCount = 2;
             config.AutoRetransmitDelay = AutoRetransmitDelays.Delay4000uS;
             config.CrcEncodingScheme = CrcEncodingSchemes.SingleByte;
-            config.CrcEnabled = true;
             config.DynamicPayloadLengthEnabled = true;
 
+            //Radio.RegisterContainer.FeatureRegister.EnablePayloadWithAcknowledgement = false;
+            //Radio.RegisterContainer.FeatureRegister.EnableTransmitWithPayloadAcknowledgement = false;
+            //Radio.RegisterContainer.FeatureRegister.Save();
+
+            //Radio.RegisterContainer.EnableReceiveAddressRegister.EnableReceiveDataPipe = false;
+            //Radio.RegisterContainer.EnableReceiveAddressRegister.Save();
             return IsRunning = true;
         }
 

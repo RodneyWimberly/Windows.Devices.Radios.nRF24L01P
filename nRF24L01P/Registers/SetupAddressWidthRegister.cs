@@ -8,7 +8,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public class SetupAddressWidthRegister : RegisterBase
     {
         public SetupAddressWidthRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.SETUP_AW)
+            base(commandProcessor, 1, RegisterAddresses.SETUP_AW, RegisterDefaults.SETUP_AW, "SETUP_AW")
         { }
 
         /// <summary>

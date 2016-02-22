@@ -9,8 +9,8 @@ namespace Windows.Devices.Radios.nRF24L01P
     public class Configuration : IConfiguration
     {
         private readonly ICommandProcessor _commandProcessor;
-
         private readonly IRegisterContainer _registerContainer;
+        private readonly bool _isPlusModel;
 
         public Configuration(ICommandProcessor commandProcessor, IRegisterContainer registerContainer)
         {
@@ -21,7 +21,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             // Attempt to set DataRate to 250Kbps to determine if this is a plus model
             DataRates oldDataRate = DataRate;
             DataRate = DataRates.DataRate250Kbps;
-            IsPlusModel = DataRate == DataRates.DataRate250Kbps;
+            _isPlusModel = DataRate == DataRates.DataRate250Kbps;
             DataRate = oldDataRate;
 
             _commandProcessor.ControllerName = RadioModel.GetName();
@@ -139,23 +139,9 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-        public bool IsPlusModel { get; set; }
-        public string RadioModelName => RadioModel.GetName();
-        public RadioModels RadioModel => IsPlusModel ? RadioModels.nRF24L01Plus : RadioModels.nRF24L01;
 
-        public bool CrcEnabled
-        {
-            get
-            {
-                _registerContainer.ConfigurationRegister.Load();
-                return _registerContainer.ConfigurationRegister.EnableCrc;
-            }
-            set
-            {
-                _registerContainer.ConfigurationRegister.EnableCrc = value;
-                _registerContainer.ConfigurationRegister.Save();
-            }
-        }
+        public string RadioModelName => RadioModel.GetName();
+        public RadioModels RadioModel => _isPlusModel ? RadioModels.nRF24L01Plus : RadioModels.nRF24L01;
 
         public string CrcEncodingSchemeName => CrcEncodingScheme.GetName();
 
@@ -163,13 +149,20 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
-                _registerContainer.ConfigurationRegister.Load();
-                return _registerContainer.ConfigurationRegister.CrcEncodingScheme ? CrcEncodingSchemes.DualBytes : CrcEncodingSchemes.SingleByte;
+                CrcEncodingSchemes crcEncodingScheme = CrcEncodingSchemes.None;
+                ConfigurationRegister configurationRegister = _registerContainer.ConfigurationRegister;
+                configurationRegister.Load();
+                if (configurationRegister.EnableCrc)
+                    crcEncodingScheme = configurationRegister.CrcEncodingScheme ? CrcEncodingSchemes.DualBytes : CrcEncodingSchemes.SingleByte;
+                return crcEncodingScheme;
             }
             set
             {
-                _registerContainer.ConfigurationRegister.CrcEncodingScheme = (value == CrcEncodingSchemes.DualBytes);
-                _registerContainer.ConfigurationRegister.Save();
+                ConfigurationRegister configurationRegister = _registerContainer.ConfigurationRegister;
+                configurationRegister.EnableCrc = value != CrcEncodingSchemes.None;
+                if (configurationRegister.EnableCrc)
+                    configurationRegister.CrcEncodingScheme = (value == CrcEncodingSchemes.DualBytes);
+                configurationRegister.Save();
             }
         }
 
@@ -247,11 +240,16 @@ namespace Windows.Devices.Radios.nRF24L01P
             get
             {
                 _registerContainer.FeatureRegister.Load();
-                return _registerContainer.FeatureRegister.EnableDynamicPayloadLength;
+                _registerContainer.DynamicPayloadLengthRegister.Load();
+                return _registerContainer.FeatureRegister.EnableDynamicPayloadLength &&
+                    _registerContainer.DynamicPayloadLengthRegister.EnableDynamicPayload;
             }
             set
             {
-                _registerContainer.FeatureRegister.EnableDynamicPayloadLength = value;
+                _registerContainer.DynamicPayloadLengthRegister.EnableDynamicPayload =
+                    _registerContainer.FeatureRegister.EnableDynamicPayloadLength =
+                    value;
+                _registerContainer.DynamicPayloadLengthRegister.Save();
                 _registerContainer.FeatureRegister.Save();
             }
         }

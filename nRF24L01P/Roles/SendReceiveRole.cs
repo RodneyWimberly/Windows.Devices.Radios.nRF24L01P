@@ -45,6 +45,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Radio.ReceivePipes[0].AutoAcknowledgementEnabled = true;
             Radio.ReceivePipes[0].DynamicPayloadLengthEnabled = true;
             Radio.ReceivePipes[0].Address = SendAddress;
+            Radio.ReceivePipes[0].PayloadWidth = Radio.Configuration.PayloadWidth;
             Radio.ReceivePipes[0].Enabled = true;
 
             Writer = Radio.TransmitPipe;
@@ -54,6 +55,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Reader.AutoAcknowledgementEnabled = true;
             Reader.DynamicPayloadLengthEnabled = true;
             Reader.Address = ReceiveAddress;
+            Reader.PayloadWidth = Radio.Configuration.PayloadWidth;
             Reader.Enabled = true;
 
             Reader.FlushBuffer();

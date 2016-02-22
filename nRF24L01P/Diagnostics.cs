@@ -60,7 +60,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
 
             StatusRegister statusRegister = _registerContainer.StatusRegister;
-            statusRegister.Load();
+            //statusRegister.Load();
             byte status = statusRegister;
             sb.AppendFormat("STATUS\t\t\t = 0x{0} RX_DR={1} TX_DS={2} MAX_RT={3} RX_P_NO={4} TX_FULL={5}\r\n",
                 status.ToString("X").PadLeft(2, '0'),
@@ -82,7 +82,6 @@ namespace Windows.Devices.Radios.nRF24L01P
 
             sb.AppendLine("Data Rate\t\t = " + _configuration.DataRate.GetName());
             sb.AppendLine("Model\t\t\t = " + _configuration.RadioModel.GetName());
-            sb.AppendLine("CRC Enabled\t\t = " + _configuration.CrcEnabled);
             sb.AppendLine("CRC Length\t\t = " + _configuration.CrcEncodingScheme.GetName());
             sb.AppendLine("PA Power\t\t = " + _configuration.PowerLevel.GetName());
 

@@ -15,6 +15,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Reader.AutoAcknowledgementEnabled = true;
             Reader.DynamicPayloadLengthEnabled = true;
             Reader.Address = ReceiveAddress;
+            Reader.PayloadWidth = Radio.Configuration.PayloadWidth;
             Reader.Enabled = true;
 
             Reader.FlushBuffer();

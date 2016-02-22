@@ -8,7 +8,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public class ConfigurationRegister : RegisterBase
     {
         public ConfigurationRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.CONFIG)
+            base(commandProcessor, 1, RegisterAddresses.CONFIG, RegisterDefaults.CONFIG, "CONFIG")
         { }
 
         /// <summary>

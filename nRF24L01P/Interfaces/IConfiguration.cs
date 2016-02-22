@@ -5,7 +5,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
     public interface IConfiguration
     {
         bool EnableContiuousCarrierTransmit { get; set; }
-        bool IsPlusModel { get; set; }
         bool EnableAutoAcknowledgement { get; set; }
         DataRates DataRate { get; set; }
         string DateRateName { get; }
@@ -14,7 +13,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         uint Channel { get; set; }
         RadioModels RadioModel { get; }
         string RadioModelName { get; }
-        bool CrcEnabled { get; set; }
         CrcEncodingSchemes CrcEncodingScheme { get; set; }
         string CrcEncodingSchemeName { get; }
         AutoRetransmitDelays AutoRetransmitDelay { get; set; }

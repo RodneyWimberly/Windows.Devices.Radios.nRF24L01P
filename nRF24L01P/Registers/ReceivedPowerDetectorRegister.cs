@@ -9,7 +9,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public class ReceivedPowerDetectorRegister : RegisterBase
     {
         public ReceivedPowerDetectorRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.RPD)
+            base(commandProcessor, 1, RegisterAddresses.RPD, RegisterDefaults.RPD, "RPD")
         { }
 
         /// <summary>

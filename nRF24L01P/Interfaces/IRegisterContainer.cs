@@ -22,7 +22,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         IRegisterCollection<AddressPipeRegister> ReceiveAddressPipeRegisters { get; }
         IRegisterCollection<ReceivePayloadWidthPipeRegister> ReceivePayloadWidthPipeRegisters { get; }
         void LoadRegisters();
-        void SaveRegisters();
+        void ResetRegisters();
+        void SaveRegisters(bool force = false);
         string ToString();
     }
 }

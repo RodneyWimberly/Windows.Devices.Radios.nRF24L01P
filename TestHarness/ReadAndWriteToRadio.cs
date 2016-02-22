@@ -40,8 +40,8 @@ namespace nRF24L01P.TestHarness
             _radio = new Radio(commandProcessor, cePin, irqPin);
 
             //ConstantCarrierWaveOutputForTesting();
-            //SimpleSendTest();
-            SimpleReceiveTest();
+            SimpleSendTest();
+            //SimpleReceiveTest();
             //SimpleSendReceiveTest();
         }
 
@@ -128,7 +128,7 @@ namespace nRF24L01P.TestHarness
         private void PrintDiagnostics()
         {
             Debug.WriteLine(_radio.GetDiagnostics());
-            Debug.WriteLine(_radio.ToString());
+            //Debug.WriteLine(_radio.ToString());
         }
     }
 }

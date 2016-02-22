@@ -2,7 +2,8 @@
 {
     public enum CrcEncodingSchemes
     {
-        SingleByte = 0,
-        DualBytes = 1
+        None = 0,
+        SingleByte = 1,
+        DualBytes = 2
     }
 }

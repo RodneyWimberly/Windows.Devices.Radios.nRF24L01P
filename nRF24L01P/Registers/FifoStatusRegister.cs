@@ -8,7 +8,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public class FifoStatusRegister : RegisterBase
     {
         public FifoStatusRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.FIFO_STATUS)
+            base(commandProcessor, 1, RegisterAddresses.FIFO_STATUS, RegisterDefaults.FIFO_STATUS, "FIFO_STATUS")
         { }
 
         /// <summary>

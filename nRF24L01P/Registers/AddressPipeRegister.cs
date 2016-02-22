@@ -1,4 +1,5 @@
-﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+﻿using System;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
@@ -15,8 +16,23 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </remarks>
     public class AddressPipeRegister : PipeRegisterBase
     {
-        public AddressPipeRegister(ICommandProcessor commandProcessor, byte address, byte pipeNumber) :
-            base(commandProcessor, address, (byte)(pipeNumber <= 1 ? 5 : 1), pipeNumber)
-        { }
+        public AddressPipeRegister(ICommandProcessor commandProcessor, byte address, byte[] defaultValue, byte pipeNumber, string name = "") :
+                base(commandProcessor, address, (byte)(pipeNumber <= 1 ? 5 : 1), defaultValue, pipeNumber, name)
+        {
+            Name = (Address == RegisterAddresses.TX_ADDR ? "Transmit" : "Receive") +
+                GetType().Name + (Address == RegisterAddresses.TX_ADDR ? "" : PipeNumber.ToString()) +
+                (string.IsNullOrEmpty(name) ? "" : string.Format(" ({0})", name));
+        }
+
+        public byte[] PipeAddress
+        {
+            get { return Buffer; }
+            set
+            {
+                if (value.Length != Length)
+                    throw new InvalidOperationException(string.Format("The length of the PipeAddress must be {0}", Length));
+                Buffer = value;
+            }
+        }
     }
 }

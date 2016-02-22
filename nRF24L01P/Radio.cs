@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Windows.Devices.Gpio;
@@ -34,6 +35,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             _commandProcessor = commandProcessor;
 
             RegisterContainer = new RegisterContainer(_commandProcessor);
+            RegisterContainer.ResetRegisters();
             RegisterContainer.LoadRegisters();
 
             Configuration = new Configuration(_commandProcessor, RegisterContainer);
@@ -75,10 +77,14 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public override string ToString()
         {
-            return string.Format("Radio\r\n" + "{{\"Status\":\"{0}\",\"TransmitFIFO\":\"{1}\",\"ReceiveFIFO\":\"{2}\"}}\r\n" + "{3}{4}",
-                TransmitPipe.FifoStatus.GetName(),
-                ReceivePipes[0].FifoStatus.GetName(),
-                Status.GetName(),
+            var radio = new
+            {
+                Status = Status.GetName(),
+                TransmitFIFO = TransmitPipe.FifoStatus.GetName(),
+                ReceiveFIFO = ReceivePipes[0].FifoStatus.GetName()
+            };
+            return string.Format("Radio\r\n{0}\r\n{1}{2}",
+                JsonConvert.SerializeObject(radio, Formatting.None),
                 Configuration,
                 RegisterContainer);
         }

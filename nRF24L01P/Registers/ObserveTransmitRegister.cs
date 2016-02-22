@@ -8,7 +8,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public class ObserveTransmitRegister : RegisterBase
     {
         public ObserveTransmitRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.OBSERVE_TX)
+            base(commandProcessor, 1, RegisterAddresses.OBSERVE_TX, RegisterDefaults.OBSERVE_TX, "OBSERVE_TX")
         { }
 
         /// <summary>

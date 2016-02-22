@@ -134,6 +134,7 @@
     <Compile Include="Configuration.cs" />
     <Compile Include="ReceivePipe.cs" />
     <Compile Include="Registers\RegisterContainer.cs" />
+    <Compile Include="Registers\RegisterDefaults.cs" />
     <Compile Include="Registers\SetupAddressWidthRegister.cs" />
     <Compile Include="Registers\EnableAutoAcknowledgementRegister.cs" />
     <Compile Include="Registers\RfChannelRegister.cs" />

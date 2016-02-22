@@ -12,7 +12,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public class StatusRegister : RegisterBase
     {
         public StatusRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.STATUS)
+            base(commandProcessor, 1, RegisterAddresses.STATUS, RegisterDefaults.STATUS, "STATUS")
         { }
 
         /// <summary>

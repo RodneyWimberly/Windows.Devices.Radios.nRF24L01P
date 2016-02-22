@@ -8,7 +8,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public class SetupRetransmissionRegister : RegisterBase
     {
         public SetupRetransmissionRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.SETUP_RETR)
+            base(commandProcessor, 1, RegisterAddresses.SETUP_RETR, RegisterDefaults.SETUP_RETR, "SETUP_RETR")
         { }
 
         /// <summary>

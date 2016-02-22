@@ -8,7 +8,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public class FeatureRegister : RegisterBase
     {
         public FeatureRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.FEATURE)
+            base(commandProcessor, 1, RegisterAddresses.FEATURE, RegisterDefaults.FEATURE, "FEATURE")
         { }
 
         /// <summary>

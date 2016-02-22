@@ -33,27 +33,27 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
             StatusRegister = new StatusRegister(commandProcessor);
             ObserveTransmitRegister = new ObserveTransmitRegister(commandProcessor);
             ReceivedPowerDetectorRegister = new ReceivedPowerDetectorRegister(commandProcessor);
-            TransmitAddressRegister = new AddressPipeRegister(commandProcessor, RegisterAddresses.TX_ADDR, 0);
+            TransmitAddressRegister = new AddressPipeRegister(commandProcessor, RegisterAddresses.TX_ADDR, RegisterDefaults.TX_ADDR, 0, "TX_ADDR");
             FifoStatusRegister = new FifoStatusRegister(commandProcessor);
             DynamicPayloadLengthRegister = new DynamicPayloadLengthRegister(commandProcessor);
             FeatureRegister = new FeatureRegister(commandProcessor);
             ReceiveAddressPipeRegisters = new RegisterCollection<AddressPipeRegister>
             {
-                {0, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P0, 0)},
-                {1, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, 1)},
-                {2, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, 2)},
-                {3, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, 3)},
-                {4, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, 4)},
-                {5, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, 5)},
+                {0, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P0, RegisterDefaults.RX_ADDR_P0, 0, "RX_ADDR_P0")},
+                {1, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, RegisterDefaults.RX_ADDR_P1, 1, "RX_ADDR_P1")},
+                {2, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P2, RegisterDefaults.RX_ADDR_P2, 2, "RX_ADDR_P2")},
+                {3, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P3, RegisterDefaults.RX_ADDR_P3, 3, "RX_ADDR_P3")},
+                {4, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P4, RegisterDefaults.RX_ADDR_P4, 4, "RX_ADDR_P4")},
+                {5, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P5, RegisterDefaults.RX_ADDR_P5, 5, "RX_ADDR_P5")},
             };
             ReceivePayloadWidthPipeRegisters = new RegisterCollection<ReceivePayloadWidthPipeRegister>
             {
-                {0, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P0, 0)},
-                {1, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P1, 1)},
-                {2, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P2, 2)},
-                {3, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P3, 3)},
-                {4, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P4, 4)},
-                {5, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P5, 5)}
+                {0, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P0, RegisterDefaults.RX_PW_P0, 0, "RX_PW_P0")},
+                {1, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P1, RegisterDefaults.RX_PW_P1, 1, "RX_PW_P1")},
+                {2, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P2, RegisterDefaults.RX_PW_P2, 2, "RX_PW_P2")},
+                {3, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P3, RegisterDefaults.RX_PW_P3, 3, "RX_PW_P3")},
+                {4, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P4, RegisterDefaults.RX_PW_P4, 4, "RX_PW_P4")},
+                {5, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P5, RegisterDefaults.RX_PW_P5, 5, "RX_PW_P5")}
             };
             AllRegisters = new RegisterCollection<IRegisterBase>
             {
@@ -93,7 +93,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public void LoadRegisters() => AllRegisters.LoadAll();
 
-        public void SaveRegisters() => AllRegisters.SaveAll();
+        public void ResetRegisters() => AllRegisters.ResetAll();
+
+        public void SaveRegisters(bool force = false) => AllRegisters.SaveAll(force);
 
         public override string ToString() => AllRegisters.ToString();
     }

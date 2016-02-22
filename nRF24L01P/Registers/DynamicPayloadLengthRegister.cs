@@ -8,7 +8,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public class DynamicPayloadLengthRegister : RegisterBase
     {
         public DynamicPayloadLengthRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.DYNPD)
+            base(commandProcessor, 1, RegisterAddresses.DYNPD, RegisterDefaults.DYNPD, "DYNPD")
+
         { }
 
         /// <summary>

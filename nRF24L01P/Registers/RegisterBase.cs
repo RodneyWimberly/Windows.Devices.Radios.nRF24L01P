@@ -10,6 +10,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     {
         protected ICommandProcessor CommandProcessor;
         protected byte[] Buffer;
+        protected readonly byte[] DefaultValue;
 
         public string Value
         {
@@ -24,13 +25,14 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public byte Address { get; protected set; }
         public string Name { get; protected set; }
 
-        protected RegisterBase(ICommandProcessor commandProcessor, int length, byte address, string name = "")
+        protected RegisterBase(ICommandProcessor commandProcessor, int length, byte address, byte[] defaultValue, string name = "")
         {
             Buffer = new byte[length];
-            Name = string.IsNullOrEmpty(name) ? GetType().Name : name;
+            Name = GetType().Name + (string.IsNullOrEmpty(name) ? "" : string.Format(" ({0})", name));
             CommandProcessor = commandProcessor;
             Length = length;
             Address = address;
+            DefaultValue = defaultValue;
             IsDirty = false;
         }
 
@@ -48,11 +50,17 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
             IsDirty = true;
         }
 
-        public void Save()
+        public void Save(bool force = false)
         {
-            if (!IsDirty) return;
+            if (!IsDirty && !force) return;
             CommandProcessor.ExecuteCommand(DeviceCommands.W_REGISTER, Address, Buffer);
             IsDirty = false;
+        }
+
+        public void Reset()
+        {
+            Load(DefaultValue);
+            Save();
         }
 
         public static implicit operator byte[] (RegisterBase source)

@@ -13,6 +13,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
                 register.Load();
         }
 
+        public void ResetAll()
+        {
+            foreach (T register in Values)
+                register.Reset();
+        }
+
         public void SaveAll(bool force = false)
         {
             foreach (T register in Values.Where(r => force || r.IsDirty))

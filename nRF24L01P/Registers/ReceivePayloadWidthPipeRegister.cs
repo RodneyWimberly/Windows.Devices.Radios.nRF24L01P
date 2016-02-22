@@ -7,13 +7,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class ReceivePayloadWidthPipeRegister : PipeRegisterBase
     {
-        public ReceivePayloadWidthPipeRegister(ICommandProcessor commandProcessor, byte address, byte pipeNumber) :
-            base(commandProcessor, address, 1, pipeNumber)
+        public ReceivePayloadWidthPipeRegister(ICommandProcessor commandProcessor, byte address, byte[] defaultValue, byte pipeNumber, string name = "") :
+            base(commandProcessor, address, 1, defaultValue, pipeNumber, name)
         { }
 
         /// <summary>
-        /// Number of bytes in RX payload in data pipe x (1 to
-        /// 32 bytes)
+        /// Number of bytes in RX payload in data pipe x (1 to 32 bytes)
         /// 0 Pipe not used 
         /// 1 = 1 byte 
         /// ...

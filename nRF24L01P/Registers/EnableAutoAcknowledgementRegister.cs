@@ -8,7 +8,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public class EnableAutoAcknowledgementRegister : RegisterBase
     {
         public EnableAutoAcknowledgementRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.EN_AA)
+            base(commandProcessor, 1, RegisterAddresses.EN_AA, RegisterDefaults.EN_AA, "EN_AA")
         { }
 
         /// <summary>

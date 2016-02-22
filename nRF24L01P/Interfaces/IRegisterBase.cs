@@ -9,7 +9,8 @@
         bool IsDirty { get; }
         void Load();
         void Load(byte[] value);
-        void Save();
+        void Save(bool force = false);
+        void Reset();
         string ToString();
     }
 }

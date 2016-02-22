@@ -8,7 +8,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     public class EnableReceiveAddressRegister : RegisterBase
     {
         public EnableReceiveAddressRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.EN_RXADDR)
+            base(commandProcessor, 1, RegisterAddresses.EN_RXADDR, RegisterDefaults.EN_RXADDR, "EN_RXADDR")
         { }
 
         /// <summary>
