@@ -96,9 +96,9 @@ namespace Windows.Devices.Radios.nRF24L01P
             _irqPin?.Dispose();
         }
 
-        public string GetDiagnostics()
+        public string GetArduinoDetails()
         {
-            return new Diagnostics(this, Configuration, _commandProcessor, RegisterContainer).ToString();
+            return new ArduinoDetails(this, Configuration, _commandProcessor, RegisterContainer).ToString();
         }
 
         private void EnableReceiver(bool enabled)
@@ -148,8 +148,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                             RegisterContainer.ConfigurationRegister.Save();
                             break;
                         }
-                        throw new InvalidOperationException(
-                            "Error status change, PowerDown should from StandBy mode only");
+                        throw new InvalidOperationException("Error status change, PowerDown should from StandBy mode only");
                     case DeviceStatus.StandBy:
                         if (lastStatus == DeviceStatus.ReceiveMode || lastStatus == DeviceStatus.TransmitMode)
                         {
@@ -163,8 +162,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                             Task.Delay(2).Wait();
                             break;
                         }
-                        throw new InvalidOperationException(
-                            "Error status change, StandBy should from PowerDown,TX or RX mode only");
+                        throw new InvalidOperationException("Error status change, StandBy should from PowerDown,TX or RX mode only");
                     case DeviceStatus.TransmitMode:
                         if (lastStatus == DeviceStatus.StandBy)
                         {
@@ -189,7 +187,6 @@ namespace Windows.Devices.Radios.nRF24L01P
 
                             EnableReceiver(true);
                             break;
-
                         }
                         throw new InvalidOperationException("Error status change, RXMode should from Standby mode only");
                 }

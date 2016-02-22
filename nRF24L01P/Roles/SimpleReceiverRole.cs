@@ -22,7 +22,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Radio.TransmitPipe.FlushBuffer();
 
             Radio.Interrupted += Radio_Interrupted;
-            Radio.Status = DeviceStatus.StandBy;
             Radio.Status = DeviceStatus.ReceiveMode;
 
             return IsRunning = true;
@@ -30,13 +29,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
 
         protected override void Radio_Interrupted(object sender, InterruptedEventArgs e)
         {
-            if (e.StatusRegister.ReceiveDataReady && DataArrived != null)
-            {
-                DataArrived(this, Reader.ReadBufferAll());
-                Radio.Status = DeviceStatus.StandBy;
-                e.StatusRegister.Save();
-                Radio.Status = DeviceStatus.ReceiveMode;
-            }
+            if (!e.StatusRegister.ReceiveDataReady || DataArrived == null) return;
+
+            DataArrived(this, Reader.ReadBufferAll());
+            Radio.Status = DeviceStatus.StandBy;
+            e.StatusRegister.Save();
+            Radio.Status = DeviceStatus.ReceiveMode;
         }
     }
 }

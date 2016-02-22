@@ -127,7 +127,7 @@ namespace nRF24L01P.TestHarness
 
         private void PrintDiagnostics()
         {
-            Debug.WriteLine(_radio.GetDiagnostics());
+            Debug.WriteLine(_radio.GetArduinoDetails());
             //Debug.WriteLine(_radio.ToString());
         }
     }

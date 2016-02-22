@@ -38,7 +38,7 @@ namespace nRF24L01P.UnitTests
         [TestMethod]
         public void GetDiagnosticsTest()
         {
-            Debug.WriteLine(_radio.GetDiagnostics());
+            Debug.WriteLine(_radio.GetArduinoDetails());
 
             //SendReceiveRole sendReceive = new SendReceiveRole();
             //sendReceive.AttachDevice(_radio);
@@ -51,7 +51,7 @@ namespace nRF24L01P.UnitTests
         [TestMethod]
         public void ConstantCarrierWaveOutputForTestinng()
         {
-            Debug.WriteLine(_radio.GetDiagnostics());
+            Debug.WriteLine(_radio.GetArduinoDetails());
             ConfigurationRegister configurationRegister = _radio.RegisterContainer.ConfigurationRegister;
             configurationRegister.PowerUp = true;
             configurationRegister.PrimaryReceiveMode = false;

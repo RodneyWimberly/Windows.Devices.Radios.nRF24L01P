@@ -22,10 +22,11 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         public void EnableReceivePipe(int pipeId, byte address)
         {
             if (IsRunning) throw new InvalidOperationException("Please call this method before you call the Start method");
-            if (pipeId > 5 || pipeId < 2) throw new ArgumentOutOfRangeException(nameof(pipeId), "pipeId should be 2-5");
+            if (pipeId > 5 || pipeId < 2) throw new ArgumentOutOfRangeException(nameof(pipeId), "PipeId should be 2-5");
             Radio.ReceivePipes[pipeId].Address = new byte[1] { address };
             Radio.ReceivePipes[pipeId].AutoAcknowledgementEnabled = true;
             Radio.ReceivePipes[pipeId].DynamicPayloadLengthEnabled = true;
+            Radio.ReceivePipes[pipeId].PayloadWidth = Radio.Configuration.PayloadWidth;
             Radio.ReceivePipes[pipeId].Enabled = true;
         }
 
@@ -88,7 +89,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Radio.Status = DeviceStatus.TransmitMode;
             while (bytesLeft > 0)
             {
-                int sendBufferLength = Math.Min(bytesLeft, 32);
+                int sendBufferLength = Math.Min(bytesLeft, Constants.MaxPayloadWidth);
                 if (sendBufferLength != sendBuffer.Length)
                     sendBuffer = new byte[sendBufferLength];
                 Array.Copy(buffer, sendPos, sendBuffer, 0, sendBufferLength);

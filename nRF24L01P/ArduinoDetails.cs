@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
@@ -6,14 +7,17 @@ using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P
 {
-    public class Diagnostics
+    /// <summary>
+    /// This class is used to produce details similar to the printDetails() Arduino method 
+    /// </summary>
+    public class ArduinoDetails
     {
         private readonly IRadio _radio;
         private readonly IConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
         private readonly IRegisterContainer _registerContainer;
 
-        public Diagnostics(IRadio radio, IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer)
+        public ArduinoDetails(IRadio radio, IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer)
         {
             _radio = radio;
             _configuration = configuration;
@@ -54,13 +58,17 @@ namespace Windows.Devices.Radios.nRF24L01P
             return registerValue;
         }
 
+        public void PrintDetails()
+        {
+            Debug.WriteLine(this);
+        }
+
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
 
-
             StatusRegister statusRegister = _registerContainer.StatusRegister;
-            //statusRegister.Load();
+            statusRegister.Load();
             byte status = statusRegister;
             sb.AppendFormat("STATUS\t\t\t = 0x{0} RX_DR={1} TX_DS={2} MAX_RT={3} RX_P_NO={4} TX_FULL={5}\r\n",
                 status.ToString("X").PadLeft(2, '0'),

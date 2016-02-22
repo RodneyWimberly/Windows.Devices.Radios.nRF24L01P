@@ -97,7 +97,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IReadAndWriteProcess.cs" />
-    <Compile Include="PingPong.cs" />
     <Compile Include="ReadAndWriteToRadio.cs" />
     <Compile Include="WebServer.cs" />
     <Compile Include="StartupTask.cs" />

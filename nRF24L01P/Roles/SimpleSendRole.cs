@@ -34,7 +34,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Writer.FlushBuffer();
 
             Radio.Interrupted += Radio_Interrupted;
-            Radio.Status = DeviceStatus.StandBy;
             Radio.Status = DeviceStatus.TransmitMode;
 
             return IsRunning = true;
@@ -43,6 +42,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         protected override void Radio_Interrupted(object sender, InterruptedEventArgs e)
         {
             if (!e.StatusRegister.TransmitDataSent && !e.StatusRegister.MaximunTransmitRetries) return;
+
             Writer.FlushBuffer();
             _maxRetries = e.StatusRegister.MaximunTransmitRetries;
             Radio.Status = DeviceStatus.StandBy;

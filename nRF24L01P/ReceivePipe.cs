@@ -218,12 +218,13 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
+                FifoStatus fifoStatus = FifoStatus.InUse;
                 _registerContainer.FifoStatusRegister.Load();
                 if (_registerContainer.FifoStatusRegister.ReceiveFifoFull)
-                    return FifoStatus.Full;
-                if (_registerContainer.FifoStatusRegister.ReveiveFifoEmpty)
-                    return FifoStatus.Empty;
-                return FifoStatus.InUse;
+                    fifoStatus = FifoStatus.Full;
+                else if (_registerContainer.FifoStatusRegister.ReveiveFifoEmpty)
+                    fifoStatus = FifoStatus.Empty;
+                return fifoStatus;
             }
         }
 
@@ -241,7 +242,7 @@ namespace Windows.Devices.Radios.nRF24L01P
         public byte[] ReadBuffer(int length)
         {
             if (length == 0 || length > 32)
-                throw new ArgumentOutOfRangeException(nameof(length), "length should between 1 and 32");
+                throw new ArgumentOutOfRangeException(nameof(length), "Length should between 1 and 32");
 
             byte[] buffer = new byte[length];
 
@@ -271,27 +272,25 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             int position = writeStartPosition;
             int bytesRead = 0;
-            if (DynamicPayloadLengthEnabled)
+            if (!DynamicPayloadLengthEnabled)
+                throw new InvalidOperationException("DynamicPayloadLength is not enabled on this pipe, please turn it On or use ReadBuffer(int length) instead");
+            while (FifoStatus != FifoStatus.Empty)
             {
-                while (FifoStatus != FifoStatus.Empty)
+                int length = BytesToRead;
+                if (length > 32)
                 {
-                    int length = BytesToRead;
-                    if (length > 32)
-                    {
-                        FlushBuffer();
-                        return 0;
-                    }
-                    if (length == 0)
-                        return 0;
-                    if (position + length > outputBuffer.Length)//buffer full
-                        break;
-                    Array.Copy(ReadBuffer(length), 0, outputBuffer, position, length);
-                    position += length;
-                    bytesRead += length;
+                    FlushBuffer();
+                    return 0;
                 }
-                return bytesRead;
+                if (length == 0)
+                    return 0;
+                if (position + length > outputBuffer.Length)//buffer full
+                    break;
+                Array.Copy(ReadBuffer(length), 0, outputBuffer, position, length);
+                position += length;
+                bytesRead += length;
             }
-            throw new InvalidOperationException("DynamicPayloadLength is not enabled on this pipe, please turn it On or use ReadBuffer(int length) instead");
+            return bytesRead;
         }
     }
 }

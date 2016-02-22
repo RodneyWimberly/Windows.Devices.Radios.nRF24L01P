@@ -13,7 +13,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         IDictionary<int, IReceivePipe> ReceivePipes { get; }
         DeviceStatus Status { get; set; }
         string ToString();
-        string GetDiagnostics();
+        string GetArduinoDetails();
         bool ReceivedPowerDetector { get; }
 
         event EventHandler<InterruptedEventArgs> Interrupted;

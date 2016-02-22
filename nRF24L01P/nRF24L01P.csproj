@@ -107,7 +107,7 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Diagnostics.cs" />
+    <Compile Include="ArduinoDetails.cs" />
     <Compile Include="Enums\BitMasks.cs" />
     <Compile Include="Enums\DeviceCommands.cs" />
     <Compile Include="Enums\EnumExtensionMethods.cs" />

@@ -45,21 +45,22 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             get
             {
+                FifoStatus fifoStatus = FifoStatus.InUse;
                 _registerContainer.FifoStatusRegister.Load();
                 if (_registerContainer.FifoStatusRegister.TransmitFifoFull)
-                    return FifoStatus.Full;
-                if (_registerContainer.FifoStatusRegister.TransmitFifoEmpty)
-                    return FifoStatus.Empty;
-                return FifoStatus.InUse;
+                    fifoStatus = FifoStatus.Full;
+                else if (_registerContainer.FifoStatusRegister.TransmitFifoEmpty)
+                    fifoStatus = FifoStatus.Empty;
+                return fifoStatus;
             }
         }
 
-        public void Write(byte[] data, bool disableACK = false)
+        public void Write(byte[] data, bool disableAck = false)
         {
             if (data.Length > Constants.MaxPayloadWidth)
-                throw new ArgumentOutOfRangeException(nameof(data), string.Format("data should be 0-{0} bytes", Constants.MaxPayloadWidth));
+                throw new ArgumentOutOfRangeException(nameof(data), string.Format("Data should be 0-{0} bytes", Constants.MaxPayloadWidth));
 
-            _commandProcessor.ExecuteCommand(disableACK ? DeviceCommands.W_TX_PAYLOAD_NO_ACK : DeviceCommands.W_TX_PAYLOAD, RegisterAddresses.EMPTY_ADDRESS, data);
+            _commandProcessor.ExecuteCommand(disableAck ? DeviceCommands.W_TX_PAYLOAD_NO_ACK : DeviceCommands.W_TX_PAYLOAD, RegisterAddresses.EMPTY_ADDRESS, data);
         }
     }
 }

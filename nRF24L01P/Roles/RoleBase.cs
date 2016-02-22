@@ -60,12 +60,10 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             config.CrcEncodingScheme = CrcEncodingSchemes.SingleByte;
             config.DynamicPayloadLengthEnabled = true;
 
-            //Radio.RegisterContainer.FeatureRegister.EnablePayloadWithAcknowledgement = false;
-            //Radio.RegisterContainer.FeatureRegister.EnableTransmitWithPayloadAcknowledgement = false;
-            //Radio.RegisterContainer.FeatureRegister.Save();
+            Radio.RegisterContainer.FeatureRegister.EnablePayloadWithAcknowledgement = true;
+            Radio.RegisterContainer.FeatureRegister.EnableTransmitWithPayloadAcknowledgement = true;
+            Radio.RegisterContainer.FeatureRegister.Save();
 
-            //Radio.RegisterContainer.EnableReceiveAddressRegister.EnableReceiveDataPipe = false;
-            //Radio.RegisterContainer.EnableReceiveAddressRegister.Save();
             return IsRunning = true;
         }
 
