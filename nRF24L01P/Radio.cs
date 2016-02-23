@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P.Enums;
@@ -17,13 +16,11 @@ namespace Windows.Devices.Radios.nRF24L01P
         private readonly GpioPin _cePin;
         private readonly GpioPin _irqPin;
         private readonly ICommandProcessor _commandProcessor;
-        public IRegisterContainer RegisterContainer { get; }
-
         public event EventHandler<InterruptedEventArgs> Interrupted;
-
+        public IRegisterContainer RegisterContainer { get; }
         public IConfiguration Configuration { get; }
         public ITransmitPipe TransmitPipe { get; }
-        public IDictionary<int, IReceivePipe> ReceivePipes { get; }
+        public IReceivePipeCollection ReceivePipes { get; }
 
         public Radio(ICommandProcessor commandProcessor, GpioPin cePin, GpioPin irqPin = null)
         {
@@ -40,15 +37,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
             Configuration = new Configuration(_commandProcessor, RegisterContainer);
             TransmitPipe = new TransmitPipe(Configuration, _commandProcessor, RegisterContainer);
-            ReceivePipes = new Dictionary<int, IReceivePipe>
-            {
-                {0, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 0)},
-                {1, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 1)},
-                {2, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 2)},
-                {3, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 3)},
-                {4, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 4)},
-                {5, new ReceivePipe(Configuration, _commandProcessor, RegisterContainer, 5)}
-            };
+            ReceivePipes = new ReceivePipeCollection(Configuration, _commandProcessor, RegisterContainer);
 
             bool useIrq = irqPin != null;
             if (useIrq)
@@ -81,7 +70,8 @@ namespace Windows.Devices.Radios.nRF24L01P
             {
                 Status = Status.GetName(),
                 TransmitFIFO = TransmitPipe.FifoStatus.GetName(),
-                ReceiveFIFO = ReceivePipes[0].FifoStatus.GetName()
+                ReceiveFIFO = ReceivePipes.FifoStatus.GetName(),
+                ReceivePipes.ReceivedPowerDetector
             };
             return string.Format("Radio\r\n{0}\r\n{1}{2}",
                 JsonConvert.SerializeObject(radio, Formatting.None),
@@ -113,16 +103,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
             Task.Delay(5).Wait();
         }
-
-        public bool ReceivedPowerDetector
-        {
-            get
-            {
-                RegisterContainer.ReceivedPowerDetectorRegister.Load();
-                return RegisterContainer.ReceivedPowerDetectorRegister.ReceivedPowerDetector;
-            }
-        }
-
+     
         private DeviceStatus GetStatus() { return _status; }
         private DeviceStatus _status;
         public DeviceStatus Status

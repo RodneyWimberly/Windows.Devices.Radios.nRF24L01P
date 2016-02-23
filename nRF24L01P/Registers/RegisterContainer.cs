@@ -18,7 +18,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public FifoStatusRegister FifoStatusRegister { get; }
         public DynamicPayloadLengthRegister DynamicPayloadLengthRegister { get; }
         public FeatureRegister FeatureRegister { get; }
-        public IRegisterCollection<IRegisterBase> AllRegisters { get; }
+        public IRegisterCollection<IRegister> AllRegisters { get; }
         public IRegisterCollection<AddressPipeRegister> ReceiveAddressPipeRegisters { get; }
         public IRegisterCollection<ReceivePayloadWidthPipeRegister> ReceivePayloadWidthPipeRegisters { get; }
         public RegisterContainer(ICommandProcessor commandProcessor)
@@ -55,7 +55,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
                 {4, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P4, RegisterDefaults.RX_PW_P4, 4, "RX_PW_P4")},
                 {5, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P5, RegisterDefaults.RX_PW_P5, 5, "RX_PW_P5")}
             };
-            AllRegisters = new RegisterCollection<IRegisterBase>
+            AllRegisters = new RegisterCollection<IRegister>
             {
                 {RegisterAddresses.CONFIG, ConfigurationRegister},
                 {RegisterAddresses.EN_AA, EnableAutoAcknowledgementRegister},

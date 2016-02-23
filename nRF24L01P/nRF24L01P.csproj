@@ -114,14 +114,16 @@
     <Compile Include="Interfaces\ICommandProcessor.cs" />
     <Compile Include="Interfaces\IDataPipe.cs" />
     <Compile Include="Interfaces\IConfiguration.cs" />
+    <Compile Include="Interfaces\IReceivePipeCollection.cs" />
     <Compile Include="Interfaces\IRole.cs" />
     <Compile Include="Interfaces\IRadio.cs" />
     <Compile Include="Interfaces\IReceivePipe.cs" />
     <Compile Include="Interfaces\ITransmitPipe.cs" />
     <Compile Include="Interfaces\IRegisterContainer.cs" />
-    <Compile Include="Interfaces\IRegisterBase.cs" />
+    <Compile Include="Interfaces\IRegister.cs" />
     <Compile Include="InterruptedEventArgs.cs" />
     <Compile Include="Interfaces\IRegisterCollection.cs" />
+    <Compile Include="ReceivePipeCollection.cs" />
     <Compile Include="Registers\PipeRegisterBase.cs" />
     <Compile Include="Registers\PropertyMasks.cs" />
     <Compile Include="Registers\AddressPipeRegister.cs" />

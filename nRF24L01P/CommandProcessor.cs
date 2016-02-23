@@ -106,7 +106,7 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             DeviceStatus? status = GetDeviceStatus?.Invoke();
             if (CheckStatus && status.HasValue && (deviceCommand == DeviceCommands.W_REGISTER && !(status == DeviceStatus.StandBy || status == DeviceStatus.PowerDown)))
-                throw new InvalidOperationException("Writing register should only in Standby or PowerDown mode");
+                throw new InvalidOperationException("Writing to registers should only happen in Standby or PowerDown mode");
         }
 
         public void Dispose()

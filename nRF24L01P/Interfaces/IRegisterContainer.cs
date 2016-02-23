@@ -18,7 +18,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         FifoStatusRegister FifoStatusRegister { get; }
         DynamicPayloadLengthRegister DynamicPayloadLengthRegister { get; }
         FeatureRegister FeatureRegister { get; }
-        IRegisterCollection<IRegisterBase> AllRegisters { get; }
+        IRegisterCollection<IRegister> AllRegisters { get; }
         IRegisterCollection<AddressPipeRegister> ReceiveAddressPipeRegisters { get; }
         IRegisterCollection<ReceivePayloadWidthPipeRegister> ReceivePayloadWidthPipeRegisters { get; }
         void LoadRegisters();

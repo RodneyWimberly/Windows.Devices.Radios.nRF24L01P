@@ -19,9 +19,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public AddressPipeRegister(ICommandProcessor commandProcessor, byte address, byte[] defaultValue, byte pipeNumber, string name = "") :
                 base(commandProcessor, address, (byte)(pipeNumber <= 1 ? 5 : 1), defaultValue, pipeNumber, name)
         {
-            Name = (Address == RegisterAddresses.TX_ADDR ? "Transmit" : "Receive") +
-                GetType().Name + (Address == RegisterAddresses.TX_ADDR ? "" : PipeNumber.ToString()) +
-                (string.IsNullOrEmpty(name) ? "" : string.Format(" ({0})", name));
+            bool transmitPipe = Address == RegisterAddresses.TX_ADDR;
+            Name = string.Format("{0}{1}{2}{3}",
+                                 transmitPipe ? "Transmit" : "Receive",
+                                 GetType().Name,
+                                 transmitPipe ? "" : PipeNumber.ToString(),
+                                 string.IsNullOrEmpty(name) ? "" : string.Format(" ({0})", name));
         }
 
         public byte[] PipeAddress

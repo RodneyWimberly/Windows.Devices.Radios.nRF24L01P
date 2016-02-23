@@ -13,7 +13,10 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
             base(commandProcessor, length, address, defaultValue, name)
         {
             PipeNumber = pipeNumber;
-            Name = GetType().Name + PipeNumber + (string.IsNullOrEmpty(name) ? "" : string.Format(" ({0})", name));
+            Name = string.Format("{0}{1}{2}",
+                                GetType().Name,
+                                PipeNumber,
+                                string.IsNullOrEmpty(name) ? "" : string.Format(" ({0})", name));
         }
     }
 }

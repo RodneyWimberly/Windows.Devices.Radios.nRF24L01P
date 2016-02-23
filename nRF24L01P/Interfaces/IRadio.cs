@@ -1,6 +1,5 @@
 using Microsoft.IoT.DeviceCore;
 using System;
-using System.Collections.Generic;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 
 namespace Windows.Devices.Radios.nRF24L01P.Interfaces
@@ -10,11 +9,11 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         IRegisterContainer RegisterContainer { get; }
         IConfiguration Configuration { get; }
         ITransmitPipe TransmitPipe { get; }
-        IDictionary<int, IReceivePipe> ReceivePipes { get; }
+        IReceivePipeCollection ReceivePipes { get; }
         DeviceStatus Status { get; set; }
         string ToString();
         string GetArduinoDetails();
-        bool ReceivedPowerDetector { get; }
+       
 
         event EventHandler<InterruptedEventArgs> Interrupted;
     }

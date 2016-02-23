@@ -1,6 +1,6 @@
 ﻿namespace Windows.Devices.Radios.nRF24L01P.Interfaces
 {
-    public interface IRegisterBase
+    public interface IRegister
     {
         string Value { get; }
         int Length { get; }

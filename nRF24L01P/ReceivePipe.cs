@@ -10,15 +10,17 @@ namespace Windows.Devices.Radios.nRF24L01P
         private readonly IRegisterContainer _registerContainer;
         private readonly IConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
+        private readonly IReceivePipeCollection _parent;
         public int PipeId { get; }
 
-        public ReceivePipe(IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer, int pipeId)
+        public ReceivePipe(IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer, IReceivePipeCollection parent, int pipeId)
         {
             if (PipeId > 5)
                 throw new ArgumentOutOfRangeException(nameof(pipeId), "Invalid PipeId number for this Pipe");
             _configuration = configuration;
             _commandProcessor = commandProcessor;
             _registerContainer = registerContainer;
+            _parent = parent;
             PipeId = pipeId;
         }
 
@@ -214,24 +216,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public byte BytesToRead => _configuration.DynamicPayloadSize;
 
-        public FifoStatus FifoStatus
-        {
-            get
-            {
-                FifoStatus fifoStatus = FifoStatus.InUse;
-                _registerContainer.FifoStatusRegister.Load();
-                if (_registerContainer.FifoStatusRegister.ReceiveFifoFull)
-                    fifoStatus = FifoStatus.Full;
-                else if (_registerContainer.FifoStatusRegister.ReveiveFifoEmpty)
-                    fifoStatus = FifoStatus.Empty;
-                return fifoStatus;
-            }
-        }
-
-        public void FlushBuffer()
-        {
-            _commandProcessor.ExecuteCommand(DeviceCommands.FLUSH_RX);
-        }
+     
 
         /// <summary>
         /// Reads data from RX buffer, use this feature when dynamic payload length is turned off
@@ -274,12 +259,12 @@ namespace Windows.Devices.Radios.nRF24L01P
             int bytesRead = 0;
             if (!DynamicPayloadLengthEnabled)
                 throw new InvalidOperationException("DynamicPayloadLength is not enabled on this pipe, please turn it On or use ReadBuffer(int length) instead");
-            while (FifoStatus != FifoStatus.Empty)
+            while (_parent.FifoStatus != FifoStatus.Empty)
             {
                 int length = BytesToRead;
                 if (length > 32)
                 {
-                    FlushBuffer();
+                    _parent.FlushBuffer();
                     return 0;
                 }
                 if (length == 0)
@@ -292,5 +277,9 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
             return bytesRead;
         }
+
+        public FifoStatus FifoStatus => _parent.FifoStatus;
+
+        public void FlushBuffer() => _parent.FlushBuffer();
     }
 }
