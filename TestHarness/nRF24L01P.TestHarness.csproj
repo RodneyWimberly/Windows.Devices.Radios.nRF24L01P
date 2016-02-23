@@ -96,9 +96,10 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GpioExtensions.cs" />
     <Compile Include="IReadAndWriteProcess.cs" />
     <Compile Include="ReadAndWriteToRadio.cs" />
-    <Compile Include="WebServer.cs" />
+    <Compile Include="BackgroundServer.cs" />
     <Compile Include="StartupTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

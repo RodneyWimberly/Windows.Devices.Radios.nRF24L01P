@@ -22,7 +22,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         bool DynamicPayloadLengthEnabled { get; set; }
         byte DynamicPayloadSize { get; }
         byte PayloadWidth { get; set; }
-        void ToggleFeatures();
+        //void ToggleFeatures();
         string ToString();
     }
 }

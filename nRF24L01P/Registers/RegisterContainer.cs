@@ -93,7 +93,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public void LoadRegisters() => AllRegisters.LoadAll();
 
-        public void ResetRegisters() => AllRegisters.ResetAll();
+        public void ResetRegistersToDefault() => AllRegisters.ResetAllToDefault();
 
         public void SaveRegisters(bool force = false) => AllRegisters.SaveAll(force);
 

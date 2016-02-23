@@ -1,6 +1,5 @@
 ﻿{
   "dependencies": {
-    "HA4IoT.SDK": "1.0.13",
     "Microsoft.IoT.DeviceCore": "1.0.3",
     "Microsoft.IoT.Lightning": "1.0.2-alpha",
     "Microsoft.IoT.SDKFromArduino": "1.1.1",

@@ -57,7 +57,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
             IsDirty = false;
         }
 
-        public void Reset()
+        public void ResetToDefault()
         {
             Load(DefaultValue);
             Save();

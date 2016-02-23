@@ -30,7 +30,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-
         public FifoStatus FifoStatus
         {
             get

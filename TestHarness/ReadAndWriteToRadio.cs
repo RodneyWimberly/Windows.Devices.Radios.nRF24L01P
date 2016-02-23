@@ -1,5 +1,4 @@
-﻿using HA4IoT.Hardware;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
@@ -30,8 +29,8 @@ namespace nRF24L01P.TestHarness
         public void Initialize()
         {
             GpioController gpioController = GpioController.GetDefault();
-            GpioPin cePin = gpioController.InitGpioPin(22, GpioPinDriveMode.Output);
-            GpioPin irqPin = gpioController.InitGpioPin(25, GpioPinDriveMode.InputPullUp);
+            GpioPin cePin = gpioController.InitGpioPin(22, GpioPinDriveMode.Output, GpioSharingMode.Exclusive);
+            GpioPin irqPin = gpioController.InitGpioPin(25, GpioPinDriveMode.InputPullUp, GpioSharingMode.Exclusive);
 
             DeviceInformationCollection devicesInfo = DeviceInformation.FindAllAsync(SpiDevice.GetDeviceSelector("SPI0")).GetAwaiter().GetResult();
             SpiDevice spiDevice = SpiDevice.FromIdAsync(devicesInfo[0].Id, new SpiConnectionSettings(0)).GetAwaiter().GetResult();
@@ -60,7 +59,7 @@ namespace nRF24L01P.TestHarness
             ConstantCarrierWaveRole ccwRole = new ConstantCarrierWaveRole();
             ccwRole.AttachRadio(_radio);
             ccwRole.Start();
-            PrintDiagnostics();
+            PrintDetails();
         }
 
         public void SimpleReceiveTest()
@@ -70,7 +69,7 @@ namespace nRF24L01P.TestHarness
             receiver.ReceiveAddress = _receiveAddress;
             receiver.DataArrived += DataArrived; ;
             receiver.Start();
-            PrintDiagnostics();
+            PrintDetails();
             while (true) { }
         }
 
@@ -81,7 +80,7 @@ namespace nRF24L01P.TestHarness
             sender.SendAddress = _sendAddress;
             sender.Start();
             int count = 0;
-            PrintDiagnostics();
+            PrintDetails();
             while (true)
             {
                 lock (_syncRoot)
@@ -102,7 +101,7 @@ namespace nRF24L01P.TestHarness
             sendReceive.ReceiveAddress = _receiveAddress;
             sendReceive.Start();
             int count = 0;
-            PrintDiagnostics();
+            PrintDetails();
             while (true)
             {
                 string content = "Payload, Count=" + (count++).ToString();
@@ -125,10 +124,14 @@ namespace nRF24L01P.TestHarness
             Debug.WriteLine("Data Received, Data =" + sb);
         }
 
-        private void PrintDiagnostics()
+        private void PrintDetails()
         {
             Debug.WriteLine(_radio.GetArduinoDetails());
-            //Debug.WriteLine(_radio.ToString());
+        }
+
+        private void PrintDiagnostics()
+        {
+            Debug.WriteLine(_radio.ToString());
         }
     }
 }

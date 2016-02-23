@@ -108,9 +108,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArduinoDetails.cs" />
+    <Compile Include="Delay.cs" />
     <Compile Include="Enums\BitMasks.cs" />
     <Compile Include="Enums\DeviceCommands.cs" />
-    <Compile Include="Enums\EnumExtensionMethods.cs" />
+    <Compile Include="Extensions\EnumExtensions.cs" />
+    <Compile Include="Exceptions\InvalidStatusTransation.cs" />
     <Compile Include="Interfaces\ICommandProcessor.cs" />
     <Compile Include="Interfaces\IDataPipe.cs" />
     <Compile Include="Interfaces\IConfiguration.cs" />
@@ -164,6 +166,7 @@
     <Compile Include="Roles\SendReceiveRole.cs" />
     <Compile Include="Roles\SimpleReceiverRole.cs" />
     <Compile Include="Roles\SimpleSendRole.cs" />
+    <Compile Include="Extensions\StopWatchExtensions.cs" />
     <Compile Include="TransmitPipe.cs" />
     <EmbeddedResource Include="Properties\nRF24L01.rd.xml" />
   </ItemGroup>

@@ -24,7 +24,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             PipeId = pipeId;
         }
 
-
         public byte[] Address
         {
             get { return _registerContainer.ReceiveAddressPipeRegisters[(byte)PipeId]; }
@@ -214,10 +213,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-        public byte BytesToRead => _configuration.DynamicPayloadSize;
-
-     
-
         /// <summary>
         /// Reads data from RX buffer, use this feature when dynamic payload length is turned off
         /// Warning: use this feature will ignore the data pipe ID, it may read buffer belongs to other data pipe
@@ -277,6 +272,8 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
             return bytesRead;
         }
+
+        public byte BytesToRead => _configuration.DynamicPayloadSize;
 
         public FifoStatus FifoStatus => _parent.FifoStatus;
 

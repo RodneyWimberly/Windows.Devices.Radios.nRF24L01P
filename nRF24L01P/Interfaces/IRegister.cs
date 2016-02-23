@@ -10,7 +10,7 @@
         void Load();
         void Load(byte[] value);
         void Save(bool force = false);
-        void Reset();
+        void ResetToDefault();
         string ToString();
     }
 }

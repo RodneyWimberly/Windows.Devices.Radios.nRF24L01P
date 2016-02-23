@@ -1,8 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Threading.Tasks;
 using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Exceptions;
+using Windows.Devices.Radios.nRF24L01P.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 
@@ -24,26 +25,29 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public Radio(ICommandProcessor commandProcessor, GpioPin cePin, GpioPin irqPin = null)
         {
-            _status = DeviceStatus.PowerDown;
-            _cePin = cePin;
-            EnableReceiver(false);
+            _status = DeviceStatus.Undefined;
 
-            commandProcessor.GetDeviceStatus = GetStatus;
+            _cePin = cePin;
+            _cePin.Write(GpioPinValue.Low);
+
             _commandProcessor = commandProcessor;
+            _commandProcessor.GetDeviceStatus = () => Status;
 
             RegisterContainer = new RegisterContainer(_commandProcessor);
-            RegisterContainer.ResetRegisters();
-            RegisterContainer.LoadRegisters();
+            RegisterContainer.ResetRegistersToDefault();
 
             Configuration = new Configuration(_commandProcessor, RegisterContainer);
+
             TransmitPipe = new TransmitPipe(Configuration, _commandProcessor, RegisterContainer);
             ReceivePipes = new ReceivePipeCollection(Configuration, _commandProcessor, RegisterContainer);
+
+            Status = DeviceStatus.PowerDown;
 
             bool useIrq = irqPin != null;
             if (useIrq)
             {
                 _irqPin = irqPin;
-                _irqPin.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 50);
+                _irqPin.Write(GpioPinValue.High);
                 _irqPin.ValueChanged += irqPin_ValueChanged;
             }
             ConfigurationRegister configurationRegister = RegisterContainer.ConfigurationRegister;
@@ -51,8 +55,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             configurationRegister.ReceiveDataReadyMask = !useIrq;
             configurationRegister.TransmitDataSentMask = !useIrq;
             configurationRegister.Save();
-
-            Task.Delay(1).Wait();
             Status = DeviceStatus.StandBy;
         }
 
@@ -62,6 +64,95 @@ namespace Windows.Devices.Radios.nRF24L01P
 
             RegisterContainer.StatusRegister.Load();
             Interrupted?.Invoke(this, new InterruptedEventArgs { StatusRegister = RegisterContainer.StatusRegister });
+            _irqPin.Write(GpioPinValue.High);
+        }
+
+        private DeviceStatus _status;
+        public DeviceStatus Status
+        {
+            get
+            {
+                return _status;
+            }
+            set
+            {
+                if (value == _status)
+                    return;
+                DeviceStatus lastStatus = _status;
+                _status = value;
+                ConfigurationRegister configurationRegister = RegisterContainer.ConfigurationRegister;
+                configurationRegister.Load();
+                switch (_status)
+                {
+                    case DeviceStatus.Undefined:
+                        throw new InvalidStatusTransitionException(lastStatus, _status, "you cannot transition into Undefined mode.");
+                    case DeviceStatus.PowerDown:
+                        if (lastStatus == DeviceStatus.Undefined)
+                        {
+                            Delay.WaitMilliseconds(105);
+                            configurationRegister.ResetToDefault();
+                            break;
+                        }
+                        if (lastStatus == DeviceStatus.StandBy)
+                        {
+                            configurationRegister.PowerUp = false;
+                            configurationRegister.Save();
+                            break;
+                        }
+                        throw new InvalidStatusTransitionException(lastStatus, _status, "you can only transition into PowerDown mode from StandBy mode.");
+                    case DeviceStatus.StandBy:
+                        if (lastStatus == DeviceStatus.ReceiveMode || lastStatus == DeviceStatus.TransmitMode)
+                        {
+                            _cePin.Write(GpioPinValue.Low);
+                            break;
+                        }
+                        if (lastStatus == DeviceStatus.PowerDown)
+                        {
+                            configurationRegister.PowerUp = true;
+                            configurationRegister.Save();
+                            Delay.WaitMilliseconds(2);
+                            break;
+                        }
+                        throw new InvalidStatusTransitionException(lastStatus, _status, "you can only transition into StandBy mode from PowerDown, TransmitMode, or ReceiveMode mode.");
+                    case DeviceStatus.TransmitMode:
+                        if (lastStatus == DeviceStatus.StandBy)
+                        {
+                            bool checkStatus = _commandProcessor.CheckStatus;
+                            _commandProcessor.CheckStatus = false;
+
+                            configurationRegister.PrimaryReceiveMode = false;
+                            configurationRegister.Save();
+                            _cePin.Write(GpioPinValue.High);
+                            Delay.WaitMicroseconds(10);
+                            //_cePin.Write(GpioPinValue.Low);
+                            Delay.WaitMicroseconds(130);
+
+                            _commandProcessor.CheckStatus = checkStatus;
+                            break;
+                        }
+                        throw new InvalidStatusTransitionException(lastStatus, _status, "you can only transition into TransmitMode mode from Standby mode.");
+                    case DeviceStatus.ReceiveMode:
+                        if (lastStatus == DeviceStatus.StandBy)
+                        {
+                            bool checkStatus = _commandProcessor.CheckStatus;
+                            _commandProcessor.CheckStatus = false;
+
+                            configurationRegister.PrimaryReceiveMode = true;
+                            configurationRegister.Save();
+                            _cePin.Write(GpioPinValue.High);
+                            Delay.WaitMicroseconds(130);
+
+                            _commandProcessor.CheckStatus = checkStatus;
+                            break;
+                        }
+                        throw new InvalidStatusTransitionException(lastStatus, _status, "you can only transition into ReceiveMode mode from Standby mode.");
+                }
+            }
+        }
+
+        public string GetArduinoDetails()
+        {
+            return new ArduinoDetails(this, Configuration, _commandProcessor, RegisterContainer).ToString();
         }
 
         public override string ToString()
@@ -84,94 +175,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             _commandProcessor?.Dispose();
             _cePin?.Dispose();
             _irqPin?.Dispose();
-        }
-
-        public string GetArduinoDetails()
-        {
-            return new ArduinoDetails(this, Configuration, _commandProcessor, RegisterContainer).ToString();
-        }
-
-        private void EnableReceiver(bool enabled)
-        {
-            _cePin.Write(enabled ? GpioPinValue.High : GpioPinValue.Low);
-
-            // Must allow the radio time to settle else configuration bits will not necessarily stick.
-            // This is actually only required following power up but some settling time also appears to
-            // be required after resets too. For full coverage, we'll always assume the worst.
-            // Enabling 16b CRC is by far the most obvious case if the wrong timing is used - or skipped.
-            // Technically we require 4.5ms + 14us as a worst case. We'll just call it 5ms for good measure.
-            // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
-            Task.Delay(5).Wait();
-        }
-     
-        private DeviceStatus GetStatus() { return _status; }
-        private DeviceStatus _status;
-        public DeviceStatus Status
-        {
-            get
-            {
-                return _status;
-            }
-            set
-            {
-                if (value == _status)
-                    return;
-                DeviceStatus lastStatus = _status;
-                _status = value;
-                switch (_status)
-                {
-                    case DeviceStatus.Undefined:
-                        throw new InvalidOperationException("Undefined Device Status");
-                    case DeviceStatus.PowerDown:
-                        if (lastStatus == DeviceStatus.StandBy)
-                        {
-                            RegisterContainer.ConfigurationRegister.PowerUp = false;
-                            RegisterContainer.ConfigurationRegister.Save();
-                            break;
-                        }
-                        throw new InvalidOperationException("Error status change, PowerDown should from StandBy mode only");
-                    case DeviceStatus.StandBy:
-                        if (lastStatus == DeviceStatus.ReceiveMode || lastStatus == DeviceStatus.TransmitMode)
-                        {
-                            EnableReceiver(false);
-                            break;
-                        }
-                        if (lastStatus == DeviceStatus.PowerDown)
-                        {
-                            RegisterContainer.ConfigurationRegister.PowerUp = true;
-                            RegisterContainer.ConfigurationRegister.Save();
-                            Task.Delay(2).Wait();
-                            break;
-                        }
-                        throw new InvalidOperationException("Error status change, StandBy should from PowerDown,TX or RX mode only");
-                    case DeviceStatus.TransmitMode:
-                        if (lastStatus == DeviceStatus.StandBy)
-                        {
-                            bool checkStatus = _commandProcessor.CheckStatus;
-                            _commandProcessor.CheckStatus = false;
-                            RegisterContainer.ConfigurationRegister.PrimaryReceiveMode = false;
-                            RegisterContainer.ConfigurationRegister.Save();
-                            _commandProcessor.CheckStatus = checkStatus;
-
-                            EnableReceiver(true);
-                            break;
-                        }
-                        throw new InvalidOperationException("Error status change, RXMode should from Standby mode only");
-                    case DeviceStatus.ReceiveMode:
-                        if (lastStatus == DeviceStatus.StandBy)
-                        {
-                            bool checkStatus = _commandProcessor.CheckStatus;
-                            _commandProcessor.CheckStatus = false;
-                            RegisterContainer.ConfigurationRegister.PrimaryReceiveMode = true;
-                            RegisterContainer.ConfigurationRegister.Save();
-                            _commandProcessor.CheckStatus = checkStatus;
-
-                            EnableReceiver(true);
-                            break;
-                        }
-                        throw new InvalidOperationException("Error status change, RXMode should from Standby mode only");
-                }
-            }
         }
     }
 }

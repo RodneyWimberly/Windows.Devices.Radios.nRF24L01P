@@ -13,7 +13,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         DeviceStatus Status { get; set; }
         string ToString();
         string GetArduinoDetails();
-       
 
         event EventHandler<InterruptedEventArgs> Interrupted;
     }

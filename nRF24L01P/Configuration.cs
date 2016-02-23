@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
+using Windows.Devices.Radios.nRF24L01P.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 
@@ -26,6 +27,23 @@ namespace Windows.Devices.Radios.nRF24L01P
 
             _commandProcessor.ControllerName = RadioModel.GetName();
         }
+
+        public uint Channel
+        {
+            get
+            {
+                _registerContainer.RfChannelRegister.Load();
+                return _registerContainer.RfChannelRegister.RfChannel;
+            }
+            set
+            {
+                if (Channel > Constants.MaxRfChannel)
+                    throw new ArgumentOutOfRangeException(string.Format("Channel", "Channel should be 0 - {0}", Constants.MaxRfChannel));
+                _registerContainer.RfChannelRegister.RfChannel = (byte)value;
+                _registerContainer.RfChannelRegister.Save();
+            }
+        }
+
 
         public bool EnableContiuousCarrierTransmit
         {
@@ -61,7 +79,6 @@ namespace Windows.Devices.Radios.nRF24L01P
         }
 
         public string DateRateName => DataRate.GetName();
-
         public DataRates DataRate
         {
             get
@@ -103,7 +120,6 @@ namespace Windows.Devices.Radios.nRF24L01P
         }
 
         public string PowerLevelName => PowerLevel.GetName();
-
         public PowerLevels PowerLevel
         {
             get
@@ -123,28 +139,12 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-        public uint Channel
-        {
-            get
-            {
-                _registerContainer.RfChannelRegister.Load();
-                return _registerContainer.RfChannelRegister.RfChannel;
-            }
-            set
-            {
-                if (Channel > Constants.MaxRfChannel)
-                    throw new ArgumentOutOfRangeException(string.Format("Channel", "Channel should be 0 - {0}", Constants.MaxRfChannel));
-                _registerContainer.RfChannelRegister.RfChannel = (byte)value;
-                _registerContainer.RfChannelRegister.Save();
-            }
-        }
 
 
         public string RadioModelName => RadioModel.GetName();
         public RadioModels RadioModel => _isPlusModel ? RadioModels.nRF24L01Plus : RadioModels.nRF24L01;
 
         public string CrcEncodingSchemeName => CrcEncodingScheme.GetName();
-
         public CrcEncodingSchemes CrcEncodingScheme
         {
             get
@@ -167,7 +167,6 @@ namespace Windows.Devices.Radios.nRF24L01P
         }
 
         public string AutoRetransmitDelayName => AutoRetransmitDelay.GetName();
-
         public AutoRetransmitDelays AutoRetransmitDelay
         {
             get
@@ -257,18 +256,17 @@ namespace Windows.Devices.Radios.nRF24L01P
         public byte DynamicPayloadSize => _commandProcessor.ExecuteCommand(DeviceCommands.R_RX_PL_WID, RegisterAddresses.EMPTY_ADDRESS, new byte[1])[0];
 
         private byte _payloadWidth;
-
         public byte PayloadWidth
         {
             get { return _payloadWidth; }
             set { _payloadWidth = Math.Min(value, Constants.MaxPayloadWidth); }
         }
 
-        public void ToggleFeatures()
-        {
-            _commandProcessor.ExecuteCommand(DeviceCommands.ACTIVATE);
-            _commandProcessor.ExecuteCommand(DeviceCommands.FEATURES);
-        }
+        //public void ToggleFeatures()
+        //{
+        //    _commandProcessor.ExecuteCommand(DeviceCommands.ACTIVATE);
+        //    _commandProcessor.ExecuteCommand(DeviceCommands.FEATURES);
+        //}
 
         public override string ToString()
         {
