@@ -31,6 +31,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             }
         }
 
+        protected IReceivePipe Acknowledgement;
         protected IReceivePipe Reader;
         protected ITransmitPipe Writer;
 
@@ -48,14 +49,14 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         {
             if (IsRunning) return false;
 
-            Radio.Status = DeviceStatus.StandBy;
+            Radio.OperatingMode = OperatingModes.StandBy;
 
             IConfiguration config = Radio.Configuration;
             config.Channel = 1;
             config.PowerLevel = PowerLevels.Max;
             config.DataRate = DataRates.DataRate1Mbps;
             config.EnableAutoAcknowledgement = true;
-            config.AutoRetransmitCount = 2;
+            config.AutoRetransmitCount = 15;
             config.AutoRetransmitDelay = AutoRetransmitDelays.Delay4000uS;
             config.CrcEncodingScheme = CrcEncodingSchemes.SingleByte;
             config.DynamicPayloadLengthEnabled = true;
@@ -75,8 +76,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         {
             if (!IsRunning) return;
             Radio.Interrupted -= Radio_Interrupted;
-            Radio.Status = DeviceStatus.StandBy;
-            Radio.Status = DeviceStatus.PowerDown;
+            Radio.OperatingMode = OperatingModes.StandBy;
+            Radio.OperatingMode = OperatingModes.PowerDown;
             IsRunning = false;
         }
     }

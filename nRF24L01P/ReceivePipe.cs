@@ -254,7 +254,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             int bytesRead = 0;
             if (!DynamicPayloadLengthEnabled)
                 throw new InvalidOperationException("DynamicPayloadLength is not enabled on this pipe, please turn it On or use ReadBuffer(int length) instead");
-            while (_parent.FifoStatus != FifoStatus.Empty)
+            while (FifoStatus != FifoStatus.Empty)
             {
                 int length = BytesToRead;
                 if (length > 32)

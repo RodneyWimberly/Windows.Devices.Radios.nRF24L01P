@@ -43,11 +43,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
 
             if (!base.Start()) return false;
 
-            Radio.ReceivePipes[0].AutoAcknowledgementEnabled = true;
-            Radio.ReceivePipes[0].DynamicPayloadLengthEnabled = true;
-            Radio.ReceivePipes[0].Address = SendAddress;
-            Radio.ReceivePipes[0].PayloadWidth = Radio.Configuration.PayloadWidth;
-            Radio.ReceivePipes[0].Enabled = true;
+            Acknowledgement = Radio.ReceivePipes[0];
+            Acknowledgement.AutoAcknowledgementEnabled = true;
+            Acknowledgement.DynamicPayloadLengthEnabled = true;
+            Acknowledgement.Address = SendAddress;
+            Acknowledgement.PayloadWidth = Radio.Configuration.PayloadWidth;
+            Acknowledgement.Enabled = true;
 
             Writer = Radio.TransmitPipe;
             Writer.Address = SendAddress;
@@ -63,7 +64,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Writer.FlushBuffer();
 
             Radio.Interrupted += Radio_Interrupted;
-            Radio.Status = DeviceStatus.ReceiveMode;
+            Radio.OperatingMode = OperatingModes.ReceiveMode;
 
             return IsRunning = true;
         }
@@ -84,9 +85,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             _isMaxRetries = false;
             _isSending = true;
             int length = buffer.Length;
-            Radio.Status = DeviceStatus.StandBy;
+            Radio.OperatingMode = OperatingModes.StandBy;
             Writer.FlushBuffer();
-            Radio.Status = DeviceStatus.TransmitMode;
+            Radio.OperatingMode = OperatingModes.TransmitMode;
             while (bytesLeft > 0)
             {
                 int sendBufferLength = Math.Min(bytesLeft, Constants.MaxPayloadWidth);
@@ -103,8 +104,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
                     break;
                 }
             }
-            Radio.Status = DeviceStatus.StandBy;
-            Radio.Status = DeviceStatus.ReceiveMode;
+            Radio.OperatingMode = OperatingModes.StandBy;
+            Radio.OperatingMode = OperatingModes.ReceiveMode;
             _isSending = false;
             return result;
         }
@@ -112,19 +113,16 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         protected override void Radio_Interrupted(object sender, InterruptedEventArgs e)
         {
             base.Radio_Interrupted(sender, e);
-            if (e.StatusRegister.MaximunTransmitRetries)
-            {
-                _isMaxRetries = true;
+
+            _isMaxRetries = e.StatusRegister.MaximunTransmitRetries;
+            if (_isMaxRetries || e.StatusRegister.TransmitDataSent)
                 _sendCompleteEvent.Set();
-            }
-            if (e.StatusRegister.TransmitDataSent)
-                _sendCompleteEvent.Set();
-            Radio.Status = DeviceStatus.StandBy;
             if (e.StatusRegister.ReceiveDataReady)
                 DataArrived?.Invoke(this, Reader.ReadBufferAll());
+            Radio.OperatingMode = OperatingModes.StandBy;
             e.StatusRegister.Save();
             if (!_isSending)
-                Radio.Status = DeviceStatus.ReceiveMode;
+                Radio.OperatingMode = OperatingModes.ReceiveMode;
         }
     }
 }

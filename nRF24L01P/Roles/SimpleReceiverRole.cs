@@ -22,19 +22,20 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             Radio.TransmitPipe.FlushBuffer();
 
             Radio.Interrupted += Radio_Interrupted;
-            Radio.Status = DeviceStatus.ReceiveMode;
+            Radio.OperatingMode = OperatingModes.ReceiveMode;
 
             return IsRunning = true;
         }
 
         protected override void Radio_Interrupted(object sender, InterruptedEventArgs e)
         {
-            if (!e.StatusRegister.ReceiveDataReady || DataArrived == null) return;
+            if (!e.StatusRegister.ReceiveDataReady) return;
+            base.Radio_Interrupted(sender, e);
 
-            DataArrived(this, Reader.ReadBufferAll());
-            Radio.Status = DeviceStatus.StandBy;
+            DataArrived?.Invoke(this, Reader.ReadBufferAll());
+            Radio.OperatingMode = OperatingModes.StandBy;
             e.StatusRegister.Save();
-            Radio.Status = DeviceStatus.ReceiveMode;
+            Radio.OperatingMode = OperatingModes.ReceiveMode;
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Extensions
         private static readonly string[] PowerLevels;
         private static readonly string[] RadioModels;
         private static readonly string[] FifoStatus;
-        private static readonly string[] DeviceStatus;
+        private static readonly string[] OperatingMode;
         private static readonly string[] AutoRetransmitDelay;
 
         static EnumExtensions()
@@ -19,7 +19,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Extensions
             PowerLevels = new[] { "Minimum (-18dBm)", "Low (-12dBm)", "High (-6dBm)", "Maximum (0dBm)", "Error" };
             RadioModels = new[] { "nRF24L01", "nRF24L01+" };
             FifoStatus = new[] { "Full", "Empty", "In Use" };
-            DeviceStatus = new[] { "Undefined", "Power Down", "Stand-By", "Transmit Mode", "Receive Mode" };
+            OperatingMode = new[] { "Power Off", "Power Down", "Stand-By", "Transmit Mode", "Receive Mode" };
             AutoRetransmitDelay = new[]
             {
                 "250uS", "500uS", "750uS", "1000uS",
@@ -54,9 +54,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Extensions
             return FifoStatus[(int)fifoStatus];
         }
 
-        public static string GetName(this DeviceStatus deviceStatus)
+        public static string GetName(this OperatingModes deviceStatus)
         {
-            return DeviceStatus[(int)deviceStatus];
+            return OperatingMode[(int)deviceStatus];
         }
 
         public static string GetName(this AutoRetransmitDelays autoRetransmitDelay)

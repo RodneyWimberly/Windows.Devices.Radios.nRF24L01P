@@ -1,8 +1,8 @@
 ﻿namespace Windows.Devices.Radios.nRF24L01P.Enums
 {
-    public enum DeviceStatus
+    public enum OperatingModes
     {
-        Undefined,
+        PowerOff,
         PowerDown,
         StandBy,
         TransmitMode,

@@ -111,8 +111,9 @@
     <Compile Include="Delay.cs" />
     <Compile Include="Enums\BitMasks.cs" />
     <Compile Include="Enums\DeviceCommands.cs" />
+    <Compile Include="Extensions\ByteExtensions.cs" />
     <Compile Include="Extensions\EnumExtensions.cs" />
-    <Compile Include="Exceptions\InvalidStatusTransation.cs" />
+    <Compile Include="Exceptions\InvalidOperatingModeTransation.cs" />
     <Compile Include="Interfaces\ICommandProcessor.cs" />
     <Compile Include="Interfaces\IDataPipe.cs" />
     <Compile Include="Interfaces\IConfiguration.cs" />
@@ -133,7 +134,7 @@
     <Compile Include="Registers\RegisterAddresses.cs" />
     <Compile Include="Enums\AutoRetransmitDelays.cs" />
     <Compile Include="Enums\CrcEncodingSchemes.cs" />
-    <Compile Include="Enums\DeviceStatus.cs" />
+    <Compile Include="Enums\OperatingModes.cs" />
     <Compile Include="Enums\FifoStatus.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="ReceivePipe.cs" />
@@ -161,7 +162,6 @@
     <Compile Include="Registers\SetupRetransmissionRegister.cs" />
     <Compile Include="Registers\StatusRegister.cs" />
     <Compile Include="CommandProcessor.cs" />
-    <Compile Include="Roles\ConstantCarrierWaveRole.cs" />
     <Compile Include="Roles\RoleBase.cs" />
     <Compile Include="Roles\SendReceiveRole.cs" />
     <Compile Include="Roles\SimpleReceiverRole.cs" />

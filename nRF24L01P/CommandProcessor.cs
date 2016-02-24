@@ -14,8 +14,8 @@ namespace Windows.Devices.Radios.nRF24L01P
         protected readonly object SyncRoot;
 
         public Action<byte[]> LoadStatusRegister { get; set; }
-        public Func<DeviceStatus> GetDeviceStatus { get; set; }
-        public bool CheckStatus { get; set; }
+        public Func<OperatingModes> GetOperatingMode { get; set; }
+        public bool CheckOperatingMode { get; set; }
 
         public int ChipSelectLine
         {
@@ -25,10 +25,10 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public string ControllerName { get; set; }
 
-        public CommandProcessor(SpiDevice spiDevice, bool checkStatus = true)
+        public CommandProcessor(SpiDevice spiDevice, bool checkOperatingMode = true)
         {
             _revertBytes = BitConverter.IsLittleEndian;
-            CheckStatus = checkStatus;
+            CheckOperatingMode = checkOperatingMode;
             SyncRoot = new object();
             _spiDevice = spiDevice;
 
@@ -104,8 +104,10 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         private void CanExecuteCommand(DeviceCommands deviceCommand)
         {
-            DeviceStatus? status = GetDeviceStatus?.Invoke();
-            if (CheckStatus && status.HasValue && (deviceCommand == DeviceCommands.W_REGISTER && !(status == DeviceStatus.Undefined || status == DeviceStatus.StandBy || status == DeviceStatus.PowerDown)))
+            OperatingModes? operatingMode = GetOperatingMode?.Invoke();
+            if (CheckOperatingMode && operatingMode.HasValue && 
+                (deviceCommand == DeviceCommands.W_REGISTER &&
+                !( operatingMode == OperatingModes.StandBy || operatingMode == OperatingModes.PowerDown)))
                 throw new InvalidOperationException("Writing to registers should only happen in Standby or PowerDown mode");
         }
 

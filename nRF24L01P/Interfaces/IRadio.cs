@@ -10,7 +10,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         IConfiguration Configuration { get; }
         ITransmitPipe TransmitPipe { get; }
         IReceivePipeCollection ReceivePipes { get; }
-        DeviceStatus Status { get; set; }
+        OperatingModes OperatingMode { get; set; }
         string ToString();
         string GetArduinoDetails();
 

@@ -12,8 +12,10 @@ namespace Windows.Devices.Radios.nRF24L01P
     /// <summary>
     /// Driver for nRF24L01(+) 2.4GHz Wireless Transceiver
     /// </summary>
-    public class Radio : IRadio
+    public sealed class Radio : IRadio
     {
+        private readonly object _syncRoot;
+        private readonly GpioPin _powerPin;
         private readonly GpioPin _cePin;
         private readonly GpioPin _irqPin;
         private readonly ICommandProcessor _commandProcessor;
@@ -23,25 +25,27 @@ namespace Windows.Devices.Radios.nRF24L01P
         public ITransmitPipe TransmitPipe { get; }
         public IReceivePipeCollection ReceivePipes { get; }
 
-        public Radio(ICommandProcessor commandProcessor, GpioPin cePin, GpioPin irqPin = null)
+        public Radio(ICommandProcessor commandProcessor, GpioPin powerPin, GpioPin cePin, GpioPin irqPin = null)
         {
-            _status = DeviceStatus.Undefined;
+            _syncRoot = new object();
+            _operatingMode = OperatingModes.PowerOff;
+            _powerPin = powerPin;
+            _powerPin.Write(GpioPinValue.Low);
 
             _cePin = cePin;
             _cePin.Write(GpioPinValue.Low);
 
             _commandProcessor = commandProcessor;
-            _commandProcessor.GetDeviceStatus = () => Status;
+            _commandProcessor.GetOperatingMode = () => OperatingMode;
 
             RegisterContainer = new RegisterContainer(_commandProcessor);
+            OperatingMode = OperatingModes.PowerDown;
             RegisterContainer.ResetRegistersToDefault();
 
             Configuration = new Configuration(_commandProcessor, RegisterContainer);
 
             TransmitPipe = new TransmitPipe(Configuration, _commandProcessor, RegisterContainer);
             ReceivePipes = new ReceivePipeCollection(Configuration, _commandProcessor, RegisterContainer);
-
-            Status = DeviceStatus.PowerDown;
 
             bool useIrq = irqPin != null;
             if (useIrq)
@@ -55,7 +59,7 @@ namespace Windows.Devices.Radios.nRF24L01P
             configurationRegister.ReceiveDataReadyMask = !useIrq;
             configurationRegister.TransmitDataSentMask = !useIrq;
             configurationRegister.Save();
-            Status = DeviceStatus.StandBy;
+            OperatingMode = OperatingModes.StandBy;
         }
 
         private void irqPin_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
@@ -67,85 +71,105 @@ namespace Windows.Devices.Radios.nRF24L01P
             _irqPin.Write(GpioPinValue.High);
         }
 
-        private DeviceStatus _status;
-        public DeviceStatus Status
+        private OperatingModes _operatingMode;
+        public OperatingModes OperatingMode
         {
             get
             {
-                return _status;
+                return _operatingMode;
             }
             set
             {
-                if (value == _status)
-                    return;
-                DeviceStatus lastStatus = _status;
-                _status = value;
-                ConfigurationRegister configurationRegister = RegisterContainer.ConfigurationRegister;
-                configurationRegister.Load();
-                switch (_status)
+                lock (_syncRoot)
                 {
-                    case DeviceStatus.Undefined:
-                        throw new InvalidStatusTransitionException(lastStatus, _status, "you cannot transition into Undefined mode.");
-                    case DeviceStatus.PowerDown:
-                        if (lastStatus == DeviceStatus.Undefined)
-                        {
-                            Delay.WaitMilliseconds(105);
-                            configurationRegister.ResetToDefault();
-                            break;
-                        }
-                        if (lastStatus == DeviceStatus.StandBy)
-                        {
-                            configurationRegister.PowerUp = false;
-                            configurationRegister.Save();
-                            break;
-                        }
-                        throw new InvalidStatusTransitionException(lastStatus, _status, "you can only transition into PowerDown mode from StandBy mode.");
-                    case DeviceStatus.StandBy:
-                        if (lastStatus == DeviceStatus.ReceiveMode || lastStatus == DeviceStatus.TransmitMode)
-                        {
-                            _cePin.Write(GpioPinValue.Low);
-                            break;
-                        }
-                        if (lastStatus == DeviceStatus.PowerDown)
-                        {
-                            configurationRegister.PowerUp = true;
-                            configurationRegister.Save();
-                            Delay.WaitMilliseconds(2);
-                            break;
-                        }
-                        throw new InvalidStatusTransitionException(lastStatus, _status, "you can only transition into StandBy mode from PowerDown, TransmitMode, or ReceiveMode mode.");
-                    case DeviceStatus.TransmitMode:
-                        if (lastStatus == DeviceStatus.StandBy)
-                        {
-                            bool checkStatus = _commandProcessor.CheckStatus;
-                            _commandProcessor.CheckStatus = false;
+                    if (value == _operatingMode)
+                        return;
+                    OperatingModes previousOperatingMode = _operatingMode;
+                    _operatingMode = value;
+                    ConfigurationRegister configurationRegister = null;
+                    if (previousOperatingMode != OperatingModes.PowerOff)
+                    {
+                        configurationRegister = RegisterContainer.ConfigurationRegister;
+                        configurationRegister.Load();
+                    }
+                    switch (_operatingMode)
+                    {
+                        case OperatingModes.PowerOff:
+                            if (previousOperatingMode == OperatingModes.PowerDown)
+                            {
+                                _powerPin.Write(GpioPinValue.Low);
+                                break;
+                            }
+                            throw new InvalidOperatingModeTransitionException(previousOperatingMode, _operatingMode,
+                                new[] {OperatingModes.PowerDown});
+                        case OperatingModes.PowerDown:
+                            if (previousOperatingMode == OperatingModes.PowerOff)
+                            {
+                                _powerPin.Write(GpioPinValue.High);
+                                Delay.WaitMilliseconds(105);
+                                RegisterContainer.ConfigurationRegister.ResetToDefault();
+                                break;
+                            }
+                            if (previousOperatingMode == OperatingModes.StandBy)
+                            {
+                                configurationRegister.PowerUp = false;
+                                configurationRegister.Save();
+                                break;
+                            }
+                            throw new InvalidOperatingModeTransitionException(previousOperatingMode, _operatingMode,
+                                new[] {OperatingModes.StandBy});
+                        case OperatingModes.StandBy:
+                            if (previousOperatingMode == OperatingModes.ReceiveMode ||
+                                previousOperatingMode == OperatingModes.TransmitMode)
+                            {
+                                _cePin.Write(GpioPinValue.Low);
+                                break;
+                            }
+                            if (previousOperatingMode == OperatingModes.PowerDown)
+                            {
+                                configurationRegister.PowerUp = true;
+                                configurationRegister.Save();
+                                Delay.WaitMilliseconds(2);
+                                break;
+                            }
+                            throw new InvalidOperatingModeTransitionException(previousOperatingMode, _operatingMode,
+                                new[]
+                                {OperatingModes.PowerDown, OperatingModes.ReceiveMode, OperatingModes.TransmitMode});
+                        case OperatingModes.TransmitMode:
+                            if (previousOperatingMode == OperatingModes.StandBy)
+                            {
+                                bool checkOperatingMode = _commandProcessor.CheckOperatingMode;
+                                _commandProcessor.CheckOperatingMode = false;
 
-                            configurationRegister.PrimaryReceiveMode = false;
-                            configurationRegister.Save();
-                            _cePin.Write(GpioPinValue.High);
-                            Delay.WaitMicroseconds(10);
-                            //_cePin.Write(GpioPinValue.Low);
-                            Delay.WaitMicroseconds(130);
+                                configurationRegister.PrimaryReceiveMode = false;
+                                configurationRegister.Save();
+                                _cePin.Write(GpioPinValue.High);
+                                Delay.WaitMicroseconds(10);
+                                //_cePin.Write(GpioPinValue.Low);
+                                Delay.WaitMicroseconds(130);
 
-                            _commandProcessor.CheckStatus = checkStatus;
-                            break;
-                        }
-                        throw new InvalidStatusTransitionException(lastStatus, _status, "you can only transition into TransmitMode mode from Standby mode.");
-                    case DeviceStatus.ReceiveMode:
-                        if (lastStatus == DeviceStatus.StandBy)
-                        {
-                            bool checkStatus = _commandProcessor.CheckStatus;
-                            _commandProcessor.CheckStatus = false;
+                                _commandProcessor.CheckOperatingMode = checkOperatingMode;
+                                break;
+                            }
+                            throw new InvalidOperatingModeTransitionException(previousOperatingMode, _operatingMode,
+                                new[] {OperatingModes.StandBy});
+                        case OperatingModes.ReceiveMode:
+                            if (previousOperatingMode == OperatingModes.StandBy)
+                            {
+                                bool checkOperatingMode = _commandProcessor.CheckOperatingMode;
+                                _commandProcessor.CheckOperatingMode = false;
 
-                            configurationRegister.PrimaryReceiveMode = true;
-                            configurationRegister.Save();
-                            _cePin.Write(GpioPinValue.High);
-                            Delay.WaitMicroseconds(130);
+                                configurationRegister.PrimaryReceiveMode = true;
+                                configurationRegister.Save();
+                                _cePin.Write(GpioPinValue.High);
+                                Delay.WaitMicroseconds(130);
 
-                            _commandProcessor.CheckStatus = checkStatus;
-                            break;
-                        }
-                        throw new InvalidStatusTransitionException(lastStatus, _status, "you can only transition into ReceiveMode mode from Standby mode.");
+                                _commandProcessor.CheckOperatingMode = checkOperatingMode;
+                                break;
+                            }
+                            throw new InvalidOperatingModeTransitionException(previousOperatingMode, _operatingMode,
+                                new[] {OperatingModes.StandBy});
+                    }
                 }
             }
         }
@@ -159,7 +183,7 @@ namespace Windows.Devices.Radios.nRF24L01P
         {
             var radio = new
             {
-                Status = Status.GetName(),
+                OperatingMode = OperatingMode.GetName(),
                 TransmitFIFO = TransmitPipe.FifoStatus.GetName(),
                 ReceiveFIFO = ReceivePipes.FifoStatus.GetName(),
                 ReceivePipes.ReceivedPowerDetector
@@ -172,6 +196,14 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public void Dispose()
         {
+
+            if (OperatingMode == OperatingModes.TransmitMode || OperatingMode == OperatingModes.ReceiveMode)
+                OperatingMode = OperatingModes.StandBy;
+            if (OperatingMode == OperatingModes.StandBy)
+                OperatingMode = OperatingModes.PowerDown;
+            if (OperatingMode == OperatingModes.PowerDown)
+                OperatingMode = OperatingModes.PowerOff;
+
             _commandProcessor?.Dispose();
             _cePin?.Dispose();
             _irqPin?.Dispose();

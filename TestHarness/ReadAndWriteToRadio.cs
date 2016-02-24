@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P;
+using Windows.Devices.Radios.nRF24L01P.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Roles;
 using Windows.Devices.Spi;
@@ -29,19 +30,29 @@ namespace nRF24L01P.TestHarness
         public void Initialize()
         {
             GpioController gpioController = GpioController.GetDefault();
+            GpioPin powerPin = gpioController.InitGpioPin(4, GpioPinDriveMode.Output, GpioSharingMode.Exclusive);
             GpioPin cePin = gpioController.InitGpioPin(22, GpioPinDriveMode.Output, GpioSharingMode.Exclusive);
             GpioPin irqPin = gpioController.InitGpioPin(25, GpioPinDriveMode.InputPullUp, GpioSharingMode.Exclusive);
+            powerPin.Write(GpioPinValue.Low);
+            cePin.Write(GpioPinValue.Low);
+            irqPin.Write(GpioPinValue.High);
 
             DeviceInformationCollection devicesInfo = DeviceInformation.FindAllAsync(SpiDevice.GetDeviceSelector("SPI0")).GetAwaiter().GetResult();
             SpiDevice spiDevice = SpiDevice.FromIdAsync(devicesInfo[0].Id, new SpiConnectionSettings(0)).GetAwaiter().GetResult();
             ICommandProcessor commandProcessor = new CommandProcessor(spiDevice);
 
-            _radio = new Radio(commandProcessor, cePin, irqPin);
+            _radio = new Radio(commandProcessor, powerPin, cePin, irqPin);
 
             //ConstantCarrierWaveOutputForTesting();
-            SimpleSendTest();
+            //SimpleSendTest();
             //SimpleReceiveTest();
-            //SimpleSendReceiveTest();
+            SimpleSendReceiveTest();
+        }
+
+        public void Dispose()
+        {
+            _radio?.Dispose();
+            _radio = null;
         }
 
         public byte[] GetBytes()
@@ -52,14 +63,6 @@ namespace nRF24L01P.TestHarness
         public void WriteBytes([ReadOnlyArray] byte[] bytes)
         {
             throw new NotImplementedException();
-        }
-
-        public void ConstantCarrierWaveOutputForTesting()
-        {
-            ConstantCarrierWaveRole ccwRole = new ConstantCarrierWaveRole();
-            ccwRole.AttachRadio(_radio);
-            ccwRole.Start();
-            PrintDetails();
         }
 
         public void SimpleReceiveTest()
@@ -85,7 +88,7 @@ namespace nRF24L01P.TestHarness
             {
                 lock (_syncRoot)
                 {
-                    byte[] payload = Encoding.UTF8.GetBytes("Hello World " + (count++));
+                    byte[] payload = Encoding.UTF8.GetBytes("Hello World " + (count++)).ReverseBytes();
                     Debug.WriteLine(sender.Send(payload) ? "Send complete" : "Send failed");
                 }
                 Task.Delay(1000).Wait();
@@ -107,7 +110,7 @@ namespace nRF24L01P.TestHarness
                 string content = "Payload, Count=" + (count++).ToString();
                 lock (_syncRoot)
                 {
-                    Debug.WriteLine(sendReceive.Send(Encoding.UTF8.GetBytes(content))
+                    Debug.WriteLine(sendReceive.Send(Encoding.UTF8.GetBytes(content).ReverseBytes(), 5000)
                         ? "Data sent success."
                         : "Failed to send data.");
                 }
@@ -126,12 +129,12 @@ namespace nRF24L01P.TestHarness
 
         private void PrintDetails()
         {
-            Debug.WriteLine(_radio.GetArduinoDetails());
+            // Debug.WriteLine(_radio.GetArduinoDetails());
         }
 
         private void PrintDiagnostics()
         {
-            Debug.WriteLine(_radio.ToString());
+            // Debug.WriteLine(_radio.ToString());
         }
     }
 }

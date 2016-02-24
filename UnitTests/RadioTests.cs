@@ -68,7 +68,7 @@ namespace nRF24L01P.UnitTests
             rfChannelRegister.RfChannel = 1;
             rfChannelRegister.Save();
 
-            _radio.Status = DeviceStatus.ReceiveMode;
+            _radio.OperatingMode = OperatingModes.ReceiveMode;
         }
 
         private void SendReceive_DataArrived(object sender, byte[] data)

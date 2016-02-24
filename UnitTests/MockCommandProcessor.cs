@@ -7,7 +7,7 @@ namespace nRF24L01P.UnitTests
     public class MockCommandProcessor : ICommandProcessor
     {
         public bool CheckStatusField;
-        public bool CheckStatus
+        public bool CheckOperatingMode
         {
             get
             {
@@ -20,8 +20,8 @@ namespace nRF24L01P.UnitTests
             }
         }
 
-        public Func<DeviceStatus> GetDeviceStatusField;
-        public Func<DeviceStatus> GetDeviceStatus
+        public Func<OperatingModes> GetDeviceStatusField;
+        public Func<OperatingModes> GetOperatingMode
         {
             get
             {
