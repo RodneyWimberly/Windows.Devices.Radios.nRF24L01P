@@ -4,17 +4,16 @@ using Windows.Devices.Radios.nRF24L01P.Enums;
 
 namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
-    public class SendReceiveRole : RoleBase
+    public class SenderReceiverRole : RoleBase
     {
         private bool _isSending;
-        private bool _isMaxRetries;
         private readonly ManualResetEvent _sendCompleteEvent;
         public event EventHandler<byte[]> DataArrived;
 
-        public SendReceiveRole()
+        public SenderReceiverRole()
         {
             DataArrived = null;
-            _isMaxRetries = false;
+            MaxRetries = false;
             _isSending = false;
             _sendCompleteEvent = new ManualResetEvent(false);
         }
@@ -81,31 +80,32 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             byte[] sendBuffer = new byte[32];
             int bytesLeft = buffer.Length;
             int sendPos = 0;
-            bool result = true;
-            _isMaxRetries = false;
+            MaxRetries = false;
             _isSending = true;
-            int length = buffer.Length;
-            Radio.OperatingMode = OperatingModes.StandBy;
-            Writer.FlushBuffer();
-            Radio.OperatingMode = OperatingModes.TransmitMode;
-            while (bytesLeft > 0)
+            bool result = true;
+            lock (SyncRoot)
             {
-                int sendBufferLength = Math.Min(bytesLeft, Constants.MaxPayloadWidth);
-                if (sendBufferLength != sendBuffer.Length)
-                    sendBuffer = new byte[sendBufferLength];
-                Array.Copy(buffer, sendPos, sendBuffer, 0, sendBufferLength);
-                sendPos += sendBufferLength;
-                bytesLeft -= sendBufferLength;
-                Writer.Write(sendBuffer);
-                _sendCompleteEvent.Reset();
-                if (!(_sendCompleteEvent.WaitOne(timeOut) && !_isMaxRetries))
+                Radio.OperatingMode = OperatingModes.StandBy;
+                Writer.FlushBuffer();
+                Radio.OperatingMode = OperatingModes.TransmitMode;
+                while (bytesLeft > 0)
                 {
-                    result = false;
-                    break;
+                    int sendBufferLength = Math.Min(bytesLeft, Constants.MaxPayloadWidth);
+                    if (sendBufferLength != sendBuffer.Length)
+                        sendBuffer = new byte[sendBufferLength];
+                    Array.Copy(buffer, sendPos, sendBuffer, 0, sendBufferLength);
+                    sendPos += sendBufferLength;
+                    bytesLeft -= sendBufferLength;
+
+                    _sendCompleteEvent.Reset();
+                    Writer.Write(sendBuffer);
+                    result = _sendCompleteEvent.WaitOne(timeOut) && !MaxRetries;
+                    if(!result)
+                        break;
                 }
+                Radio.OperatingMode = OperatingModes.StandBy;
+                Radio.OperatingMode = OperatingModes.ReceiveMode;
             }
-            Radio.OperatingMode = OperatingModes.StandBy;
-            Radio.OperatingMode = OperatingModes.ReceiveMode;
             _isSending = false;
             return result;
         }
@@ -114,15 +114,22 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         {
             base.Radio_Interrupted(sender, e);
 
-            _isMaxRetries = e.StatusRegister.MaximunTransmitRetries;
-            if (_isMaxRetries || e.StatusRegister.TransmitDataSent)
-                _sendCompleteEvent.Set();
-            if (e.StatusRegister.ReceiveDataReady)
-                DataArrived?.Invoke(this, Reader.ReadBufferAll());
-            Radio.OperatingMode = OperatingModes.StandBy;
-            e.StatusRegister.Save();
-            if (!_isSending)
-                Radio.OperatingMode = OperatingModes.ReceiveMode;
+            //lock (SyncRoot)
+            {
+                MaxRetries = e.StatusRegister.MaximunTransmitRetries;
+                if (MaxRetries || e.StatusRegister.TransmitDataSent)
+                    _sendCompleteEvent.Set();
+                if (e.StatusRegister.ReceiveDataReady)
+                    DataArrived?.Invoke(this, Reader.ReadBufferAll());
+                lock (SyncRoot)
+                {
+                    Radio.OperatingMode = OperatingModes.StandBy;
+                    e.StatusRegister.ResetToDefault();
+                    e.StatusRegister.Save();
+                    if (!_isSending)
+                        Radio.OperatingMode = OperatingModes.ReceiveMode;
+                }
+            }
         }
     }
 }

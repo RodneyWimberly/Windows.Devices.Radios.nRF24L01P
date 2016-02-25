@@ -44,7 +44,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
             Configuration = new Configuration(_commandProcessor, RegisterContainer);
 
-            TransmitPipe = new TransmitPipe(Configuration, _commandProcessor, RegisterContainer);
+            TransmitPipe = new TransmitPipe(Configuration, _commandProcessor, RegisterContainer, _cePin);
             ReceivePipes = new ReceivePipeCollection(Configuration, _commandProcessor, RegisterContainer);
 
             bool useIrq = irqPin != null;
@@ -101,7 +101,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                                 break;
                             }
                             throw new InvalidOperatingModeTransitionException(previousOperatingMode, _operatingMode,
-                                new[] {OperatingModes.PowerDown});
+                                new[] { OperatingModes.PowerDown });
                         case OperatingModes.PowerDown:
                             if (previousOperatingMode == OperatingModes.PowerOff)
                             {
@@ -117,7 +117,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                                 break;
                             }
                             throw new InvalidOperatingModeTransitionException(previousOperatingMode, _operatingMode,
-                                new[] {OperatingModes.StandBy});
+                                new[] { OperatingModes.StandBy });
                         case OperatingModes.StandBy:
                             if (previousOperatingMode == OperatingModes.ReceiveMode ||
                                 previousOperatingMode == OperatingModes.TransmitMode)
@@ -144,15 +144,15 @@ namespace Windows.Devices.Radios.nRF24L01P
                                 configurationRegister.PrimaryReceiveMode = false;
                                 configurationRegister.Save();
                                 _cePin.Write(GpioPinValue.High);
-                                Delay.WaitMicroseconds(10);
+                                Delay.WaitMicroseconds(15);
                                 //_cePin.Write(GpioPinValue.Low);
-                                Delay.WaitMicroseconds(130);
+                                Delay.WaitMicroseconds(135);
 
                                 _commandProcessor.CheckOperatingMode = checkOperatingMode;
                                 break;
                             }
                             throw new InvalidOperatingModeTransitionException(previousOperatingMode, _operatingMode,
-                                new[] {OperatingModes.StandBy});
+                                new[] { OperatingModes.StandBy });
                         case OperatingModes.ReceiveMode:
                             if (previousOperatingMode == OperatingModes.StandBy)
                             {
@@ -162,13 +162,13 @@ namespace Windows.Devices.Radios.nRF24L01P
                                 configurationRegister.PrimaryReceiveMode = true;
                                 configurationRegister.Save();
                                 _cePin.Write(GpioPinValue.High);
-                                Delay.WaitMicroseconds(130);
+                                Delay.WaitMicroseconds(135);
 
                                 _commandProcessor.CheckOperatingMode = checkOperatingMode;
                                 break;
                             }
                             throw new InvalidOperatingModeTransitionException(previousOperatingMode, _operatingMode,
-                                new[] {OperatingModes.StandBy});
+                                new[] { OperatingModes.StandBy });
                     }
                 }
             }

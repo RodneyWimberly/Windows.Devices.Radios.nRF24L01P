@@ -4,15 +4,14 @@ using Windows.Devices.Radios.nRF24L01P.Enums;
 
 namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
-    public class SimpleSendRole : RoleBase
+    public class SenderRole : RoleBase
     {
 
         private readonly ManualResetEvent _sentEvent;
-        private bool _maxRetries;
 
-        public SimpleSendRole()
+        public SenderRole()
         {
-            _maxRetries = false;
+            MaxRetries = false;
             _sentEvent = new ManualResetEvent(false);
         }
 
@@ -45,11 +44,15 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             base.Radio_Interrupted(sender, e);
 
             Writer.FlushBuffer();
-            _maxRetries = e.StatusRegister.MaximunTransmitRetries;
-            Radio.OperatingMode = OperatingModes.StandBy;
-            e.StatusRegister.Save();
-            Radio.OperatingMode = OperatingModes.TransmitMode;
-            _sentEvent.Set();
+            MaxRetries = e.StatusRegister.MaximunTransmitRetries;
+            lock (SyncRoot)
+            {
+                Radio.OperatingMode = OperatingModes.StandBy;
+                e.StatusRegister.ResetToDefault();
+                e.StatusRegister.Save();
+                Radio.OperatingMode = OperatingModes.TransmitMode;
+                _sentEvent.Set();
+            }
         }
 
         public void SendAsync(byte[] buffer)
@@ -62,8 +65,11 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         {
             if (buffer.Length > 32) throw new ArgumentOutOfRangeException(nameof(buffer), "Buffer should less than 32 bytes");
             _sentEvent.Reset();
-            SendAsync(buffer);
-            return _sentEvent.WaitOne(timeOut) && !_maxRetries;
+            lock (SyncRoot)
+            {
+                SendAsync(buffer);
+            }
+            return _sentEvent.WaitOne(timeOut) && !MaxRetries;
         }
     }
 }

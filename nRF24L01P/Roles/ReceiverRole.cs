@@ -3,7 +3,7 @@ using Windows.Devices.Radios.nRF24L01P.Enums;
 
 namespace Windows.Devices.Radios.nRF24L01P.Roles
 {
-    public class SimpleReceiverRole : RoleBase
+    public class ReceiverRole : RoleBase
     {
         public event EventHandler<byte[]> DataArrived;
 
@@ -33,9 +33,13 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
             base.Radio_Interrupted(sender, e);
 
             DataArrived?.Invoke(this, Reader.ReadBufferAll());
-            Radio.OperatingMode = OperatingModes.StandBy;
-            e.StatusRegister.Save();
-            Radio.OperatingMode = OperatingModes.ReceiveMode;
+            lock (SyncRoot)
+            {
+                Radio.OperatingMode = OperatingModes.StandBy;
+                e.StatusRegister.ResetToDefault();
+                e.StatusRegister.Save();
+                Radio.OperatingMode = OperatingModes.ReceiveMode;
+            }
         }
     }
 }

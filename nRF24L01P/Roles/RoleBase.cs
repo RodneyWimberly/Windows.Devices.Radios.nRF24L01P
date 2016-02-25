@@ -8,6 +8,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
     {
         protected IRadio Radio;
         public bool IsRunning { get; protected set; }
+        public bool MaxRetries { get; protected set; }
 
         private byte[] _sendAddress;
         public byte[] SendAddress
@@ -34,6 +35,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
         protected IReceivePipe Acknowledgement;
         protected IReceivePipe Reader;
         protected ITransmitPipe Writer;
+        protected object SyncRoot;
+
+        protected RoleBase()
+        {
+            SyncRoot = new object();
+        }
 
         public virtual void AttachRadio(IRadio radio)
         {

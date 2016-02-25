@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
@@ -43,10 +42,72 @@ namespace nRF24L01P.TestHarness
 
             _radio = new Radio(commandProcessor, powerPin, cePin, irqPin);
 
-            //ConstantCarrierWaveOutputForTesting();
-            //SimpleSendTest();
-            //SimpleReceiveTest();
-            SimpleSendReceiveTest();
+            //SenderTest();
+            //ReceiverTest();
+            SenderReceiverTest();
+        }
+
+        public void ReceiverTest()
+        {
+            ReceiverRole receiver = new ReceiverRole();
+            receiver.AttachRadio(_radio);
+            receiver.ReceiveAddress = _receiveAddress;
+            receiver.DataArrived += DataArrived; ;
+            receiver.Start();
+            while (true) { }
+        }
+
+        public void SenderTest()
+        {
+            SenderRole sender = new SenderRole();
+            sender.AttachRadio(_radio);
+            sender.SendAddress = _sendAddress;
+            sender.Start();
+            int count = 0;
+            while (true)
+            {
+                string content = "Payload, Count=" + (count++);
+                byte[] buffer = new byte[3];
+                buffer[0] = 6;
+                buffer[1] = 12;
+                buffer[2] = 5;
+                lock (_syncRoot)
+                {
+                    //Encoding.UTF8.GetBytes(content).ReverseBytes()
+                    Debug.WriteLine(sender.Send(buffer.ReverseBytes())
+                        ? "Send complete"
+                        : "Send failed " + (sender.MaxRetries ? "MaxRetries" : "Timeout"));
+                }
+                Task.Delay(1000).Wait();
+            }
+        }
+
+        public void SenderReceiverTest()
+        {
+            SenderReceiverRole senderReceiver = new SenderReceiverRole();
+            senderReceiver.AttachRadio(_radio);
+            senderReceiver.DataArrived += DataArrived; ;
+            senderReceiver.SendAddress = _sendAddress;
+            senderReceiver.ReceiveAddress = _receiveAddress;
+            senderReceiver.Start();
+            int count = 0;
+            while (true)
+            {
+                string content = "Payload, Count=" + (count++);
+                lock (_syncRoot)
+                {
+                    Debug.WriteLine(senderReceiver.Send(Encoding.UTF8.GetBytes(content).ReverseBytes(), 5000)
+                        ? "Data sent success."
+                        : "Failed to send data. " + (senderReceiver.MaxRetries ? "MaxRetries" : "Timeout"));
+                }
+                Task.Delay(1000).Wait();
+            }
+        }
+
+        private void DataArrived(object sender, byte[] data)
+        {
+            string content = Encoding.UTF8.GetString(data, 0, data.Length - 1);
+            Debug.WriteLine("Data Received, Data = " + content);
         }
 
         public void Dispose()
@@ -55,86 +116,5 @@ namespace nRF24L01P.TestHarness
             _radio = null;
         }
 
-        public byte[] GetBytes()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void WriteBytes([ReadOnlyArray] byte[] bytes)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void SimpleReceiveTest()
-        {
-            SimpleReceiverRole receiver = new SimpleReceiverRole();
-            receiver.AttachRadio(_radio);
-            receiver.ReceiveAddress = _receiveAddress;
-            receiver.DataArrived += DataArrived; ;
-            receiver.Start();
-            PrintDetails();
-            while (true) { }
-        }
-
-        public void SimpleSendTest()
-        {
-            SimpleSendRole sender = new SimpleSendRole();
-            sender.AttachRadio(_radio);
-            sender.SendAddress = _sendAddress;
-            sender.Start();
-            int count = 0;
-            PrintDetails();
-            while (true)
-            {
-                lock (_syncRoot)
-                {
-                    byte[] payload = Encoding.UTF8.GetBytes("Hello World " + (count++)).ReverseBytes();
-                    Debug.WriteLine(sender.Send(payload) ? "Send complete" : "Send failed");
-                }
-                Task.Delay(1000).Wait();
-            }
-        }
-
-        public void SimpleSendReceiveTest()
-        {
-            SendReceiveRole sendReceive = new SendReceiveRole();
-            sendReceive.AttachRadio(_radio);
-            sendReceive.DataArrived += DataArrived; ;
-            sendReceive.SendAddress = _sendAddress;
-            sendReceive.ReceiveAddress = _receiveAddress;
-            sendReceive.Start();
-            int count = 0;
-            PrintDetails();
-            while (true)
-            {
-                string content = "Payload, Count=" + (count++).ToString();
-                lock (_syncRoot)
-                {
-                    Debug.WriteLine(sendReceive.Send(Encoding.UTF8.GetBytes(content).ReverseBytes(), 5000)
-                        ? "Data sent success."
-                        : "Failed to send data.");
-                }
-
-                Task.Delay(1000).Wait();
-            }
-        }
-
-        private void DataArrived(object sender, byte[] data)
-        {
-            StringBuilder sb = new StringBuilder();
-            foreach (byte value in data)
-                sb.AppendFormat("0x{0} ", value.ToString("X").PadLeft(2, '0'));
-            Debug.WriteLine("Data Received, Data =" + sb);
-        }
-
-        private void PrintDetails()
-        {
-            // Debug.WriteLine(_radio.GetArduinoDetails());
-        }
-
-        private void PrintDiagnostics()
-        {
-            // Debug.WriteLine(_radio.ToString());
-        }
     }
 }

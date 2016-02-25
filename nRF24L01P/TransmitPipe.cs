@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
@@ -10,12 +12,14 @@ namespace Windows.Devices.Radios.nRF24L01P
         private readonly IRegisterContainer _registerContainer;
         private readonly IConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
+        private readonly GpioPin _cePin;
 
-        public TransmitPipe(IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer)
+        public TransmitPipe(IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer, GpioPin cePin)
         {
             _configuration = configuration;
             _commandProcessor = commandProcessor;
             _registerContainer = registerContainer;
+            _cePin = cePin;
         }
 
         public byte[] Address
@@ -55,12 +59,38 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
-        public void Write(byte[] data, bool disableAck = false)
+        public void ReuseTransmitPayload()
         {
+            _registerContainer.StatusRegister.ResetToDefault();
+            _cePin.Write(GpioPinValue.Low);
+            _cePin.Write(GpioPinValue.High);
+        }
+
+        public bool Write(byte[] data, bool disableAck = false, int timeout = 1000)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            StatusRegister statusRegister = _registerContainer.StatusRegister;
+
+            while (statusRegister.TransmitFifoFull)
+            {
+                if (statusRegister.MaximunTransmitRetries)
+                {
+                    //ReuseTransmitPayload();
+                    bool checkOperatingMode = _commandProcessor.CheckOperatingMode;
+                    _commandProcessor.CheckOperatingMode = false;
+
+                    statusRegister.ResetToDefault();
+                    _commandProcessor.CheckOperatingMode = checkOperatingMode;
+                    return false;
+                }
+                //if (stopwatch.ElapsedMilliseconds() > timeout)
+                //    return false;
+                statusRegister.Load();
+            }
             if (data.Length > Constants.MaxPayloadWidth)
                 throw new ArgumentOutOfRangeException(nameof(data), string.Format("Data should be 0-{0} bytes", Constants.MaxPayloadWidth));
-
             _commandProcessor.ExecuteCommand(disableAck ? DeviceCommands.W_TX_PAYLOAD_NO_ACK : DeviceCommands.W_TX_PAYLOAD, RegisterAddresses.EMPTY_ADDRESS, data);
+            return true;
         }
     }
 }

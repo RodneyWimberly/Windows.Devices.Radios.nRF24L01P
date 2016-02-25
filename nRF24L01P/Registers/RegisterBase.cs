@@ -11,6 +11,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         protected ICommandProcessor CommandProcessor;
         protected byte[] Buffer;
         protected readonly byte[] DefaultValue;
+        private readonly object _syncRoot;
 
         public string Value
         {
@@ -27,6 +28,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         protected RegisterBase(ICommandProcessor commandProcessor, int length, byte address, byte[] defaultValue, string name = "")
         {
+            _syncRoot = new object();
             Buffer = new byte[length];
             Name = GetType().Name + (string.IsNullOrEmpty(name) ? "" : string.Format(" ({0})", name));
             CommandProcessor = commandProcessor;
@@ -38,9 +40,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public void Load()
         {
-            Load(CommandProcessor.ExecuteCommand(DeviceCommands.R_REGISTER, Address, Buffer));
-            // We called Load after reading from Register so we know the value is not dirty
-            IsDirty = false;
+            lock (_syncRoot)
+            {
+                Load(CommandProcessor.ExecuteCommand(DeviceCommands.R_REGISTER, Address, Buffer));
+                // We called Load after reading from Register so we know the value is not dirty
+                IsDirty = false;
+            }
         }
 
         public void Load(byte[] value)
@@ -53,14 +58,20 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public void Save(bool force = false)
         {
             if (!IsDirty && !force) return;
-            CommandProcessor.ExecuteCommand(DeviceCommands.W_REGISTER, Address, Buffer);
-            IsDirty = false;
+            lock (_syncRoot)
+            {
+                CommandProcessor.ExecuteCommand(DeviceCommands.W_REGISTER, Address, Buffer);
+                IsDirty = false;
+            }
         }
 
         public void ResetToDefault()
         {
-            Load(DefaultValue);
-            Save();
+            lock (_syncRoot)
+            {
+                Buffer = DefaultValue;
+                CommandProcessor.ExecuteCommand(DeviceCommands.W_REGISTER, Address, DefaultValue);
+            }
         }
 
         public static implicit operator byte[] (RegisterBase source)
