@@ -100,8 +100,10 @@
     <Compile Include="IReadAndWriteProcess.cs" />
     <Compile Include="ReadAndWriteToRadio.cs" />
     <Compile Include="BackgroundServer.cs" />
+    <Compile Include="ReadAndWriteToSensorServerModule.cs" />
     <Compile Include="StartupTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="wrPacketTypes.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

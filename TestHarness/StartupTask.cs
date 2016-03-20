@@ -6,7 +6,7 @@ namespace nRF24L01P.TestHarness
     {
         public void Run(IBackgroundTaskInstance taskInstance)
         {
-            new BackgroundServer(new ReadAndWriteToRadio()).RunAsync(taskInstance);
+            new BackgroundServer(new ReadAndWriteToSensorServerModule()).RunAsync(taskInstance);
         }
     }
 }

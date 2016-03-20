@@ -16,7 +16,7 @@ namespace nRF24L01P.TestHarness
         public void RunAsync(IBackgroundTaskInstance taskInstance)
         {
             _deferral = taskInstance.GetDeferral();
-            Task.Factory.StartNew(this.Initialize, TaskCreationOptions.LongRunning);
+            Task.Factory.StartNew(this.Initialize, TaskCreationOptions.RunContinuationsAsynchronously);
         }
 
         public void Initialize()
