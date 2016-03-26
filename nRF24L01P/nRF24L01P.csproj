@@ -126,6 +126,10 @@
     <Compile Include="Interfaces\IRegister.cs" />
     <Compile Include="InterruptedEventArgs.cs" />
     <Compile Include="Interfaces\IRegisterCollection.cs" />
+    <Compile Include="Logging\DebugOutLoggerFactoryAdapter.cs" />
+    <Compile Include="Logging\DebugOutLogger.cs" />
+    <Compile Include="Logging\SimpleFileLogger.cs" />
+    <Compile Include="Logging\SimpleFileLoggerFactoryAdapter.cs" />
     <Compile Include="ReceivePipeCollection.cs" />
     <Compile Include="Registers\PipeRegisterBase.cs" />
     <Compile Include="Registers\PropertyMasks.cs" />

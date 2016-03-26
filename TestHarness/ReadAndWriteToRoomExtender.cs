@@ -1,6 +1,5 @@
-﻿using System;
-using System.Diagnostics;
-using System.Text;
+﻿using Common.Logging;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
@@ -8,27 +7,88 @@ using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P;
 using Windows.Devices.Radios.nRF24L01P.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
+using Windows.Devices.Radios.nRF24L01P.Logging;
 using Windows.Devices.Radios.nRF24L01P.Roles;
 using Windows.Devices.Spi;
 using Windows.System.Threading;
 
 namespace nRF24L01P.TestHarness
 {
-    internal class ReadAndWriteToSensorServerModule : IReadAndWriteProcess
+    internal class ReadAndWriteToRoomExtender : IReadAndWriteProcess
     {
         private Radio _radio;
-        private readonly byte[] _sendAddress;
-        private readonly byte[] _receiveAddress;
         private SenderReceiverRole _sendReceiveRole;
         private readonly ManualResetEvent _manualResetEvent;
         private readonly object _syncRoot;
+        private readonly ILog _logger;
+        private readonly ILoggerFactoryAdapter _loggerFactory;
+        private readonly TaskFactory _taskFactory;
 
-        public ReadAndWriteToSensorServerModule()
+        public byte[] SendAddress { get; set; }
+        //public string SendAddressString
+        //{
+        //    get { return Encoding.UTF8.GetString(SendAddress); }
+        //    set
+        //    {
+        //        IBuffer buffer = new Windows.Storage.Streams.Buffer(5);
+        //        Encoding.UTF8.GetBytes(value).CopyTo(0, buffer, 0, 5);
+        //        SendAddress = buffer.ToArray();
+        //    }
+        //}
+
+        //public IPAddress SendIPAddress
+        //{
+        //    get
+        //    {
+        //        return new IPAddress(new[] { SendAddress[0], SendAddress[1], SendAddress[2], SendAddress[3] });
+        //    }
+        //    set
+        //    {
+        //        value.GetAddressBytes().CopyTo(SendAddress, 0);
+        //        SendAddress[4] = 0;
+        //    }
+        //}
+
+        public byte[] ReceiveAddress { get; set; }
+        //public string ReceiveAddressString
+        //{
+        //    get { return Encoding.UTF8.GetString(ReceiveAddress); }
+        //    set
+        //    {
+        //        IBuffer buffer = new Windows.Storage.Streams.Buffer(5);
+        //        Encoding.UTF8.GetBytes(value).CopyTo(0, buffer, 0, 5);
+        //        ReceiveAddress = buffer.ToArray();
+        //    }
+        //}
+
+        //public IPAddress ReceiveIPAddress
+        //{
+        //    get
+        //    {
+        //        return new IPAddress(new[] { ReceiveAddress[0], ReceiveAddress[1], ReceiveAddress[2], ReceiveAddress[3] });
+        //    }
+        //    set
+        //    {
+        //        value.GetAddressBytes().CopyTo(ReceiveAddress, 0);
+        //        ReceiveAddress[4] = 0;
+        //    }
+        //}
+        private byte _foo;
+
+        public ReadAndWriteToRoomExtender()
         {
-            _sendAddress = new byte[] { 0x54, 0x4d, 0x52, 0x68, 0x7C };
-            _receiveAddress = new byte[] { 0xAB, 0xCD, 0xAB, 0xCD, 0x71 };
+            _foo = 65;
+            SendAddress = new byte[] { 0x54, 0x4d, 0x52, 0x68, 0x7C };
+            ReceiveAddress = new byte[] { 0xAB, 0xCD, 0xAB, 0xCD, 0x71 };
+
             _manualResetEvent = new ManualResetEvent(false);
             _syncRoot = new object();
+
+            _taskFactory = new TaskFactory(TaskCreationOptions.LongRunning, TaskContinuationOptions.ExecuteSynchronously);
+
+            _loggerFactory = new DebugOutLoggerFactoryAdapter(LogLevel.All, true, true, true, "MM/dd/yyyy hh:mm:ss");
+            _logger = _loggerFactory.GetLogger(GetType());
+
         }
 
         public void Dispose()
@@ -55,8 +115,8 @@ namespace nRF24L01P.TestHarness
             _sendReceiveRole = new SenderReceiverRole();
             _sendReceiveRole.AttachRadio(_radio);
             _sendReceiveRole.DataArrived += DataArrived; ;
-            _sendReceiveRole.SendAddress = _sendAddress;
-            _sendReceiveRole.ReceiveAddress = _receiveAddress;
+            _sendReceiveRole.SendAddress = SendAddress;
+            _sendReceiveRole.ReceiveAddress = ReceiveAddress;
             _sendReceiveRole.Start();
 
             ThreadPoolTimer.CreatePeriodicTimer(Handler, TimeSpan.FromSeconds(5));
@@ -65,28 +125,30 @@ namespace nRF24L01P.TestHarness
 
         private async void Handler(ThreadPoolTimer timer)
         {
+            _foo++;
             timer.Cancel();
-            Debug.WriteLine("TimerCallback");
-            TaskFactory f = new TaskFactory(TaskCreationOptions.LongRunning, TaskContinuationOptions.ExecuteSynchronously);
-            bool success = await f.StartNew(() => SendX10Packet('A', 1, 3));
+            await _taskFactory.StartNew(() => SendX10Packet(_foo, 10, 8));
             ThreadPoolTimer.CreatePeriodicTimer(Handler, TimeSpan.FromSeconds(5));
         }
 
-        public bool SendX10Packet(char house, int unit, byte command)
+        public bool SendX10Packet(byte house, byte unit, byte command)
         {
             int count = 0;
             lock (_syncRoot)
             {
-                byte[] packet = { (byte)wrPacketTypes.X10StandardRequest, (byte)house, (byte)unit, command };
+                byte[] packet = { (byte)wrPacketTypes.X10StandardRequest, house, unit, command };
+                byte[] reverseBytes = packet.ReverseBytes();
 
-                while (!_sendReceiveRole.Send(packet.ReverseBytes()))
+                while (!_sendReceiveRole.Send(reverseBytes))
                 {
                     count++;
                     Task.Delay(250).Wait();
                     if (count > 20)
                         break;
                 }
-                Debug.WriteLine("SendX10Packet " + (count <= 20 ? "succeeded!" : "failed!"));
+                _logger.Debug("SendX10Packet " + (count <= 20 ? "succeeded!" : "failed!") +
+                    "Count: " + count + " { " + reverseBytes[0] + ", " + reverseBytes[1] + ", " + reverseBytes[2] + " }");
+
             }
 
             return count <= 20;
@@ -105,15 +167,14 @@ namespace nRF24L01P.TestHarness
                     if (count > 10)
                         break;
                 }
-                Debug.WriteLine("SendEnvironmentRequestPacket " + (count <= 10 ? "succeeded!" : "failed!"));
+                _logger.Debug("SendEnvironmentRequestPacket " + (count <= 10 ? "succeeded!" : "failed!"));
             }
             return count <= 10;
         }
 
         private void DataArrived(object sender, byte[] e)
         {
-            string content = Encoding.UTF8.GetString(e, 0, e.Length - 1);
-            Debug.WriteLine("Data Received, Data = " + content);
+            _logger.DebugFormat("PacketType: {0} House: {1} Unit: {2} Command: {3}", (wrPacketTypes)e[0], (char)e[1], e[2], e[3]);
         }
 
         private void WaitForData()
@@ -123,7 +184,6 @@ namespace nRF24L01P.TestHarness
             {
                 lock (_syncRoot)
                 {
-                    Debug.WriteLine("WaitForData");
                     if (!_manualResetEvent.WaitOne(1000))
                         continue;
                     break;

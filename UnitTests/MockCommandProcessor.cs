@@ -1,11 +1,14 @@
 ﻿using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
+using Common.Logging;
 
 namespace nRF24L01P.UnitTests
 {
     public class MockCommandProcessor : ICommandProcessor
     {
+        public ILoggerFactoryAdapter LoggerFactory { get; set; }
+
         public bool CheckStatusField;
         public bool CheckOperatingMode
         {

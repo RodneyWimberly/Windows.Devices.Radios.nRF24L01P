@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Logging;
+using System;
 using System.Diagnostics;
 using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P.Enums;
@@ -12,13 +13,15 @@ namespace Windows.Devices.Radios.nRF24L01P
         private readonly IRegisterContainer _registerContainer;
         private readonly IConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
+        private readonly ILog _logger;
         private readonly GpioPin _cePin;
 
-        public TransmitPipe(IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer, GpioPin cePin)
+        public TransmitPipe(IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer, ILog logger, GpioPin cePin)
         {
             _configuration = configuration;
             _commandProcessor = commandProcessor;
             _registerContainer = registerContainer;
+            _logger = logger;
             _cePin = cePin;
         }
 

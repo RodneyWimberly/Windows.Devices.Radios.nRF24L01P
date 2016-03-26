@@ -5,6 +5,7 @@ using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
+using Common.Logging;
 
 namespace Windows.Devices.Radios.nRF24L01P
 {
@@ -17,10 +18,12 @@ namespace Windows.Devices.Radios.nRF24L01P
         private readonly IConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
         private readonly IRegisterContainer _registerContainer;
+        private readonly ILog _logger;
 
-        public ArduinoDetails(IRadio radio, IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer)
+        public ArduinoDetails(IRadio radio, ILoggerFactoryAdapter loggerFactory, IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer)
         {
             _radio = radio;
+            _logger = loggerFactory.GetLogger(GetType());
             _configuration = configuration;
             _commandProcessor = commandProcessor;
             _registerContainer = registerContainer;
@@ -94,7 +97,9 @@ namespace Windows.Devices.Radios.nRF24L01P
             sb.AppendLine("CRC Length\t\t = " + _configuration.CrcEncodingScheme.GetName());
             sb.AppendLine("PA Power\t\t = " + _configuration.PowerLevel.GetName());
 
-            return sb.ToString();
+            string output = sb.ToString();
+            _logger.InfoFormat("Arduino Details\r\n{0}", output);
+            return output;
         }
     }
 }

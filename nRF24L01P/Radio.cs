@@ -1,10 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using Common.Logging;
+using Newtonsoft.Json;
 using System;
 using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Exceptions;
 using Windows.Devices.Radios.nRF24L01P.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
+using Windows.Devices.Radios.nRF24L01P.Logging;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 
 namespace Windows.Devices.Radios.nRF24L01P
@@ -19,6 +21,8 @@ namespace Windows.Devices.Radios.nRF24L01P
         private readonly GpioPin _cePin;
         private readonly GpioPin _irqPin;
         private readonly ICommandProcessor _commandProcessor;
+        private readonly ILog _logger;
+        private readonly ILoggerFactoryAdapter _loggerFactory;
         public event EventHandler<InterruptedEventArgs> Interrupted;
         public IRegisterContainer RegisterContainer { get; }
         public IConfiguration Configuration { get; }
@@ -35,7 +39,19 @@ namespace Windows.Devices.Radios.nRF24L01P
             _cePin = cePin;
             _cePin.Write(GpioPinValue.Low);
 
+            //_logger = new SimpleFileLoggerFactoryAdapter(
+            //    LogLevel.All,
+            //    true,
+            //    true,
+            //    true,
+            //    "MM/dd/yyyy",
+            //    Path.Combine(ApplicationData.Current.LocalFolder.Path, "nRF24L01P.log")
+            //    )
+            _loggerFactory = new DebugOutLoggerFactoryAdapter(LogLevel.All, true, true, true, "MM/dd/yyyy hh:mm:ss");
+            _logger = _loggerFactory.GetLogger(GetType());
+
             _commandProcessor = commandProcessor;
+            _commandProcessor.LoggerFactory = _loggerFactory;
             _commandProcessor.GetOperatingMode = () => OperatingMode;
 
             RegisterContainer = new RegisterContainer(_commandProcessor);
@@ -44,7 +60,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
             Configuration = new Configuration(_commandProcessor, RegisterContainer);
 
-            TransmitPipe = new TransmitPipe(Configuration, _commandProcessor, RegisterContainer, _cePin);
+            TransmitPipe = new TransmitPipe(Configuration, _commandProcessor, RegisterContainer, _logger, _cePin);
             ReceivePipes = new ReceivePipeCollection(Configuration, _commandProcessor, RegisterContainer);
 
             bool useIrq = irqPin != null;
@@ -60,12 +76,13 @@ namespace Windows.Devices.Radios.nRF24L01P
             configurationRegister.TransmitDataSentMask = !useIrq;
             configurationRegister.Save();
             OperatingMode = OperatingModes.StandBy;
+
         }
 
         private void irqPin_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
         {
             if (args.Edge != GpioPinEdge.FallingEdge) return;
-
+            _logger.Trace("IRQ Event Received!");
             RegisterContainer.StatusRegister.Load();
             Interrupted?.Invoke(this, new InterruptedEventArgs { StatusRegister = RegisterContainer.StatusRegister });
             _irqPin.Write(GpioPinValue.High);
@@ -86,6 +103,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                         return;
                     OperatingModes previousOperatingMode = _operatingMode;
                     _operatingMode = value;
+                    _logger.InfoFormat("Switching OperatingMode from {0} to {1}.", previousOperatingMode, _operatingMode);
                     ConfigurationRegister configurationRegister = null;
                     if (previousOperatingMode != OperatingModes.PowerOff)
                     {
@@ -176,7 +194,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public string GetArduinoDetails()
         {
-            return new ArduinoDetails(this, Configuration, _commandProcessor, RegisterContainer).ToString();
+            return new ArduinoDetails(this, _loggerFactory, Configuration, _commandProcessor, RegisterContainer).ToString();
         }
 
         public override string ToString()
@@ -188,15 +206,17 @@ namespace Windows.Devices.Radios.nRF24L01P
                 ReceiveFIFO = ReceivePipes.FifoStatus.GetName(),
                 ReceivePipes.ReceivedPowerDetector
             };
-            return string.Format("Radio\r\n{0}\r\n{1}{2}",
+            string output = string.Format("Radio\r\n{0}\r\n{1}{2}",
                 JsonConvert.SerializeObject(radio, Formatting.None),
                 Configuration,
                 RegisterContainer);
+            _logger.InfoFormat("Diagnostics Information\r\n{0}", output);
+            return output;
         }
 
         public void Dispose()
         {
-
+            _logger.Trace("Dispose");
             if (OperatingMode == OperatingModes.TransmitMode || OperatingMode == OperatingModes.ReceiveMode)
                 OperatingMode = OperatingModes.StandBy;
             if (OperatingMode == OperatingModes.StandBy)
