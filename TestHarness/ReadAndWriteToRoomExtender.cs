@@ -1,5 +1,8 @@
 ﻿using Common.Logging;
 using System;
+using System.Net;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
@@ -10,6 +13,7 @@ using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Logging;
 using Windows.Devices.Radios.nRF24L01P.Roles;
 using Windows.Devices.Spi;
+using Windows.Storage.Streams;
 using Windows.System.Threading;
 
 namespace nRF24L01P.TestHarness
@@ -21,63 +25,60 @@ namespace nRF24L01P.TestHarness
         private readonly ManualResetEvent _manualResetEvent;
         private readonly object _syncRoot;
         private readonly ILog _logger;
-        private readonly ILoggerFactoryAdapter _loggerFactory;
         private readonly TaskFactory _taskFactory;
 
         public byte[] SendAddress { get; set; }
-        //public string SendAddressString
-        //{
-        //    get { return Encoding.UTF8.GetString(SendAddress); }
-        //    set
-        //    {
-        //        IBuffer buffer = new Windows.Storage.Streams.Buffer(5);
-        //        Encoding.UTF8.GetBytes(value).CopyTo(0, buffer, 0, 5);
-        //        SendAddress = buffer.ToArray();
-        //    }
-        //}
-
-        //public IPAddress SendIPAddress
-        //{
-        //    get
-        //    {
-        //        return new IPAddress(new[] { SendAddress[0], SendAddress[1], SendAddress[2], SendAddress[3] });
-        //    }
-        //    set
-        //    {
-        //        value.GetAddressBytes().CopyTo(SendAddress, 0);
-        //        SendAddress[4] = 0;
-        //    }
-        //}
+        public string SendAddressString
+        {
+            get { return Encoding.UTF8.GetString(SendAddress); }
+            set
+            {
+                IBuffer buffer = new Windows.Storage.Streams.Buffer(5);
+                Encoding.UTF8.GetBytes(value).CopyTo(0, buffer, 0, 5);
+                SendAddress = buffer.ToArray();
+            }
+        }
+        public IPAddress SendIPAddress
+        {
+            get
+            {
+                return new IPAddress(new[] { SendAddress[0], SendAddress[1], SendAddress[2], SendAddress[3] });
+            }
+            set
+            {
+                value.GetAddressBytes().CopyTo(SendAddress, 0);
+                SendAddress[4] = 0;
+            }
+        }
 
         public byte[] ReceiveAddress { get; set; }
-        //public string ReceiveAddressString
-        //{
-        //    get { return Encoding.UTF8.GetString(ReceiveAddress); }
-        //    set
-        //    {
-        //        IBuffer buffer = new Windows.Storage.Streams.Buffer(5);
-        //        Encoding.UTF8.GetBytes(value).CopyTo(0, buffer, 0, 5);
-        //        ReceiveAddress = buffer.ToArray();
-        //    }
-        //}
-
-        //public IPAddress ReceiveIPAddress
-        //{
-        //    get
-        //    {
-        //        return new IPAddress(new[] { ReceiveAddress[0], ReceiveAddress[1], ReceiveAddress[2], ReceiveAddress[3] });
-        //    }
-        //    set
-        //    {
-        //        value.GetAddressBytes().CopyTo(ReceiveAddress, 0);
-        //        ReceiveAddress[4] = 0;
-        //    }
-        //}
-        private byte _foo;
+        public string ReceiveAddressString
+        {
+            get { return Encoding.UTF8.GetString(ReceiveAddress); }
+            set
+            {
+                IBuffer buffer = new Windows.Storage.Streams.Buffer(5);
+                Encoding.UTF8.GetBytes(value).CopyTo(0, buffer, 0, 5);
+                ReceiveAddress = buffer.ToArray();
+            }
+        }
+        public IPAddress ReceiveIPAddress
+        {
+            get
+            {
+                return new IPAddress(new[] { ReceiveAddress[0], ReceiveAddress[1], ReceiveAddress[2], ReceiveAddress[3] });
+            }
+            set
+            {
+                value.GetAddressBytes().CopyTo(ReceiveAddress, 0);
+                ReceiveAddress[4] = 0;
+            }
+        }
+        private byte _counter;
 
         public ReadAndWriteToRoomExtender()
         {
-            _foo = 65;
+            _counter = 65;
             SendAddress = new byte[] { 0x54, 0x4d, 0x52, 0x68, 0x7C };
             ReceiveAddress = new byte[] { 0xAB, 0xCD, 0xAB, 0xCD, 0x71 };
 
@@ -86,8 +87,8 @@ namespace nRF24L01P.TestHarness
 
             _taskFactory = new TaskFactory(TaskCreationOptions.LongRunning, TaskContinuationOptions.ExecuteSynchronously);
 
-            _loggerFactory = new DebugOutLoggerFactoryAdapter(LogLevel.All, true, true, true, "MM/dd/yyyy hh:mm:ss");
-            _logger = _loggerFactory.GetLogger(GetType());
+            ILoggerFactoryAdapter loggerFactory = new DebugOutLoggerFactoryAdapter(LogLevel.All, true, true, true, "MM/dd/yyyy hh:mm:ss");
+            _logger = loggerFactory.GetLogger(GetType());
 
         }
 
@@ -125,9 +126,9 @@ namespace nRF24L01P.TestHarness
 
         private async void Handler(ThreadPoolTimer timer)
         {
-            _foo++;
+            _counter++;
             timer.Cancel();
-            await _taskFactory.StartNew(() => SendX10Packet(_foo, 10, 8));
+            await _taskFactory.StartNew(() => SendX10Packet(_counter, 10, 8));
             ThreadPoolTimer.CreatePeriodicTimer(Handler, TimeSpan.FromSeconds(5));
         }
 
