@@ -1,9 +1,7 @@
 ﻿{
   "dependencies": {
-    "Common.Logging.WinRT": "3.3.1",
-    "Microsoft.IoT.DeviceCore": "1.0.3",
-    "Microsoft.NETCore.UniversalWindowsPlatform": "5.0.0",
-    "Newtonsoft.Json": "8.0.2"
+    "Common.Logging.WinRT.Extras": "1.0.0",
+    "Microsoft.NETCore.UniversalWindowsPlatform": "5.0.0"
   },
   "frameworks": {
     "uap10.0": {}

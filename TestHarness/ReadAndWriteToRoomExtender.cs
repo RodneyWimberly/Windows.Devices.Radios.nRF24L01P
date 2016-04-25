@@ -1,4 +1,5 @@
 ﻿using Common.Logging;
+using Common.Logging.WinRT.Extras;
 using System;
 using System.Net;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -10,7 +11,6 @@ using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P;
 using Windows.Devices.Radios.nRF24L01P.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
-using Windows.Devices.Radios.nRF24L01P.Logging;
 using Windows.Devices.Radios.nRF24L01P.Roles;
 using Windows.Devices.Spi;
 using Windows.Storage.Streams;
@@ -26,6 +26,9 @@ namespace nRF24L01P.TestHarness
         private readonly object _syncRoot;
         private readonly ILog _logger;
         private readonly TaskFactory _taskFactory;
+
+        private readonly byte[] _myAddress;
+        private readonly byte[] _reAddress;
 
         public byte[] SendAddress { get; set; }
         public string SendAddressString
@@ -79,8 +82,10 @@ namespace nRF24L01P.TestHarness
         public ReadAndWriteToRoomExtender()
         {
             _counter = 65;
-            SendAddress = new byte[] { 0x54, 0x4d, 0x52, 0x68, 0x7C };
-            ReceiveAddress = new byte[] { 0xAB, 0xCD, 0xAB, 0xCD, 0x71 };
+            _myAddress = new byte[] { 0xAA, 0xAA, 0xAA, 0xAA, 0x00 };
+            _reAddress = new byte[] { 0xBB, 0xBB, 0xBB, 0xBB, 0x00 };
+            SendAddress = _myAddress;
+            ReceiveAddress = _reAddress;
 
             _manualResetEvent = new ManualResetEvent(false);
             _syncRoot = new object();
@@ -111,8 +116,9 @@ namespace nRF24L01P.TestHarness
             DeviceInformationCollection devicesInfo = DeviceInformation.FindAllAsync(SpiDevice.GetDeviceSelector("SPI0")).GetAwaiter().GetResult();
             SpiDevice spiDevice = SpiDevice.FromIdAsync(devicesInfo[0].Id, new SpiConnectionSettings(0)).GetAwaiter().GetResult();
             ICommandProcessor commandProcessor = new CommandProcessor(spiDevice);
+            ILoggerFactoryAdapter loggerFactoryAdapter = new DebugOutLoggerFactoryAdapter(LogLevel.All, true, true, true, "MM/dd/yyyy hh:mm:ss fffff");
 
-            _radio = new Radio(commandProcessor, powerPin, cePin, irqPin);
+            _radio = new Radio(commandProcessor, loggerFactoryAdapter, powerPin, cePin, irqPin);
             _sendReceiveRole = new SenderReceiverRole();
             _sendReceiveRole.AttachRadio(_radio);
             _sendReceiveRole.DataArrived += DataArrived; ;
@@ -176,6 +182,7 @@ namespace nRF24L01P.TestHarness
         private void DataArrived(object sender, byte[] e)
         {
             _logger.DebugFormat("PacketType: {0} House: {1} Unit: {2} Command: {3}", (wrPacketTypes)e[0], (char)e[1], e[2], e[3]);
+            _manualResetEvent.Set();
         }
 
         private void WaitForData()

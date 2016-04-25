@@ -35,8 +35,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             set { _spiDevice.ConnectionSettings.ChipSelectLine = value; }
         }
 
-        public string ControllerName { get; set; }
-
         public CommandProcessor(SpiDevice spiDevice, bool checkOperatingMode = true)
         {
             _revertBytes = BitConverter.IsLittleEndian;

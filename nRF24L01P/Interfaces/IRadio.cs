@@ -1,10 +1,9 @@
-using Microsoft.IoT.DeviceCore;
 using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 
 namespace Windows.Devices.Radios.nRF24L01P.Interfaces
 {
-    public interface IRadio : IDevice
+    public interface IRadio
     {
         IRegisterContainer RegisterContainer { get; }
         IConfiguration Configuration { get; }

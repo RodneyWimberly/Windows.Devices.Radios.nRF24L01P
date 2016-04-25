@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Common.Logging;
+using Common.Logging.WinRT.Extras;
+using System;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
@@ -40,7 +42,9 @@ namespace nRF24L01P.TestHarness
             SpiDevice spiDevice = SpiDevice.FromIdAsync(devicesInfo[0].Id, new SpiConnectionSettings(0)).GetAwaiter().GetResult();
             ICommandProcessor commandProcessor = new CommandProcessor(spiDevice);
 
-            _radio = new Radio(commandProcessor, powerPin, cePin, irqPin);
+            ILoggerFactoryAdapter loggerFactoryAdapter = new DebugOutLoggerFactoryAdapter(LogLevel.All, true, true, true, "MM/dd/yyyy hh:mm:ss fffff");
+
+            _radio = new Radio(commandProcessor, loggerFactoryAdapter, powerPin, cePin, irqPin);
 
             //SenderTest();
             //ReceiverTest();

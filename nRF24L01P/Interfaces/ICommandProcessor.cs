@@ -1,11 +1,10 @@
 using Common.Logging;
-using Microsoft.IoT.DeviceCore.Spi;
 using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 
 namespace Windows.Devices.Radios.nRF24L01P.Interfaces
 {
-    public interface ICommandProcessor : ISpiBasedDevice
+    public interface ICommandProcessor : IDisposable
     {
         bool CheckOperatingMode { get; set; }
         Action<byte[]> LoadStatusRegister { get; set; }

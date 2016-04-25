@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+﻿using Common.Logging;
+using Common.Logging.Simple;
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -8,7 +10,6 @@ using Windows.Devices.Radios.nRF24L01P;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
-using Windows.Devices.Radios.nRF24L01P.Roles;
 using Windows.Devices.Spi;
 
 namespace nRF24L01P.UnitTests
@@ -21,6 +22,7 @@ namespace nRF24L01P.UnitTests
         private static SpiDevice _spiDevice;
         private static IRadio _radio;
         private static ICommandProcessor _commandProcessor;
+        private static ILoggerFactoryAdapter _loggerFactoryAdapter;
 
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
@@ -32,7 +34,9 @@ namespace nRF24L01P.UnitTests
             DeviceInformationCollection devicesInfo = DeviceInformation.FindAllAsync(SpiDevice.GetDeviceSelector("SPI0")).GetAwaiter().GetResult();
             _spiDevice = SpiDevice.FromIdAsync(devicesInfo[0].Id, new SpiConnectionSettings(0)).GetAwaiter().GetResult();
             _commandProcessor = new CommandProcessor(_spiDevice); // new MockCommandProcessor();
-            _radio = new Radio(_commandProcessor, _cePin, _irqPin);
+            _loggerFactoryAdapter = new NoOpLoggerFactoryAdapter();
+
+            _radio = new Radio(_commandProcessor, _loggerFactoryAdapter, _cePin, _irqPin);
         }
 
         [TestMethod]

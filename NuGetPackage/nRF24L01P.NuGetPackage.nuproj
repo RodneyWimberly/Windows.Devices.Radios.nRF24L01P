@@ -21,6 +21,9 @@
   <ItemGroup>
     <ProjectReference Include="..\nRF24L01P\nRF24L01P.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Microsoft.IoT.DeviceCore.1.0.3.nupkg" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>da010ec6-e51a-47c5-95df-885a1903087e</ProjectGuid>
   </PropertyGroup>
@@ -30,7 +33,7 @@
   <Import Project="$(NuProjPath)\NuProj.props" Condition="Exists('$(NuProjPath)\NuProj.props')" />
   <PropertyGroup Label="Configuration">
     <Id>Windows.Devices.Radios.nRF24L01P</Id>
-    <Version>1.1.0</Version>
+    <Version>1.2.1</Version>
     <Title>nRF24L01P</Title>
     <Authors>Rodney Wimberly</Authors>
     <Owners>Rodney Wimberly</Owners>

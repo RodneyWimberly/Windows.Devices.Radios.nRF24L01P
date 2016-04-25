@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
@@ -25,7 +24,6 @@ namespace Windows.Devices.Radios.nRF24L01P
             _isPlusModel = DataRate == DataRates.DataRate250Kbps;
             DataRate = oldDataRate;
 
-            _commandProcessor.ControllerName = RadioModel.GetName();
         }
 
         public uint Channel
@@ -270,7 +268,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public override string ToString()
         {
-            return string.Format("{0}\r\n{1}\r\n", GetType().Name, JsonConvert.SerializeObject(this, Formatting.None));
+            return string.Format("{0}\r\n{1}\r\n", GetType().Name, JsonHelper.ToJson(this));
         }
     }
 }

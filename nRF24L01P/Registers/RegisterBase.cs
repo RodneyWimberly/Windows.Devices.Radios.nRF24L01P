@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Linq;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
@@ -135,7 +134,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 
         public override string ToString()
         {
-            return JsonConvert.SerializeObject(this, Formatting.None);
+            return JsonHelper.ToJson(this);
         }
     }
 }
