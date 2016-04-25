@@ -1,0 +1,15 @@
+NuGet Package 1.2.2
+* Add correct NuGet Dependencies to NuGet Package
+* Remove the following dependencies:
+    * "Common.Logging.WinRT": "3.3.1",
+    * "Microsoft.IoT.DeviceCore": "1.0.3",
+    * "Newtonsoft.Json": "8.0.3",
+    * "Unity": "4.0.1"
+* Moved Logging Components out to new package named
+* Common.Logging.WinRT.Extras
+* Added reference to new package named Common.Logging.WinRT.Extras
+* Removed IoC Container
+* Moved the logging dependency to DI. Now you can pass in the Logging dependency. 
+  You can use the NoOpLoggerFactoryAdapter to basically disable logging, 
+  Use the DebugOutLoggerFactoryAdapter or SimpleFileLoggerFactoryAdapter or 
+  implement ILoggerFactoryAdapter and ILog to use you own logger.
