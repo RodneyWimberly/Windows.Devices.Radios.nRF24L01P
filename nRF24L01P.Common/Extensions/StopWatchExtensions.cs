@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace Windows.Devices.Radios.nRF24L01P.Extensions
+namespace Windows.Devices.Radios.nRF24L01P.Common.Extensions
 {
     public static class StopWatchExtensions
     {

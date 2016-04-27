@@ -2,7 +2,7 @@
 using System.Runtime.Serialization.Json;
 using System.Text;
 
-namespace Windows.Devices.Radios.nRF24L01P
+namespace Windows.Devices.Radios.nRF24L01P.Common
 {
     public static class JsonHelper
     {
@@ -19,7 +19,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public static T FromJson<T>(string json)
         {
-            T returnValue;
+            T returnValue = default(T);
             DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof (T));
             byte[] bytes = Encoding.UTF8.GetBytes(json);
             using (MemoryStream ms = new MemoryStream())

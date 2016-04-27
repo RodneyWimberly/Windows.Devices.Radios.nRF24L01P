@@ -21,6 +21,9 @@
     <PackageCertificateKeyFile>TestHarness_TemporaryKey.pfx</PackageCertificateKeyFile>
     <AppxPackage>true</AppxPackage>
     <ContainsStartupTask>true</ContainsStartupTask>
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <AppxBundle>Always</AppxBundle>
+    <AppxBundlePlatforms>x86|x64|arm</AppxBundlePlatforms>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
     <DebugSymbols>true</DebugSymbols>
@@ -32,6 +35,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
     <Prefer32Bit>true</Prefer32Bit>
+    <GenerateLibraryLayout>true</GenerateLibraryLayout>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM'">
     <OutputPath>bin\ARM\Release\</OutputPath>
@@ -136,6 +140,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\nRF24L01P.Simple\nRF24L01P.Simple.csproj">
+      <Project>{ad5fa32d-41c6-4949-a33c-067b033842c4}</Project>
+      <Name>nRF24L01P.Simple</Name>
+    </ProjectReference>
     <ProjectReference Include="..\nRF24L01P\nRF24L01P.csproj">
       <Project>{d134678e-33d7-4f4c-b30f-96d795d86e95}</Project>
       <Name>nRF24L01P</Name>

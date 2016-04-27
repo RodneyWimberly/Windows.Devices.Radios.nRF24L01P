@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Windows.Devices.Radios.nRF24L01P.Enums
+namespace Windows.Devices.Radios.nRF24L01P.Common.Enums
 {
     [Flags]
     public enum BitMasks

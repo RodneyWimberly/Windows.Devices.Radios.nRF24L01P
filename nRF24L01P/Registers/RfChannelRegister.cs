@@ -1,4 +1,5 @@
-﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+﻿using Common.Logging;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
@@ -7,8 +8,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class RfChannelRegister : RegisterBase
     {
-        public RfChannelRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.RF_CH, RegisterDefaults.RF_CH, "RF_CH")
+        public RfChannelRegister(ILoggerFactoryAdapter loggerFactoryAdapter, ICommandProcessor commandProcessor) :
+            base(loggerFactoryAdapter, commandProcessor, 1, RegisterAddresses.RF_CH, RegisterDefaults.RF_CH, "RF_CH")
         { }
 
         /// <summary>

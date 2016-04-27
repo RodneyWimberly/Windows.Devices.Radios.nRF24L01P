@@ -9,7 +9,7 @@ using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P;
 using Windows.Devices.Radios.nRF24L01P.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
-using Windows.Devices.Radios.nRF24L01P.Roles;
+using Windows.Devices.Radios.nRF24L01P.Simple;
 using Windows.Devices.Spi;
 
 namespace nRF24L01P.TestHarness

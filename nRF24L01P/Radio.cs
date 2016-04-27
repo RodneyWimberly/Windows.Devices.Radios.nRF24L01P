@@ -1,12 +1,12 @@
 ﻿using Common.Logging;
-//using Newtonsoft.Json;
 using System;
 using Windows.Devices.Gpio;
+using Windows.Devices.Radios.nRF24L01P.Common;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Exceptions;
-using Windows.Devices.Radios.nRF24L01P.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
+
 namespace Windows.Devices.Radios.nRF24L01P
 {
     /// <summary>
@@ -29,7 +29,6 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public Radio(ICommandProcessor commandProcessor, ILoggerFactoryAdapter loggerFactoryAdapter, GpioPin powerPin, GpioPin cePin, GpioPin irqPin = null)
         {
-
             _syncRoot = new object();
             _operatingMode = OperatingModes.PowerOff;
             _powerPin = powerPin;
@@ -45,14 +44,14 @@ namespace Windows.Devices.Radios.nRF24L01P
             _commandProcessor.LoggerFactory = _loggerFactoryAdapter;
             _commandProcessor.GetOperatingMode = () => OperatingMode;
 
-            RegisterContainer = new RegisterContainer(_commandProcessor);
+            RegisterContainer = new RegisterContainer(_loggerFactoryAdapter, _commandProcessor);
             OperatingMode = OperatingModes.PowerDown;
             RegisterContainer.ResetRegistersToDefault();
 
-            Configuration = new Configuration(_commandProcessor, RegisterContainer);
+            Configuration = new Configuration(_loggerFactoryAdapter, _commandProcessor, RegisterContainer);
 
-            TransmitPipe = new TransmitPipe(Configuration, _commandProcessor, RegisterContainer, _logger, _cePin);
-            ReceivePipes = new ReceivePipeCollection(Configuration, _commandProcessor, RegisterContainer);
+            TransmitPipe = new TransmitPipe(_loggerFactoryAdapter, Configuration, _commandProcessor, RegisterContainer, _cePin);
+            ReceivePipes = new ReceivePipeCollection(_loggerFactoryAdapter, Configuration, _commandProcessor, RegisterContainer);
 
             bool useIrq = irqPin != null;
             if (useIrq)

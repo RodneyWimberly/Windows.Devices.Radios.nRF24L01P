@@ -2,9 +2,9 @@
 using System.Threading;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 
-namespace Windows.Devices.Radios.nRF24L01P.Roles
+namespace Windows.Devices.Radios.nRF24L01P.Simple
 {
-    public class SenderReceiverRole : RoleBase
+    public class SenderReceiverRole : Simple.RoleBase
     {
         private bool _isSending;
         private readonly ManualResetEvent _sendCompleteEvent;
@@ -90,7 +90,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Roles
                 Radio.OperatingMode = OperatingModes.TransmitMode;
                 while (bytesLeft > 0)
                 {
-                    int sendBufferLength = Math.Min(bytesLeft, Constants.MaxPayloadWidth);
+                    int sendBufferLength = Math.Min(bytesLeft, 32);
                     if (sendBufferLength != sendBuffer.Length)
                         sendBuffer = new byte[sendBufferLength];
                     Array.Copy(buffer, sendPos, sendBuffer, 0, sendBufferLength);

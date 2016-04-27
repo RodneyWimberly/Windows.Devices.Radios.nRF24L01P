@@ -1,9 +1,9 @@
 ﻿using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 
-namespace Windows.Devices.Radios.nRF24L01P.Roles
+namespace Windows.Devices.Radios.nRF24L01P.Simple
 {
-    public class ReceiverRole : RoleBase
+    public class ReceiverRole : Simple.RoleBase
     {
         public event EventHandler<byte[]> DataArrived;
 

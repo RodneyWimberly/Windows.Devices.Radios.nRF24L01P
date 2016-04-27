@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Logging;
+using System;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
@@ -7,16 +8,18 @@ namespace Windows.Devices.Radios.nRF24L01P
 {
     public class ReceivePipe : IReceivePipe
     {
+        private readonly ILog _logger;
         private readonly IRegisterContainer _registerContainer;
         private readonly IConfiguration _configuration;
         private readonly ICommandProcessor _commandProcessor;
         private readonly IReceivePipeCollection _parent;
         public int PipeId { get; }
 
-        public ReceivePipe(IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer, IReceivePipeCollection parent, int pipeId)
+        public ReceivePipe(ILoggerFactoryAdapter loggerFactoryAdapter, IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer, IReceivePipeCollection parent, int pipeId)
         {
             if (PipeId > 5)
                 throw new ArgumentOutOfRangeException(nameof(pipeId), "Invalid PipeId number for this Pipe");
+            _logger = loggerFactoryAdapter.GetLogger(string.Format("{0}{1}", GetType().Name, pipeId));
             _configuration = configuration;
             _commandProcessor = commandProcessor;
             _registerContainer = registerContainer;

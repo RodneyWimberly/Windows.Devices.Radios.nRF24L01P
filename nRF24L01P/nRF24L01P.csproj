@@ -68,6 +68,7 @@
     <PlatformTarget>ARM</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
+    <GenerateLibraryLayout>true</GenerateLibraryLayout>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM'">
     <PlatformTarget>ARM</PlatformTarget>
@@ -108,17 +109,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArduinoDetails.cs" />
-    <Compile Include="Delay.cs" />
-    <Compile Include="Enums\BitMasks.cs" />
     <Compile Include="Enums\DeviceCommands.cs" />
-    <Compile Include="Extensions\ByteExtensions.cs" />
-    <Compile Include="Extensions\EnumExtensions.cs" />
+    <Compile Include="Enums\EnumExtensions.cs" />
     <Compile Include="Exceptions\InvalidOperatingModeTransation.cs" />
     <Compile Include="Interfaces\ICommandProcessor.cs" />
     <Compile Include="Interfaces\IDataPipe.cs" />
     <Compile Include="Interfaces\IConfiguration.cs" />
     <Compile Include="Interfaces\IReceivePipeCollection.cs" />
-    <Compile Include="Interfaces\IRole.cs" />
     <Compile Include="Interfaces\IRadio.cs" />
     <Compile Include="Interfaces\IReceivePipe.cs" />
     <Compile Include="Interfaces\ITransmitPipe.cs" />
@@ -126,7 +123,6 @@
     <Compile Include="Interfaces\IRegister.cs" />
     <Compile Include="InterruptedEventArgs.cs" />
     <Compile Include="Interfaces\IRegisterCollection.cs" />
-    <Compile Include="JsonHelper.cs" />
     <Compile Include="ReceivePipeCollection.cs" />
     <Compile Include="Registers\PipeRegisterBase.cs" />
     <Compile Include="Registers\PropertyMasks.cs" />
@@ -161,13 +157,8 @@
     <Compile Include="Registers\RegisterCollection.cs" />
     <Compile Include="Registers\RfSetupRegister.cs" />
     <Compile Include="Registers\SetupRetransmissionRegister.cs" />
-    <Compile Include="Registers\StatusRegister.cs" />
+    <Compile Include="StatusRegister.cs" />
     <Compile Include="CommandProcessor.cs" />
-    <Compile Include="Roles\RoleBase.cs" />
-    <Compile Include="Roles\SenderReceiverRole.cs" />
-    <Compile Include="Roles\ReceiverRole.cs" />
-    <Compile Include="Roles\SenderRole.cs" />
-    <Compile Include="Extensions\StopWatchExtensions.cs" />
     <Compile Include="TransmitPipe.cs" />
     <EmbeddedResource Include="Properties\nRF24L01.rd.xml" />
   </ItemGroup>
@@ -175,6 +166,12 @@
     <SDKReference Include="WindowsIoT, Version=10.0.10586.0">
       <Name>Windows IoT Extensions for the UWP %28WindowsIoT, Version=10.0.10586.0%29</Name>
     </SDKReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\nRF24L01P.Common\nRF24L01P.Common.csproj">
+      <Project>{e820d3f8-5018-41a5-834f-b2b31ec792a5}</Project>
+      <Name>nRF24L01P.Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

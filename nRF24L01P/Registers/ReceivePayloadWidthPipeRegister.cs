@@ -1,4 +1,5 @@
-﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+﻿using Common.Logging;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
@@ -7,8 +8,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class ReceivePayloadWidthPipeRegister : PipeRegisterBase
     {
-        public ReceivePayloadWidthPipeRegister(ICommandProcessor commandProcessor, byte address, byte[] defaultValue, byte pipeNumber, string name = "") :
-            base(commandProcessor, address, 1, defaultValue, pipeNumber, name)
+        public ReceivePayloadWidthPipeRegister(ILoggerFactoryAdapter loggerFactoryAdapter, ICommandProcessor commandProcessor, byte address, byte[] defaultValue, byte pipeNumber, string name = "") :
+            base(loggerFactoryAdapter, commandProcessor, address, 1, defaultValue, pipeNumber, name)
         { }
 
         /// <summary>

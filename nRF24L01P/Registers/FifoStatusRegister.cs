@@ -1,4 +1,5 @@
-﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+﻿using Common.Logging;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
@@ -7,8 +8,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </summary>
     public class FifoStatusRegister : RegisterBase
     {
-        public FifoStatusRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.FIFO_STATUS, RegisterDefaults.FIFO_STATUS, "FIFO_STATUS")
+        public FifoStatusRegister(ILoggerFactoryAdapter loggerFactoryAdapter, ICommandProcessor commandProcessor) :
+            base(loggerFactoryAdapter, commandProcessor, 1, RegisterAddresses.FIFO_STATUS, RegisterDefaults.FIFO_STATUS, "FIFO_STATUS")
         { }
 
         /// <summary>

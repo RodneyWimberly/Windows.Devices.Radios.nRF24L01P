@@ -1,4 +1,4 @@
-﻿using Windows.Devices.Radios.nRF24L01P.Enums;
+﻿using Windows.Devices.Radios.nRF24L01P.Common.Enums;
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {

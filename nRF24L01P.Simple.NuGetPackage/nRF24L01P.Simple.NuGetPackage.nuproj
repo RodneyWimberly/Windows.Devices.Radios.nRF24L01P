@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|AnyCPU">
+      <Configuration>Debug</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|AnyCPU">
+      <Configuration>Release</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>602ddcab-72be-4af4-a3b1-b7ad629d21fc</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NuProjPath Condition=" '$(NuProjPath)' == '' ">$(MSBuildExtensionsPath)\NuProj\</NuProjPath>
+  </PropertyGroup>
+  <Import Project="$(NuProjPath)\NuProj.props" Condition="Exists('$(NuProjPath)\NuProj.props')" />
+  <PropertyGroup Label="Configuration">
+    <Id>nRF24L01P.Simple</Id>
+    <Version>1.0.0</Version>
+    <Title>nRF24L01P.Simple</Title>
+    <Authors>Rodney Wimberly</Authors>
+    <Owners>Rodney Wimberly</Owners>
+    <Summary>Provides Simple Roles (Send, Receive, Send/Receives) that utilize the nRF24L01P driver</Summary>
+    <Description>These Roles were previous included in the nRF24L01P NuGet Package (v1.22 and below)</Description>
+    <ReleaseNotes>The driver targets "Any CPU" but I have only tested it on the Raspberry Pi2 running Windows10 IoT Core.
+    </ReleaseNotes>
+    <ProjectUrl>https://github.com/RodneyWimberly/Windows.Devices.Radios.nRF24L01
+    </ProjectUrl>
+    <LicenseUrl>
+    </LicenseUrl>
+    <Copyright>Copyright © Rodney Wimberly</Copyright>
+    <Tags>nRF24L01, nRF24L01P, Window 10 IoT Core</Tags>
+    <IconUrl>$(SolutionDir)wireless.png</IconUrl>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="Readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\nRF24L01P.Simple\nRF24L01P.Simple.csproj" />
+  </ItemGroup>
+  <Import Project="$(NuProjPath)\NuProj.targets" />
+</Project>

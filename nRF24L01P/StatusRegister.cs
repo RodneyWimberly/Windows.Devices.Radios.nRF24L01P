@@ -1,4 +1,5 @@
-﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+﻿using Common.Logging;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
@@ -11,8 +12,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </remarks>
     public class StatusRegister : RegisterBase
     {
-        public StatusRegister(ICommandProcessor commandProcessor) :
-            base(commandProcessor, 1, RegisterAddresses.STATUS, RegisterDefaults.STATUS, "STATUS")
+        public StatusRegister(ILoggerFactoryAdapter loggerFactoryAdapter, ICommandProcessor commandProcessor) :
+            base(loggerFactoryAdapter, commandProcessor, 1, RegisterAddresses.STATUS, RegisterDefaults.STATUS, "STATUS")
         { }
 
         /// <summary>

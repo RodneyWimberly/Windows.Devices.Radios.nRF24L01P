@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Common.Logging;
+using System;
 using System.Linq;
+using Windows.Devices.Radios.nRF24L01P.Common;
+using Windows.Devices.Radios.nRF24L01P.Common.Enums;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
@@ -7,6 +10,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
     public abstract class RegisterBase : IRegister
     {
+        protected ILog Logger;
         protected ICommandProcessor CommandProcessor;
         protected byte[] Buffer;
         protected readonly byte[] DefaultValue;
@@ -25,8 +29,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public byte Address { get; protected set; }
         public string Name { get; protected set; }
 
-        protected RegisterBase(ICommandProcessor commandProcessor, int length, byte address, byte[] defaultValue, string name = "")
+        protected RegisterBase(ILoggerFactoryAdapter loggerFactoryAdapter, ICommandProcessor commandProcessor, int length, byte address, byte[] defaultValue, string name = "")
         {
+            Logger = loggerFactoryAdapter.GetLogger(GetType());
             _syncRoot = new object();
             Buffer = new byte[length];
             Name = GetType().Name + (string.IsNullOrEmpty(name) ? "" : string.Format(" ({0})", name));

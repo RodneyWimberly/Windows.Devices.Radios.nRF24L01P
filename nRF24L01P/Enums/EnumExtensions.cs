@@ -1,6 +1,4 @@
-﻿using Windows.Devices.Radios.nRF24L01P.Enums;
-
-namespace Windows.Devices.Radios.nRF24L01P.Extensions
+﻿namespace Windows.Devices.Radios.nRF24L01P.Enums
 {
     public static class EnumExtensions
     {

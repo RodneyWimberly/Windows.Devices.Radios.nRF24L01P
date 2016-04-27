@@ -16,12 +16,12 @@ namespace Windows.Devices.Radios.nRF24L01P
         private readonly ILog _logger;
         private readonly GpioPin _cePin;
 
-        public TransmitPipe(IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer, ILog logger, GpioPin cePin)
+        public TransmitPipe(ILoggerFactoryAdapter loggerFactoryAdapter, IConfiguration configuration, ICommandProcessor commandProcessor, IRegisterContainer registerContainer, GpioPin cePin)
         {
             _configuration = configuration;
             _commandProcessor = commandProcessor;
             _registerContainer = registerContainer;
-            _logger = logger;
+            _logger = loggerFactoryAdapter.GetLogger(GetType());
             _cePin = cePin;
         }
 

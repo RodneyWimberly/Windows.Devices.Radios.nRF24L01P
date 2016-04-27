@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Logging;
+using System;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
@@ -16,8 +17,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
     /// </remarks>
     public class AddressPipeRegister : PipeRegisterBase
     {
-        public AddressPipeRegister(ICommandProcessor commandProcessor, byte address, byte[] defaultValue, byte pipeNumber, string name = "") :
-                base(commandProcessor, address, (byte)(pipeNumber <= 1 ? 5 : 1), defaultValue, pipeNumber, name)
+        public AddressPipeRegister(ILoggerFactoryAdapter loggerFactoryAdapter, ICommandProcessor commandProcessor, byte address, byte[] defaultValue, byte pipeNumber, string name = "") :
+                base(loggerFactoryAdapter, commandProcessor, address, (byte)(pipeNumber <= 1 ? 5 : 1), defaultValue, pipeNumber, name)
         {
             bool transmitPipe = Address == RegisterAddresses.TX_ADDR;
             Name = string.Format("{0}{1}{2}{3}",
@@ -25,6 +26,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
                                  GetType().Name,
                                  transmitPipe ? "" : PipeNumber.ToString(),
                                  string.IsNullOrEmpty(name) ? "" : string.Format(" ({0})", name));
+            Logger = loggerFactoryAdapter.GetLogger(Name);
         }
 
         public byte[] PipeAddress

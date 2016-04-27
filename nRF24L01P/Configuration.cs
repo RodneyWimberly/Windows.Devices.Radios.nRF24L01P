@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Common.Logging;
+using System;
+using Windows.Devices.Radios.nRF24L01P.Common;
 using Windows.Devices.Radios.nRF24L01P.Enums;
-using Windows.Devices.Radios.nRF24L01P.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
 
@@ -8,12 +9,14 @@ namespace Windows.Devices.Radios.nRF24L01P
 {
     public class Configuration : IConfiguration
     {
+        private ILog _logger;
         private readonly ICommandProcessor _commandProcessor;
         private readonly IRegisterContainer _registerContainer;
         private readonly bool _isPlusModel;
 
-        public Configuration(ICommandProcessor commandProcessor, IRegisterContainer registerContainer)
+        public Configuration(ILoggerFactoryAdapter loggerFactoryAdapter, ICommandProcessor commandProcessor, IRegisterContainer registerContainer)
         {
+            _logger = loggerFactoryAdapter.GetLogger(GetType());
             _commandProcessor = commandProcessor;
             _registerContainer = registerContainer;
             _payloadWidth = Constants.MaxPayloadWidth;

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Windows.Devices.Radios.nRF24L01P.Enums;
-using Windows.Devices.Radios.nRF24L01P.Extensions;
 
 namespace Windows.Devices.Radios.nRF24L01P.Exceptions
 {

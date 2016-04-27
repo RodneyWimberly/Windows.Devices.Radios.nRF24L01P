@@ -2,9 +2,9 @@
 using System.Threading;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 
-namespace Windows.Devices.Radios.nRF24L01P.Roles
+namespace Windows.Devices.Radios.nRF24L01P.Simple
 {
-    public class SenderRole : RoleBase
+    public class SenderRole : Simple.RoleBase
     {
 
         private readonly ManualResetEvent _sentEvent;

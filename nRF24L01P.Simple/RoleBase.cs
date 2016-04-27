@@ -2,7 +2,7 @@
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
-namespace Windows.Devices.Radios.nRF24L01P.Roles
+namespace Windows.Devices.Radios.nRF24L01P.Simple
 {
     public abstract class RoleBase : IRole
     {

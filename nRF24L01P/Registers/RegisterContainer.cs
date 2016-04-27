@@ -1,4 +1,5 @@
-﻿using Windows.Devices.Radios.nRF24L01P.Interfaces;
+﻿using Common.Logging;
+using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
 namespace Windows.Devices.Radios.nRF24L01P.Registers
 {
@@ -21,39 +22,39 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         public IRegisterCollection<IRegister> AllRegisters { get; }
         public IRegisterCollection<AddressPipeRegister> ReceiveAddressPipeRegisters { get; }
         public IRegisterCollection<ReceivePayloadWidthPipeRegister> ReceivePayloadWidthPipeRegisters { get; }
-        public RegisterContainer(ICommandProcessor commandProcessor)
+        public RegisterContainer(ILoggerFactoryAdapter loggerFactoryAdapter, ICommandProcessor commandProcessor)
         {
-            ConfigurationRegister = new ConfigurationRegister(commandProcessor);
-            EnableAutoAcknowledgementRegister = new EnableAutoAcknowledgementRegister(commandProcessor);
-            EnableReceiveAddressRegister = new EnableReceiveAddressRegister(commandProcessor);
-            AddressWidthRegister = new SetupAddressWidthRegister(commandProcessor);
-            SetupRetransmissionRegister = new SetupRetransmissionRegister(commandProcessor);
-            RfChannelRegister = new RfChannelRegister(commandProcessor);
-            RfSetupRegister = new RfSetupRegister(commandProcessor);
-            StatusRegister = new StatusRegister(commandProcessor);
-            ObserveTransmitRegister = new ObserveTransmitRegister(commandProcessor);
-            ReceivedPowerDetectorRegister = new ReceivedPowerDetectorRegister(commandProcessor);
-            TransmitAddressRegister = new AddressPipeRegister(commandProcessor, RegisterAddresses.TX_ADDR, RegisterDefaults.TX_ADDR, 0, "TX_ADDR");
-            FifoStatusRegister = new FifoStatusRegister(commandProcessor);
-            DynamicPayloadLengthRegister = new DynamicPayloadLengthRegister(commandProcessor);
-            FeatureRegister = new FeatureRegister(commandProcessor);
+            ConfigurationRegister = new ConfigurationRegister(loggerFactoryAdapter, commandProcessor);
+            EnableAutoAcknowledgementRegister = new EnableAutoAcknowledgementRegister(loggerFactoryAdapter, commandProcessor);
+            EnableReceiveAddressRegister = new EnableReceiveAddressRegister(loggerFactoryAdapter, commandProcessor);
+            AddressWidthRegister = new SetupAddressWidthRegister(loggerFactoryAdapter, commandProcessor);
+            SetupRetransmissionRegister = new SetupRetransmissionRegister(loggerFactoryAdapter, commandProcessor);
+            RfChannelRegister = new RfChannelRegister(loggerFactoryAdapter, commandProcessor);
+            RfSetupRegister = new RfSetupRegister(loggerFactoryAdapter, commandProcessor);
+            StatusRegister = new StatusRegister(loggerFactoryAdapter, commandProcessor);
+            ObserveTransmitRegister = new ObserveTransmitRegister(loggerFactoryAdapter, commandProcessor);
+            ReceivedPowerDetectorRegister = new ReceivedPowerDetectorRegister(loggerFactoryAdapter, commandProcessor);
+            TransmitAddressRegister = new AddressPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.TX_ADDR, RegisterDefaults.TX_ADDR, 0, "TX_ADDR");
+            FifoStatusRegister = new FifoStatusRegister(loggerFactoryAdapter, commandProcessor);
+            DynamicPayloadLengthRegister = new DynamicPayloadLengthRegister(loggerFactoryAdapter, commandProcessor);
+            FeatureRegister = new FeatureRegister(loggerFactoryAdapter, commandProcessor);
             ReceiveAddressPipeRegisters = new RegisterCollection<AddressPipeRegister>
             {
-                {0, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P0, RegisterDefaults.RX_ADDR_P0, 0, "RX_ADDR_P0")},
-                {1, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P1, RegisterDefaults.RX_ADDR_P1, 1, "RX_ADDR_P1")},
-                {2, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P2, RegisterDefaults.RX_ADDR_P2, 2, "RX_ADDR_P2")},
-                {3, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P3, RegisterDefaults.RX_ADDR_P3, 3, "RX_ADDR_P3")},
-                {4, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P4, RegisterDefaults.RX_ADDR_P4, 4, "RX_ADDR_P4")},
-                {5, new AddressPipeRegister(commandProcessor, RegisterAddresses.RX_ADDR_P5, RegisterDefaults.RX_ADDR_P5, 5, "RX_ADDR_P5")},
+                {0, new AddressPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_ADDR_P0, RegisterDefaults.RX_ADDR_P0, 0, "RX_ADDR_P0")},
+                {1, new AddressPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_ADDR_P1, RegisterDefaults.RX_ADDR_P1, 1, "RX_ADDR_P1")},
+                {2, new AddressPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_ADDR_P2, RegisterDefaults.RX_ADDR_P2, 2, "RX_ADDR_P2")},
+                {3, new AddressPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_ADDR_P3, RegisterDefaults.RX_ADDR_P3, 3, "RX_ADDR_P3")},
+                {4, new AddressPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_ADDR_P4, RegisterDefaults.RX_ADDR_P4, 4, "RX_ADDR_P4")},
+                {5, new AddressPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_ADDR_P5, RegisterDefaults.RX_ADDR_P5, 5, "RX_ADDR_P5")},
             };
             ReceivePayloadWidthPipeRegisters = new RegisterCollection<ReceivePayloadWidthPipeRegister>
             {
-                {0, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P0, RegisterDefaults.RX_PW_P0, 0, "RX_PW_P0")},
-                {1, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P1, RegisterDefaults.RX_PW_P1, 1, "RX_PW_P1")},
-                {2, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P2, RegisterDefaults.RX_PW_P2, 2, "RX_PW_P2")},
-                {3, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P3, RegisterDefaults.RX_PW_P3, 3, "RX_PW_P3")},
-                {4, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P4, RegisterDefaults.RX_PW_P4, 4, "RX_PW_P4")},
-                {5, new ReceivePayloadWidthPipeRegister(commandProcessor, RegisterAddresses.RX_PW_P5, RegisterDefaults.RX_PW_P5, 5, "RX_PW_P5")}
+                {0, new ReceivePayloadWidthPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_PW_P0, RegisterDefaults.RX_PW_P0, 0, "RX_PW_P0")},
+                {1, new ReceivePayloadWidthPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_PW_P1, RegisterDefaults.RX_PW_P1, 1, "RX_PW_P1")},
+                {2, new ReceivePayloadWidthPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_PW_P2, RegisterDefaults.RX_PW_P2, 2, "RX_PW_P2")},
+                {3, new ReceivePayloadWidthPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_PW_P3, RegisterDefaults.RX_PW_P3, 3, "RX_PW_P3")},
+                {4, new ReceivePayloadWidthPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_PW_P4, RegisterDefaults.RX_PW_P4, 4, "RX_PW_P4")},
+                {5, new ReceivePayloadWidthPipeRegister(loggerFactoryAdapter, commandProcessor, RegisterAddresses.RX_PW_P5, RegisterDefaults.RX_PW_P5, 5, "RX_PW_P5")}
             };
             AllRegisters = new RegisterCollection<IRegister>
             {

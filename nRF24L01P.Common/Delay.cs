@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
-using Windows.Devices.Radios.nRF24L01P.Extensions;
+using Windows.Devices.Radios.nRF24L01P.Common.Extensions;
 
-namespace Windows.Devices.Radios.nRF24L01P
+namespace Windows.Devices.Radios.nRF24L01P.Common
 {
     public static class Delay
     {
