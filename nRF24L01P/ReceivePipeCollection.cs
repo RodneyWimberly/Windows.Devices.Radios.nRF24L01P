@@ -31,6 +31,15 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
+        public byte ReceivePipeNumber
+        {
+            get
+            {
+                _registerContainer.StatusRegister.Load();
+                return _registerContainer.StatusRegister.ReceiveDataPipeNumber;
+            }
+        }
+
         public FifoStatus FifoStatus
         {
             get

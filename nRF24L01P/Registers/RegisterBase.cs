@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using Windows.Devices.Radios.nRF24L01P.Common;
 using Windows.Devices.Radios.nRF24L01P.Common.Enums;
+using Windows.Devices.Radios.nRF24L01P.Common.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 
@@ -16,13 +17,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Registers
         protected readonly byte[] DefaultValue;
         private readonly object _syncRoot;
 
-        public string Value
-        {
-            get
-            {
-                return Buffer.Aggregate("0x", (hex, part) => hex + part.ToString("X").PadLeft(2, '0'));
-            }
-        }
+        public string Value => Buffer.GetHexString("0x");
 
         public bool IsDirty { get; protected set; }
         public int Length { get; protected set; }

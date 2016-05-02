@@ -2,20 +2,16 @@
 {
     public interface INetworkAddressing
     {
-        ulong PipeAddress(ushort node, byte pipeNo);
         ushort NodeAddress { get; set; }
-        ushort ParentNode { get; set; }
+        ushort ParentNodeAddress { get; set; }
         byte ParentPipe { get; set; }
         ushort NodeMask { get; set; }
-
-        ushort Parent();
-        ushort AddressOfPipe(ushort node, byte pipeNo);
+        ushort LogicalPipeAddress(ushort node, byte pipeNo);
+        byte[] PhysicalPipeAddress(ushort node, byte pipeNo);
         bool IsValidAddress(ushort node);
-
         bool IsDirectChild(ushort node);
         bool IsDescendant(ushort node);
         ushort DirectChildRouteTo(ushort node);
-        void SetupAddress();
         INodeAddressInfo ConvertLogicalToPhysicalAddress(INodeAddressInfo conversionInfo);
         ushort LevelToAddress(byte level);
     }

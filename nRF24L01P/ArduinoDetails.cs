@@ -1,7 +1,7 @@
 ﻿using Common.Logging;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
+using Windows.Devices.Radios.nRF24L01P.Common.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
 using Windows.Devices.Radios.nRF24L01P.Registers;
@@ -41,7 +41,8 @@ namespace Windows.Devices.Radios.nRF24L01P
                 byte[] buffer = new byte[5];
                 buffer = _commandProcessor.ExecuteCommand(DeviceCommands.R_REGISTER, register++, buffer);
                 registerValue += " 0x";
-                registerValue = buffer.Aggregate(registerValue, (current, part) => current + part.ToString("X").PadLeft(2, '0'));
+
+                registerValue = buffer.GetHexString(registerValue);
             }
 
             return registerValue;

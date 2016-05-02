@@ -1,5 +1,6 @@
 ﻿using Common.Logging;
 using System;
+using System.Diagnostics;
 using Windows.Devices.Gpio;
 using Windows.Devices.Radios.nRF24L01P.Common;
 using Windows.Devices.Radios.nRF24L01P.Enums;
@@ -130,7 +131,27 @@ namespace Windows.Devices.Radios.nRF24L01P
                             if (previousOperatingMode == OperatingModes.ReceiveMode ||
                                 previousOperatingMode == OperatingModes.TransmitMode)
                             {
-                                _cePin.Write(GpioPinValue.Low);
+                                Stopwatch stopwatch = Stopwatch.StartNew();
+                                while (TransmitPipe.FifoStatus != FifoStatus.Empty)
+                                {
+                                    if (RegisterContainer.StatusRegister.MaximunTransmitRetries)
+                                    {
+                                        RegisterContainer.StatusRegister.MaximunTransmitRetries = false;
+                                        RegisterContainer.StatusRegister.Save();
+
+                                        _cePin.Write(GpioPinValue.Low);
+
+                                        // Retransmit
+                                        _cePin.Write(GpioPinValue.High);
+                                        if (stopwatch.ElapsedMilliseconds > 1000)
+                                        {
+                                            _cePin.Write(GpioPinValue.Low);
+                                            TransmitPipe.FlushBuffer();
+                                        }
+                                    }
+                                    _cePin.Write(GpioPinValue.Low);
+
+                                }
                                 break;
                             }
                             if (previousOperatingMode == OperatingModes.PowerDown)

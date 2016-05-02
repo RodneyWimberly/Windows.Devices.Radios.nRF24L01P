@@ -29,6 +29,19 @@
         public const int NumUserPayloads = 5;
 
         /*********************************************************************************/
+        // Nodes
+        /*********************************************************************************/
+        public const ushort RequesterNode = 04444;
+
+        public const ushort MulticastNode = 0100;
+
+        public const ushort WriteDirectUnicast = 0100;
+
+        public const int HeaderIndexType = 6;
+        public const int HeaderTypeAcknowledgementStart = 64;
+        public const int HeaderTypeAcknowledgementEnd = 192;
+
+        /*********************************************************************************/
         // Enabling
         /*********************************************************************************/
         /** Uncomment this option to enable use of dual radios */

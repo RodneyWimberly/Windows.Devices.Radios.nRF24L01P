@@ -9,13 +9,35 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
     {
         private byte _multiCastLevel;
 
-        private ILog _logger;
+        private readonly ILog _logger;
 
-        public ushort NodeAddress { get; set; }
+        private ushort _nodeAddress;
+        public ushort NodeAddress
+        {
+            get { return _nodeAddress; }
+            set
+            {
+                if (!IsValidAddress(value))
+                    throw new InvalidOperationException("Invalid Node Address!");
+                _nodeAddress = value;
+                SetupAddress();
+            }
+        }
 
         public ushort NodeMask { get; set; }
 
-        public ushort ParentNode { get; set; }
+        private ushort _parentNodeAddress;
+        public ushort ParentNodeAddress
+        {
+            get
+            {
+                if (NodeAddress != 0)
+                    return _parentNodeAddress;
+                else
+                    return unchecked((ushort)-1);
+            }
+            set { _parentNodeAddress = value; }
+        }
 
         public byte ParentPipe { get; set; }
 
@@ -24,7 +46,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             _logger = loggerFactoryAdapter.GetLogger(GetType());
         }
 
-        public ushort AddressOfPipe(ushort node, byte pipeNo)
+        public ushort LogicalPipeAddress(ushort node, byte pipeNo)
         {
             //Say this node is 013 (1011), mask is 077 or (00111111)
             //Say we want to use pipe 3 (11)
@@ -40,12 +62,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             return (ushort)(node | (pipeNo << i));
         }
 
-        public ulong PipeAddress(ushort node, byte pipeNo)
+        public byte[] PhysicalPipeAddress(ushort node, byte pipeNo)
         {
            
-            byte[] address_translation = { 0xc3, 0x3c, 0x33, 0xce, 0x3e, 0xe3, 0xec };
-            ulong result = 0xCCCCCCCCCC;
-            byte[] outData = BitConverter.GetBytes(result);
+            byte[] addressTranslation = { 0xc3, 0x3c, 0x33, 0xce, 0x3e, 0xe3, 0xec };
+            const ulong mask = 0xCCCCCCCCCC;
+            byte[] outData = BitConverter.GetBytes(mask);
 
             // Translate the address to use our optimally chosen radio address bytes
             byte count = 1;
@@ -53,24 +75,22 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
 
             while (dec > 0)
             {
-	            if(pipeNo != 0 || node == 0)
-                    outData[count] = address_translation[(dec%8)];
                 // Convert our decimal values to octal, translate them to address bytes, and set our address
+                if (pipeNo != 0 || node == 0)
+                    outData[count] = addressTranslation[(dec%8)];
                 dec /= 8;
                 count++;
             }
     
 	        if(pipeNo != 0 || node == 0)
-                outData[0] = address_translation[pipeNo];
+                outData[0] = addressTranslation[pipeNo];
 	        else
-                outData[1] = address_translation[count-1];
+                outData[1] = addressTranslation[count-1];
 
 
-            // Todo: Fix Tracing Here
-            //IF_SERIAL_DEBUG(uint32_t*top = reinterpret_cast<uint32_t*>(out +1);
-            //_logger.TraceFormat("{0}: NET Pipe {1} on node {2} has address {3}{4|\n\r"), millis(), pipeNo, node, *top, outData));
+            _logger.TraceFormat("NET Pipe {0} on node {1} has address {2}{3}\n\r", pipeNo, node, outData[1], outData[0]);
 
-            return result;
+            return outData;
         }
 
         public ushort LevelToAddress(byte level)
@@ -88,7 +108,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             // Presumes that this is in fact a child!!
             ushort childMask = (ushort)((NodeMask << 3) | 7);
             return (ushort)(node & childMask);
-
         }
 
         public bool IsDescendant(ushort node)
@@ -144,7 +163,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             bool multiCast = conversionInfo.MultiCast;
 
             // Where do we send this?  By default, to our parent
-            ushort preConversionSendNode = ParentNode;
+            ushort preConversionSendNode = ParentNodeAddress;
 
             // On which pipe
             byte preConversionSendPipe = (byte)(ParentPipe % 5);
@@ -182,15 +201,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             return conversionInfo;
         }
 
-        public ushort Parent()
-        {
-            if (NodeAddress != 0)
-                return ParentNode;
-            else
-                return unchecked((ushort)-1);
-        }
-
-        public void SetupAddress()
+        private void SetupAddress()
         {
             // First, establish the node_mask
             ushort nodeMaskCheck = 0xFFFF;
@@ -209,7 +220,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             ushort parentMask = (ushort)(NodeMask >> 3);
 
             // parent node is the part IN the mask
-            ParentNode = (ushort)(NodeAddress & parentMask);
+            ParentNodeAddress = (ushort)(NodeAddress & parentMask);
 
             // parent pipe is the part OUT of the mask
             ushort i = NodeAddress;
@@ -221,7 +232,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             }
             ParentPipe = (byte)i;
 
-            _logger.TraceFormat("setup_address node={0} mask={1} parent={2} pipe={3}\n\r", NodeAddress, NodeMask, ParentNode, ParentPipe);
+            _logger.TraceFormat("setup_address node={0} mask={1} parent={2} pipe={3}\n\r", NodeAddress, NodeMask, ParentNodeAddress, ParentPipe);
         }
     }
 }

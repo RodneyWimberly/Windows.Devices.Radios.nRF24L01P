@@ -5,7 +5,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network.Interfaces
 {
     public interface INetwork
     {
-        INetworkAddressing NetworkAddressing { get; set; }
+        INetworkAddressing Addressing { get; set; }
         bool MultiCaseRelay { get; set; }
         uint TransmitTimeout { get; set; }
         uint RouteTimeout { get; set; }
@@ -17,8 +17,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Network.Interfaces
         void Begin(byte channel, ushort nodeAddress);
         byte Update();
         bool Available();
-        ushort Peek(INetworkHeader networkHeader);
-        ushort Read(INetworkHeader networkHeader, byte message, ushort maxLength);
+        ushort Peek(ref INetworkHeader networkHeader);
+        ushort Read(ref INetworkHeader networkHeader, ref byte[] message, ushort maxLength);
         bool Write(INetworkHeader networkHeader, byte[] message, ushort length);
         bool Write(INetworkHeader networkHeader, byte[] message, ushort length, ushort writeDirect);
         bool MultiCast(INetworkHeader networkHeader, byte[] message, ushort length, byte level);

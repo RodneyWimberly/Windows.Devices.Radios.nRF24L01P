@@ -8,5 +8,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Interfaces
         FifoStatus FifoStatus { get; }
         void FlushBuffer();
         bool ReceivedPowerDetector { get; }
+        byte ReceivePipeNumber { get; }
     }
 }

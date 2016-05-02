@@ -1,6 +1,5 @@
 ﻿using Common.Logging;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Windows.Devices.Radios.nRF24L01P.Common.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Enums;
@@ -68,8 +67,8 @@ namespace Windows.Devices.Radios.nRF24L01P
                 // Send and Receive
                 if (_logger.IsTraceEnabled) _logger.TraceFormat("ExecuteCommand: {0} Address: {1} Value: {2} BufferData: {3}", deviceCommand,
                     address,
-                    value.Aggregate("", (current, part) => current + part.ToString("X").PadLeft(2, '0')),
-                    sendBuffer.Aggregate("", (current, part) => current + part.ToString("X").PadLeft(2, '0')));
+                    value.GetHexString(),
+                    sendBuffer.GetHexString());
                 lock (SyncRoot)
                 {
                     _spiDevice.TransferFullDuplex(sendBuffer, receiveBuffer);
@@ -101,7 +100,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                     receiveBuffer = new byte[1];
                 sendBuffer[0] = (byte) ((byte) deviceCommand | address);
                 if (_logger.IsTraceEnabled) _logger.TraceFormat("ExecuteCommand: {0} Address: {1} BufferData: {2}", deviceCommand, address,
-                    sendBuffer.Aggregate("", (current, part) => current + part.ToString("X").PadLeft(2, '0')));
+                    sendBuffer.GetHexString());
                 lock (SyncRoot)
                 {
                     _spiDevice.TransferFullDuplex(sendBuffer, receiveBuffer);
@@ -121,7 +120,7 @@ namespace Windows.Devices.Radios.nRF24L01P
                     receiveBuffer = new byte[1];
                 sendBuffer[0] = (byte) deviceCommand;
                 if(_logger.IsTraceEnabled) _logger.TraceFormat("ExecuteCommand {0} BufferData: {1}", deviceCommand,
-                    sendBuffer.Aggregate("", (current, part) => current + part.ToString("X").PadLeft(2, '0')));
+                    sendBuffer.GetHexString());
                 lock (SyncRoot)
                 {
                     _spiDevice.TransferFullDuplex(sendBuffer, receiveBuffer);

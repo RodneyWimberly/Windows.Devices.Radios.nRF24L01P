@@ -43,6 +43,20 @@ namespace Windows.Devices.Radios.nRF24L01P
             }
         }
 
+        public bool AutoAcknowledgementEnabled
+        {
+            get
+            {
+                _registerContainer.EnableAutoAcknowledgementRegister.Load();
+                return _registerContainer.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe0;
+            }
+            set
+            {
+                _registerContainer.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe0 = value;
+                _registerContainer.EnableAutoAcknowledgementRegister.Save();
+            }
+        }
+
         public void FlushBuffer()
         {
             _commandProcessor.ExecuteCommand(DeviceCommands.FLUSH_TX);
