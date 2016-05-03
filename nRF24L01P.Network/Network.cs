@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Windows.Devices.Radios.nRF24L01P.Common;
 using Windows.Devices.Radios.nRF24L01P.Common.Extensions;
 using Windows.Devices.Radios.nRF24L01P.Enums;
 using Windows.Devices.Radios.nRF24L01P.Interfaces;
@@ -13,19 +14,19 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
 {
     public class Network : INetwork
     {
+        private static readonly int _maxFramePayloadSize;
+
         private readonly ILog _logger;
-        private ILoggerFactoryAdapter _loggerFactoryAdapter;
-        private Stopwatch _transmitTime;
-        private Radio _radio;
+        private readonly Stopwatch _transmitTime;
+        private readonly IRadio _radio;
         private byte _multiCastLevel;
+
         private byte _frameSize;
         private readonly Queue<INetworkFrame> _frameQueue;
-        private INetworkFrame _fragmentationQueue;
-        private byte [] _fragmentationQueueMessageBuffer;
+        private readonly IDictionary<ushort, INetworkFrame> _frameFragmentsCache;
 
-        private static uint _numFails;
-        private static uint _numOk;
-        private static readonly int _maxFramePayloadSize;
+        public static uint NumberOfFails { get; private set; }
+        public static uint NumberOfSuccessful { get; private set; }
 
         public INetworkAddressing Addressing { get; set; }
         public Queue<INetworkFrame> ExternalQueue { get; set; }
@@ -41,12 +42,14 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             _maxFramePayloadSize = Configuration.MaxFrameSize - Configuration.FrameHeaderSize;
         }
 
-        public Network(ILoggerFactoryAdapter loggerFactoryAdapter)
+        public Network(ILoggerFactoryAdapter loggerFactoryAdapter, IRadio radio)
         {
-            _loggerFactoryAdapter = loggerFactoryAdapter;
-            _logger = _loggerFactoryAdapter.GetLogger(GetType());
+            _radio = radio;
+            _logger = loggerFactoryAdapter.GetLogger(GetType());
+            _transmitTime = new Stopwatch();
             _frameQueue = new Queue<INetworkFrame>();
-            Addressing = new NetworkAddressing(_loggerFactoryAdapter);
+            _frameFragmentsCache= new Dictionary<ushort, INetworkFrame>();
+            Addressing = new NetworkAddressing(loggerFactoryAdapter);
         }
 
         public bool Available()
@@ -77,7 +80,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             TransmitTimeout = 25;
             RouteTimeout = TransmitTimeout*3;
 
-
             byte i = 6;
             while (i-- > 0)
             {
@@ -87,12 +89,6 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             }
 
             _radio.OperatingMode = OperatingModes.ReceiveMode;
-        }
-
-        public void Falures(ref uint fails, ref uint ok)
-        {
-            fails = _numFails;
-            ok = _numOk;
         }
 
         public bool MultiCast(INetworkHeader networkHeader, byte[] message, ushort length, byte level)
@@ -166,8 +162,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             IRegisterContainer registers = _radio.RegisterContainer;
             while(_radio.ReceivePipes.FifoStatus != FifoStatus.Empty)
             {
-                // TODO: Use _radio.ReceivePipes.ReceivePipeNumber
-                pipeNumber = registers.StatusRegister.ReceiveDataPipeNumber;
+                pipeNumber = _radio.ReceivePipes.ReceivePipeNumber;
                 if ((_frameSize = _radio.Configuration.DynamicPayloadSize) < Configuration.FrameHeaderSize)
                 {
                     Delay.WaitMilliseconds(10);
@@ -362,7 +357,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             {
                 _radio.OperatingMode = OperatingModes.StandBy;
                 _radio.OperatingMode = OperatingModes.ReceiveMode;
-                _radio.ReceivePipes[0].AutoAcknowledgementEnabled = false;
+                _radio.TransmitPipe.AutoAcknowledgementEnabled = false;
             } 
             NetworkFlags &= ~NetworkFlags.FastFrag;
             if (!ok)
@@ -424,7 +419,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 {
                     _radio.OperatingMode = OperatingModes.StandBy;
                     NetworkFlags &= ~NetworkFlags.FastFrag;
-                    _radio.ReceivePipes[0].AutoAcknowledgementEnabled = false;
+                    _radio.TransmitPipe.AutoAcknowledgementEnabled = false;
                 }
                 _radio.OperatingMode = OperatingModes.ReceiveMode;
                 Stopwatch stopwatch = Stopwatch.StartNew();
@@ -442,9 +437,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 _radio.OperatingMode = OperatingModes.ReceiveMode;
 
             if (ok)
-                _numOk++;
+                NumberOfSuccessful++;
             else
-                _numFails++;
+                NumberOfFails++;
 
             return ok;
         }
@@ -484,8 +479,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             byte[] outPipe = Addressing.PhysicalPipeAddress(nodeAddressInfo.SendNode, nodeAddressInfo.SendPipe);
             if (!NetworkFlags.HasFlag(NetworkFlags.FastFrag))
                 _radio.OperatingMode = OperatingModes.StandBy;
-            // Change to TransmitPipe on next version. Still does the same thing...
-            _radio.ReceivePipes[0].AutoAcknowledgementEnabled = !nodeAddressInfo.MultiCast;
+            _radio.TransmitPipe.AutoAcknowledgementEnabled = !nodeAddressInfo.MultiCast;
             _radio.TransmitPipe.Address = outPipe;
             _radio.OperatingMode = OperatingModes.TransmitMode;
             ok = _radio.TransmitPipe.Write(FrameBuffer, nodeAddressInfo.MultiCast);
@@ -493,7 +487,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             if (!NetworkFlags.HasFlag(NetworkFlags.FastFrag))
             {
                 _radio.OperatingMode = OperatingModes.StandBy;
-                _radio.ReceivePipes[0].AutoAcknowledgementEnabled = false;
+                _radio.TransmitPipe.AutoAcknowledgementEnabled = false;
             }
 
             _logger.TraceFormat("MAC Sent on {0} {1}\r\n", BitConverter.ToInt32(outPipe, 0), ok ? "ok" : "failed");
@@ -503,12 +497,158 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
 
         private byte Enqueue(INetworkHeader networkHeader)
         {
-            bool result = false;
-            byte messageSize = (byte)(_frameSize - Configuration.FrameHeaderSize);
-            _logger.TraceFormat("NET Enqueue {0} \r\n", _frameQueue.Count);
+            byte result = 0;
+            INetworkFrame networkFrame = new NetworkFrame
+            {
+                Header = networkHeader,
+                MessageSize = Configuration.FrameHeaderSize
+            };
+            Array.Copy(FrameBuffer, Configuration.FrameHeaderSize, networkFrame.MessageBuffer, 0, _frameSize - Configuration.FrameHeaderSize);
+            bool isFragment = networkHeader.Type == (byte)NetworkHeaderTypes.NetworkFirstFragment ||
+                              networkHeader.Type == (byte)NetworkHeaderTypes.NetworkMoreFragments ||
+                              networkHeader.Type == (byte)NetworkHeaderTypes.NetworkLastFragment ||
+                              networkHeader.Type == (byte)NetworkHeaderTypes.NetworkMoreFragmentsNack;
+            
+            // This is sent to itself
+            if (networkFrame.Header.FromNode == Addressing.NodeAddress)
+            {
+                if (isFragment)
+                {
+                    _logger.Warn("Cannot enqueue multi-payload frames to self");
+                    result = 0;
+                }
+                else
+                {
+                    _frameQueue.Enqueue(networkFrame);
+                    result = 1;
+                }
+            }
+            else
+            {
+                if (isFragment)
+                {
+                    // The received frame contains the a fragmented payload
+                    // Set the more fragments flag to indicate a fragmented frame
+                    _logger.TraceFormat("FRG Payload type {0} of size {1} Bytes with fragmentID '{2}' received.",
+                        networkFrame.Header.Type, networkFrame.MessageSize, networkFrame.Header.Reserved);
 
+                    // Append payload
+                    result = (byte) (AppendFragmentToFrame(networkFrame) ? 1 : 0);
 
-            return 0;
+                    // The Header.Reserved contains the actual Header.Type on the last fragment
+                    if (result == 1 && networkFrame.Header.Type == (byte) NetworkHeaderTypes.NetworkLastFragment)
+                    {
+                        _logger.Trace("FRG Last fragment received.");
+                        _logger.TraceFormat("NET Enqueue assembled frame @{0}", _frameQueue.Count);
+
+                        INetworkFrame cacheFrame = _frameFragmentsCache[networkFrame.Header.FromNode];
+                        result = (byte) ((cacheFrame.Header.Type == (byte) NetworkHeaderTypes.ExternalDataType) ? 2 : 1);
+
+                        // Load external payloads into a separate queue on linux
+                        if (result == 2)
+                            ExternalQueue.Enqueue(_frameFragmentsCache[networkFrame.Header.FromNode]);
+                        else
+                            _frameQueue.Enqueue(_frameFragmentsCache[networkFrame.Header.FromNode]);
+                        _frameFragmentsCache.Remove(networkFrame.Header.FromNode);
+                    }
+
+                }
+                else
+                {
+                    // This is not a fragmented payload but a whole frame.
+                    _logger.TraceFormat("NET Enqueue @{0}", _frameQueue.Count);
+                    // Copy the current frame into the frame queue
+                    result = (byte) ((networkFrame.Header.Type == (byte) NetworkHeaderTypes.ExternalDataType) ? 2 : 1);
+                    //Load external payloads into a separate queue on linux
+                    if (result == 2)
+                        ExternalQueue.Enqueue(networkFrame);
+                    else
+                        _frameQueue.Enqueue(networkFrame);
+                }
+            }
+
+            if (result == 1)
+                _logger.Debug("Enqueue succeeded");
+            else
+                _logger.Warn("Enqueue failed");
+
+            return result;
+        }
+
+        private bool AppendFragmentToFrame(INetworkFrame frame)
+        {
+
+            if (frame.Header.Type == (byte)NetworkHeaderTypes.NetworkFirstFragment)
+            {
+                if (_frameFragmentsCache.Any(f => f.Value.Header.FromNode == frame.Header.FromNode))
+                {
+                    //Already rcvd first fragment
+                    if (_frameFragmentsCache[frame.Header.FromNode].Header.Id == frame.Header.Id)
+                        return false;
+                }
+                if (frame.Header.Reserved > (Configuration.MaxPayloadSize / 24) + 1)
+                {
+                    _logger.WarnFormat("FRG Too many fragments in payload {0}, dropping...\r\n", frame.Header.Reserved); 
+                    // If there are more fragments than we can possibly handle, return
+                    return false;
+                }
+                _frameFragmentsCache[frame.Header.FromNode] = frame;
+                return true;
+            }
+            else if (frame.Header.Type == (byte)NetworkHeaderTypes.NetworkMoreFragments || 
+                    frame.Header.Type == (byte)NetworkHeaderTypes.NetworkMoreFragmentsNack)
+            {
+
+                if (!_frameFragmentsCache.Any(f => f.Value.Header.FromNode == frame.Header.FromNode))
+                    return false;
+                INetworkFrame cacheFrame = _frameFragmentsCache[frame.Header.FromNode];
+                if (cacheFrame.Header.Reserved - 1 == frame.Header.Reserved && cacheFrame.Header.Id == frame.Header.Id)
+                {
+                    // Cache the fragment
+                    Array.Copy(frame.MessageBuffer, 0, cacheFrame.MessageBuffer, cacheFrame.MessageSize, frame.MessageSize);
+                    cacheFrame.MessageSize += frame.MessageSize;  //Increment message size
+                    cacheFrame.Header = frame.Header; //Update header
+                    return true;
+                }
+                else
+                {
+                    _logger.WarnFormat("FRG Dropping fragment for frame with header id:{0}, out of order fragment(s).\r\n", frame.Header.Id);
+                    return false;
+                }
+            }
+            else if (frame.Header.Type == (byte)NetworkHeaderTypes.NetworkLastFragment)
+            {
+                // We have received the last fragment
+                if (!_frameFragmentsCache.Any(f1 => f1.Value.Header.FromNode == frame.Header.FromNode))
+                    return false;
+
+                // Create a reference to the cached frame
+                INetworkFrame cacheFrame = _frameFragmentsCache[frame.Header.FromNode];
+                if (cacheFrame.MessageSize + frame.MessageSize > Configuration.MaxPayloadSize)
+                {
+                    _logger.WarnFormat("FRG Frame of size {0} plus enqueued frame of size {1} exceeds max payload size \r\n", frame.MessageSize, cacheFrame.MessageSize);
+                    return false;
+                }
+
+                // Error checking for missed fragments and payload size
+                if (cacheFrame.Header.Reserved - 1 != 1 || cacheFrame.Header.Id != frame.Header.Id)
+                {
+                    _logger.WarnFormat("FRG Duplicate or out of sequence frame {0}, expected {1}. Cleared.\r\n", frame.Header.Reserved, cacheFrame.Header.Reserved);
+                    return false;
+                }
+
+                // The user specified Header.Type is sent with the last fragment in the reserved field
+                frame.Header.Type = frame.Header.Reserved;
+                frame.Header.Reserved = 1;
+
+                // Append the received fragment to the cached frame
+                Array.Copy(frame.MessageBuffer, 0, cacheFrame.MessageBuffer, cacheFrame.MessageSize, frame.MessageSize);
+                cacheFrame.MessageSize += frame.MessageSize; 
+                cacheFrame.Header = frame.Header; 
+                return true;
+            }
+
+            return false;
         }
     }
 }

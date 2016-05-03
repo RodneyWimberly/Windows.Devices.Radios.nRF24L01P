@@ -1,8 +1,7 @@
 ﻿{
   "dependencies": {
     "Common.Logging.WinRT.Extras": "1.0.0",
-    "Microsoft.NETCore.UniversalWindowsPlatform": "5.0.0",
-    "Windows.Devices.Radios.nRF24L01P": "1.2.2"
+    "Microsoft.NETCore.UniversalWindowsPlatform": "5.0.0"
   },
   "frameworks": {
     "uap10.0": {}

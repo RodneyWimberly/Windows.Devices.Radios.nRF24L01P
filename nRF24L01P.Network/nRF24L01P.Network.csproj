@@ -129,6 +129,10 @@
       <Project>{e820d3f8-5018-41a5-834f-b2b31ec792a5}</Project>
       <Name>nRF24L01P.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\nRF24L01P\nRF24L01P.csproj">
+      <Project>{d134678e-33d7-4f4c-b30f-96d795d86e95}</Project>
+      <Name>nRF24L01P</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

@@ -23,6 +23,5 @@ namespace Windows.Devices.Radios.nRF24L01P.Network.Interfaces
         bool Write(INetworkHeader networkHeader, byte[] message, ushort length, ushort writeDirect);
         bool MultiCast(INetworkHeader networkHeader, byte[] message, ushort length, byte level);
         void MultiCastLevel(byte level);
-        void Falures(ref uint fails, ref uint ok);
     }
 }
