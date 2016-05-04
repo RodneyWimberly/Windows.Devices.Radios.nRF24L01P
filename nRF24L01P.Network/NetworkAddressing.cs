@@ -59,7 +59,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 m >>= 1;     //Shift to the right
                 i++;       //Count the # of increments
             }
-            return (ushort)(node | (pipeNo << i));
+            ushort pipeAddress = (ushort) (node | (pipeNo << i));
+            _logger.DebugFormat("ROUTING: Pipe {0} on node {1} has a logical address of {3}.", pipeNo, node, pipeAddress);
+            return pipeAddress;
         }
 
         public byte[] PhysicalPipeAddress(ushort node, byte pipeNo)
@@ -88,7 +90,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 outData[1] = addressTranslation[count-1];
 
 
-            _logger.TraceFormat("NET Pipe {0} on node {1} has address {2}{3}\n\r", pipeNo, node, outData[1], outData[0]);
+            _logger.DebugFormat("ROUTING: Pipe {0} on node {1} has a physical address of {2}{3}", pipeNo, node, outData[1], outData[0]);
 
             return outData;
         }
@@ -107,12 +109,16 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
         {
             // Presumes that this is in fact a child!!
             ushort childMask = (ushort)((NodeMask << 3) | 7);
-            return (ushort)(node & childMask);
+            ushort directRoute = (ushort)(node & childMask);
+            _logger.TraceFormat("ROUTING: Node {0} has a direct child route via node {1}", node, directRoute);
+            return directRoute;
         }
 
         public bool IsDescendant(ushort node)
         {
-            return (node & NodeMask) == NodeAddress;
+            bool isDescendant  = (node & NodeMask) == NodeAddress;
+            _logger.TraceFormat("ROUTING: Node {0} is {1}a descendant of this node", node, isDescendant ? string.Empty : "not ");
+            return isDescendant;
         }
 
         public bool IsDirectChild(ushort node)
@@ -132,6 +138,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 ushort childNodeMask = (ushort)((~NodeMask) << 3);
                 result = (node & childNodeMask) == 0;
             }
+
+            _logger.TraceFormat("ROUTING: Node {0} is {1}a direct child of this node", node, result ? string.Empty : "not ");
+
             return result;
         }
 
@@ -145,7 +154,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 if (digit < 0 || digit > 5)	//Allow our out of range multicast address
                 {
                     result = false;
-                    _logger.DebugFormat("*** WARNING *** Invalid address {0}\n\r", node);
+                    _logger.WarnFormat("ROUTING: {0} is an invalid node address.", node);
                     break;
                 }
                 node >>= 3;
@@ -232,7 +241,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             }
             ParentPipe = (byte)i;
 
-            _logger.TraceFormat("setup_address node={0} mask={1} parent={2} pipe={3}\n\r", NodeAddress, NodeMask, ParentNodeAddress, ParentPipe);
+            _logger.InfoFormat("ROUTING: This node was initialized with the following configuration node={0} mask={1} parent={2} pipe={3}", NodeAddress, NodeMask, ParentNodeAddress, ParentPipe);
         }
     }
 }

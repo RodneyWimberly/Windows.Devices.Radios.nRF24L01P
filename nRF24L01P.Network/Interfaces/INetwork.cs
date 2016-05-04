@@ -9,10 +9,13 @@ namespace Windows.Devices.Radios.nRF24L01P.Network.Interfaces
         bool MultiCaseRelay { get; set; }
         uint TransmitTimeout { get; set; }
         uint RouteTimeout { get; set; }
-        byte[] FrameBuffer { get; set; }
         Queue<INetworkFrame> ExternalQueue { get; set; }
         bool ReturnSysMessages { get; set; }
         NetworkFlags NetworkFlags { get; set; }
+        byte MultiCastLevel { get; set; }
+        uint NumberOfFailures { get; }
+        uint NumberOfSuccessful { get; }
+
         void Begin(ushort nodeAddress);
         void Begin(byte channel, ushort nodeAddress);
         byte Update();
@@ -22,6 +25,5 @@ namespace Windows.Devices.Radios.nRF24L01P.Network.Interfaces
         bool Write(INetworkHeader networkHeader, byte[] message, ushort length);
         bool Write(INetworkHeader networkHeader, byte[] message, ushort length, ushort writeDirect);
         bool MultiCast(INetworkHeader networkHeader, byte[] message, ushort length, byte level);
-        void MultiCastLevel(byte level);
     }
 }

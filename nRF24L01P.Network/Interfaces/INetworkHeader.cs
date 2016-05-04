@@ -7,7 +7,6 @@
         ushort Id { get; set; }
         byte Type { get; set; }
         byte Reserved { get; set; }
-        ushort NextId { get; set; }
         byte[] ToBytes();
         void FromBytes(byte[] bytes);
     }

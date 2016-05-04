@@ -14,47 +14,52 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
 {
     public class Network : INetwork
     {
-        private static readonly int _maxFramePayloadSize;
-
         private readonly ILog _logger;
-        private readonly Stopwatch _transmitTime;
         private readonly IRadio _radio;
-        private byte _multiCastLevel;
-
-        private byte _frameSize;
+        private readonly Stopwatch _transmitTime;
+        private readonly int _maxFramePayloadSize;
         private readonly Queue<INetworkFrame> _frameQueue;
         private readonly IDictionary<ushort, INetworkFrame> _frameFragmentsCache;
+        private byte _frameSize;
+        private byte[] _frameBuffer;
 
-        public static uint NumberOfFails { get; private set; }
-        public static uint NumberOfSuccessful { get; private set; }
+        public uint NumberOfFailures { get; private set; }
+        public uint NumberOfSuccessful { get; private set; }
 
         public INetworkAddressing Addressing { get; set; }
         public Queue<INetworkFrame> ExternalQueue { get; set; }
-        public byte[] FrameBuffer { get; set; }
-        public bool MultiCaseRelay { get; set; }
         public NetworkFlags NetworkFlags { get; set; }
         public bool ReturnSysMessages { get; set; }
         public uint RouteTimeout { get; set; }
         public uint TransmitTimeout { get; set; }
+        public bool MultiCaseRelay { get; set; }
 
-        static Network()
+        private byte _multiCastLevel;
+        public byte MultiCastLevel
         {
-            _maxFramePayloadSize = Configuration.MaxFrameSize - Configuration.FrameHeaderSize;
+            get { return _multiCastLevel; }
+            set
+            {
+                _multiCastLevel = value;
+                _radio.OperatingMode = OperatingModes.StandBy;
+                IReceivePipe receivePipe = _radio.ReceivePipes[0];
+                receivePipe.Address = Addressing.PhysicalPipeAddress(Addressing.LevelToAddress(value), 0);
+                receivePipe.Enabled = true;
+                _radio.OperatingMode = OperatingModes.ReceiveMode;
+            }
         }
 
         public Network(ILoggerFactoryAdapter loggerFactoryAdapter, IRadio radio)
         {
             _radio = radio;
             _logger = loggerFactoryAdapter.GetLogger(GetType());
+            _maxFramePayloadSize = Configuration.MaxFrameSize - Configuration.NetworkHeaderSize;
             _transmitTime = new Stopwatch();
             _frameQueue = new Queue<INetworkFrame>();
             _frameFragmentsCache= new Dictionary<ushort, INetworkFrame>();
             Addressing = new NetworkAddressing(loggerFactoryAdapter);
-        }
-
-        public bool Available()
-        {
-            return _frameQueue.Any();
+            TransmitTimeout = 25;
+            RouteTimeout = TransmitTimeout * 3;
         }
 
         public void Begin(ushort nodeAddress)
@@ -66,19 +71,17 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
         {
             Addressing.NodeAddress = nodeAddress;
 
+            // Set up the radio the way we want it to look
             if (channel != Configuration.UseCurrentChannel)
                 _radio.Configuration.Channel = channel;
             _radio.RegisterContainer.EnableAutoAcknowledgementRegister.EnableAutoAcknowledgementPipe0 = false;
             _radio.RegisterContainer.EnableAutoAcknowledgementRegister.Save();
-
             _radio.Configuration.DynamicPayloadLengthEnabled = true;
 
+            // Use different retry periods to reduce data collisions
             AutoRetransmitDelays retryVar = (AutoRetransmitDelays)((((nodeAddress % 6) + 1) * 2) + 3);
             _radio.Configuration.AutoRetransmitDelay = retryVar;
             _radio.Configuration.AutoRetransmitCount = 5;
-
-            TransmitTimeout = 25;
-            RouteTimeout = TransmitTimeout*3;
 
             byte i = 6;
             while (i-- > 0)
@@ -91,21 +94,119 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             _radio.OperatingMode = OperatingModes.ReceiveMode;
         }
 
-        public bool MultiCast(INetworkHeader networkHeader, byte[] message, ushort length, byte level)
+        public byte Update()
         {
-            networkHeader.ToNode = 0100;
-            networkHeader.FromNode = Addressing.NodeAddress;
-            return Write(networkHeader, message, length, Addressing.LevelToAddress(level));
+            byte pipeNumber,
+                returnValue = 0;
+
+            IRegisterContainer registers = _radio.RegisterContainer;
+            while (_radio.ReceivePipes.FifoStatus != FifoStatus.Empty)
+            {
+                pipeNumber = _radio.ReceivePipes.ReceivePipeNumber;
+                if ((_frameSize = _radio.Configuration.DynamicPayloadSize) < Configuration.NetworkHeaderSize)
+                {
+                    Delay.WaitMilliseconds(10);
+                    continue;
+                }
+
+                // Dump the payloads until we've gotten everything
+                // Fetch the payload, and see if this was the last one.
+                _frameBuffer = _radio.ReceivePipes[pipeNumber].ReadBuffer(_frameSize);
+
+                // Read the beginning of the frame as the header
+                INetworkHeader header = new NetworkHeader(_frameBuffer);
+
+                _logger.DebugFormat("ROUTING: Received on {0} {1}", pipeNumber, header);
+                _logger.TraceFormat("FRAGMENTATION: Received frame size {0}", _frameSize);
+                _logger.TraceFormat("FRAGMENTATION: Received frame {0}", _frameBuffer.GetHexString());
+
+                if (!Addressing.IsValidAddress(header.ToNode))
+                    continue;
+
+                returnValue = header.Type;
+                NetworkHeaderTypes headerType = (NetworkHeaderTypes)header.Type;
+
+                // Is this for us?
+                if (header.ToNode == Addressing.NodeAddress)
+                {
+                    if (headerType == NetworkHeaderTypes.NetworkPing)
+                        continue;
+                    if (headerType == NetworkHeaderTypes.NetworkAddrResponse)
+                    {
+                        if (Addressing.NodeAddress != Configuration.RequesterNode)
+                        {
+                            header.ToNode = Configuration.RequesterNode;
+                            Send(header.ToNode, TransmitTypes.UserTransmitToPhysicalAddress);
+                            Delay.WaitMilliseconds(10);
+                            Send(header.ToNode, TransmitTypes.UserTransmitToPhysicalAddress);
+                            continue;
+                        }
+                    }
+                    if (headerType == NetworkHeaderTypes.NetworkReqAddress && Addressing.NodeAddress > 0)
+                    {
+                        header.FromNode = Addressing.NodeAddress;
+                        header.ToNode = 0;
+                        Send(header.ToNode, TransmitTypes.TransmitNormal);
+                        continue;
+                    }
+                    if ((ReturnSysMessages && (byte)headerType > 127) || headerType == NetworkHeaderTypes.NetworkAck)
+                    {
+                        _logger.DebugFormat("ROUTING: System payload received {0}", returnValue);
+                        if (headerType != NetworkHeaderTypes.NetworkFirstFragment &&
+                            headerType != NetworkHeaderTypes.NetworkMoreFragments &&
+                            headerType != NetworkHeaderTypes.NetworkMoreFragmentsNack &&
+                            headerType != NetworkHeaderTypes.ExternalDataType &&
+                            headerType != NetworkHeaderTypes.NetworkLastFragment)
+                            return returnValue;
+                    }
+                    if (Enqueue(header) == 2)
+                    {
+                        _logger.Trace("ROUTING: Update returned external data unicast");
+                        returnValue = (byte)NetworkHeaderTypes.ExternalDataType;
+                        return returnValue;
+                    }
+                }
+                else
+                {
+                    if (header.ToNode == Configuration.MulticastNode)
+                    {
+                        if (headerType == NetworkHeaderTypes.NetworkPoll &&
+                            Addressing.NodeAddress != Configuration.RequesterNode)
+                        {
+                            if (!NetworkFlags.HasFlag(NetworkFlags.NoPoll))
+                            {
+                                header.ToNode = header.FromNode;
+                                header.FromNode = Addressing.NodeAddress;
+                                Delay.WaitMilliseconds(Addressing.ParentPipe);
+                                Send(header.ToNode, TransmitTypes.UserTransmitToPhysicalAddress);
+                            }
+                            continue;
+                        }
+                        byte val = Enqueue(header);
+                        if (MultiCaseRelay)
+                        {
+                            _logger.DebugFormat("ROUTING: Forward multicast frame from {0} to level {1}", header.FromNode, _multiCastLevel + 1);
+                            Send((ushort)(Addressing.LevelToAddress(_multiCastLevel) << 3), TransmitTypes.UserTransmitMulticast);
+                        }
+                        if (val == 2)
+                        {
+                            _logger.Trace("ROUTING: Update returned external data multicast");
+                            returnValue = (byte)NetworkHeaderTypes.ExternalDataType;
+                            return returnValue;
+                        }
+                    }
+                    else
+                        // Send it on, indicate it is a routed payload
+                        Send(header.ToNode, TransmitTypes.TransmitRouted);
+                }
+            }
+
+            return returnValue;
         }
 
-        public void MultiCastLevel(byte level)
+        public bool Available()
         {
-            _multiCastLevel = level;
-            //_radio.OperatingMode = OperatingModes.StandBy; 
-            IReceivePipe receivePipe = _radio.ReceivePipes[0];
-            receivePipe.Address = Addressing.PhysicalPipeAddress(Addressing.LevelToAddress(level), 0);
-            receivePipe.Enabled = true;
-            // _radio.OperatingMode = OperatingModes.ReceiveMode;
+            return _frameQueue.Any();
         }
 
         public ushort Peek(ref INetworkHeader networkHeader)
@@ -130,140 +231,20 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                     bufferSize = Math.Min(bufferSize, maxLength);
                     Array.Resize(ref message, bufferSize);
                     Array.Copy(networkFrame.MessageBuffer, message, bufferSize);
-                    _logger.TraceFormat("NET message size {0}\n", bufferSize);
-                    _logger.TraceFormat("NET r message {0}\n", message.GetHexString());
-                    _logger.TraceFormat("NET Received {0}\n", networkHeader);
+                    _logger.TraceFormat("NETWORK: Read message size {0}", bufferSize);
+                    _logger.TraceFormat("NETWORK: Read message {0}", message.GetHexString());
+                    _logger.TraceFormat("NETWORK: Read Header {0}", networkHeader);
                 }
             }
 
             return bufferSize;
         }
 
-        public byte Update()
+        public bool MultiCast(INetworkHeader networkHeader, byte[] message, ushort length, byte level)
         {
-            byte pipeNumber,
-                returnValue = 0;
-
-            // If bypass is enabled, continue although incoming user data may be dropped
-            // Allows system payloads to be read while user cache is full
-            // Incoming Hold prevents data from being read from the radio, preventing incoming payloads from being acked
-            if (!NetworkFlags.HasFlag(NetworkFlags.BypassHolds))
-            {
-                // TODO: Figure out math
-                if (NetworkFlags.HasFlag(NetworkFlags.HoldIncoming)) //|| Configuration.MainBufferSize)
-                {
-                    if (!Available())
-                        NetworkFlags &= ~NetworkFlags.HoldIncoming;
-                    else
-                        return returnValue;
-                }
-            }
-
-            IRegisterContainer registers = _radio.RegisterContainer;
-            while(_radio.ReceivePipes.FifoStatus != FifoStatus.Empty)
-            {
-                pipeNumber = _radio.ReceivePipes.ReceivePipeNumber;
-                if ((_frameSize = _radio.Configuration.DynamicPayloadSize) < Configuration.FrameHeaderSize)
-                {
-                    Delay.WaitMilliseconds(10);
-                    continue;
-                }
-
-                // Dump the payloads until we've gotten everything
-                // Fetch the payload, and see if this was the last one.
-                FrameBuffer = _radio.ReceivePipes[pipeNumber].ReadBuffer(_frameSize);
-
-                // Read the beginning of the frame as the header
-                INetworkHeader header = new NetworkHeader(FrameBuffer);
-
-                _logger.TraceFormat("MAC Received on {0} {1}\r\n", pipeNumber, header);
-                _logger.TraceFormat("FRG Rcv frame size {0}\r\n", _frameSize);
-                _logger.TraceFormat("FRG Rcv frame {0}\r\n", FrameBuffer.GetHexString());
-
-                if (!Addressing.IsValidAddress(header.ToNode))
-                    continue;
-
-                returnValue = header.Type;
-                NetworkHeaderTypes headerType = (NetworkHeaderTypes)header.Type;
-
-                // Is this for us?
-                if (header.ToNode == Addressing.NodeAddress)
-                {
-                    if (headerType == NetworkHeaderTypes.NetworkPing)
-                        continue;
-                    if (headerType == NetworkHeaderTypes.NetworkAddrResponse)
-                    {
-                        if (Addressing.NodeAddress != Configuration.RequesterNode)
-                        {
-                            header.ToNode = Configuration.RequesterNode;
-                            Write(header.ToNode, TransmitTypes.UserTransmitToPhysicalAddress);
-                            Delay.WaitMilliseconds(10);
-                            Write(header.ToNode, TransmitTypes.UserTransmitToPhysicalAddress);
-                            continue;
-                        }
-                    }
-                    if (headerType == NetworkHeaderTypes.NetworkReqAddress && Addressing.NodeAddress > 0)
-                    {
-                        header.FromNode = Addressing.NodeAddress;
-                        header.ToNode = 0;
-                        Write(header.ToNode, TransmitTypes.TransmitNormal);
-                        continue;
-                    }
-                    if ((ReturnSysMessages && (byte)headerType > 127) || headerType == NetworkHeaderTypes.NetworkAck)
-                    {
-                        _logger.TraceFormat("MAC: System payload rcvd {0}\r\n", returnValue);
-                        if (headerType != NetworkHeaderTypes.NetworkFirstFragment &&
-                            headerType != NetworkHeaderTypes.NetworkMoreFragments &&
-                            headerType != NetworkHeaderTypes.NetworkMoreFragmentsNack &&
-                            headerType != NetworkHeaderTypes.ExternalDataType &&
-                            headerType != NetworkHeaderTypes.NetworkLastFragment)
-                            return returnValue;
-                    }
-                    // External data received
-                    if (Enqueue(header) == 2)
-                    {
-                        _logger.Trace("ret ext\r\n");
-                        returnValue = (byte)NetworkHeaderTypes.ExternalDataType;
-                        return returnValue;
-                    }
-                }
-                else
-                {
-                    if (header.ToNode == Configuration.MulticastNode)
-                    {
-                        if (headerType == NetworkHeaderTypes.NetworkPoll &&
-                            Addressing.NodeAddress != Configuration.RequesterNode)
-                        {
-                            if (!NetworkFlags.HasFlag(NetworkFlags.NoPoll))
-                            {
-                                header.ToNode = header.FromNode;
-                                header.FromNode = Addressing.NodeAddress;
-                                Delay.WaitMilliseconds(Addressing.ParentPipe);
-                                Write(header.ToNode, TransmitTypes.UserTransmitToPhysicalAddress);
-                            }
-                            continue;
-                        }
-                        byte val = Enqueue(header);
-                        if (MultiCaseRelay)
-                        {
-                            _logger.TraceFormat("MAC: FWD multicast frame from {0} to level {1}\r\n", header.FromNode, _multiCastLevel + 1);
-                            Write((ushort)(Addressing.LevelToAddress(_multiCastLevel) << 3), TransmitTypes.UserTransmitMulticast);
-                        }
-                        //External data received
-                        if (val == 2)
-                        {
-                            _logger.Trace("ret ext multicast\r\n");
-                            returnValue = (byte)NetworkHeaderTypes.ExternalDataType;
-                            return returnValue;
-                        }
-                    }
-                    else
-                        //Send it on, indicate it is a routed payload
-                        Write(header.ToNode, TransmitTypes.TransmitRouted);
-                }
-            }
-
-            return returnValue;
+            networkHeader.ToNode = Configuration.MulticastNode;
+            networkHeader.FromNode = Addressing.NodeAddress;
+            return Write(networkHeader, message, length, Addressing.LevelToAddress(level));
         }
 
         public bool Write(INetworkHeader networkHeader, byte[] message, ushort length)
@@ -280,25 +261,24 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             // Normal Write (Un-Fragmented)
             if (length <= _maxFramePayloadSize)
             {
-                _frameSize = (byte)(length + Configuration.FrameHeaderSize);
-                if (_Write(networkHeader, message, length, writeDirect))
+                _frameSize = (byte)(length + Configuration.NetworkHeaderSize);
+                if (WriteToFrameBufferAndSend(networkHeader, message, length, writeDirect))
                     return true;
                 _transmitTime.Restart();
                 return false;
             }
 
-            // Check payload size
             if (length > Configuration.MaxPayloadSize)
             {
-                _logger.DebugFormat("NET write message failed. Given 'len'{0} is bigger than the MAX Payload size {1}\n\r", length, Configuration.MaxPayloadSize);
+                _logger.WarnFormat("NETWORK: write message failed. Given 'length' {0} is bigger than the maximum payload size {1}", length, Configuration.MaxPayloadSize);
                 return false;
             }
 
             // Divide the message payload into chunks of _maxFramePayloadSize
             byte messageCount = 0,
-                fragmentId = (byte)((length % _maxFramePayloadSize != 0 ? 1 : 0) + (length / _maxFramePayloadSize));
+                fragmentId = (byte)((length % _maxFramePayloadSize != 0 ? 1 : 0) + length / _maxFramePayloadSize);
 
-            _logger.TraceFormat("FRG Total message fragments {0)\r\n", fragmentId);
+            _logger.TraceFormat("FRAGMENTATION: Total message fragments {0)", fragmentId);
             if (networkHeader.FromNode != Configuration.MulticastNode)
             {
                 NetworkFlags |= NetworkFlags.FastFrag;
@@ -308,30 +288,29 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             byte retriesPerFragment = 0,
                 type = networkHeader.Type;
             bool ok = false;
+
+            // Loop through and send all fragments for this message
             while (fragmentId > 0)
             {
-                //Copy and fill out the header
-                networkHeader.Reserved = fragmentId;
                 if (fragmentId == 1)
                 {
-                    networkHeader.Type = (byte)NetworkHeaderTypes.NetworkLastFragment;
+                    networkHeader.Type = (byte) NetworkHeaderTypes.NetworkLastFragment;
                     networkHeader.Reserved = type;
                 }
                 else
                 {
-                    if (messageCount == 0)
-                        networkHeader.Type = (byte) NetworkHeaderTypes.NetworkFirstFragment;
-                    else
-                        networkHeader.Type = (byte)NetworkHeaderTypes.NetworkMoreFragments;
+                    networkHeader.Type =(byte)(messageCount == 0 ? NetworkHeaderTypes.NetworkFirstFragment : NetworkHeaderTypes.NetworkMoreFragments);
+                    networkHeader.Reserved = fragmentId;
                 }
 
                 ushort offset = (ushort)(messageCount * _maxFramePayloadSize);
                 ushort fragmentLength = (ushort)Math.Min(length - offset, _maxFramePayloadSize);
+                byte[] messageFragrament = new byte[fragmentLength];
+                Array.Copy(message, offset, messageFragrament, 0, fragmentLength);
 
                 // Try to send the payload chunk with the copied header
-                _frameSize = (byte)(Configuration.FrameHeaderSize + fragmentLength);
-                // TODO: ((char *)message)+offset
-                ok = _Write(networkHeader, message, fragmentLength, writeDirect);
+                _frameSize = (byte)(Configuration.NetworkHeaderSize + fragmentLength);
+                ok = WriteToFrameBufferAndSend(networkHeader, messageFragrament, fragmentLength, writeDirect);
 
                 if (!ok)
                 {
@@ -347,10 +326,10 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
 
                 if (!ok && retriesPerFragment >= 3)
                 {
-                    _logger.DebugFormat("FRG TX with fragmentID '{0}' failed after {1} fragments. Abort.\r\n", fragmentId, messageCount);
+                    _logger.WarnFormat("FRAGMENTATION: Transmit with fragmentId '{0}' failed after {1} fragments. Abort.", fragmentId, messageCount);
                     break;
                 }
-                _logger.TraceFormat("FRG message transmission with fragmentID '{0}' successful.\r\n", fragmentId);
+                _logger.DebugFormat("FRAGMENTATION: message transmission with fragmentId '{0}' successful.", fragmentId);
             }
             networkHeader.Type = type;
             if (NetworkFlags.HasFlag(NetworkFlags.FastFrag))
@@ -362,7 +341,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             NetworkFlags &= ~NetworkFlags.FastFrag;
             if (!ok)
                 return false;
-            _logger.TraceFormat("FRG total message fragments sent {0}.\r\n", messageCount);
+            _logger.DebugFormat("FRAGMENTATION: Total message fragments sent {0}.", messageCount);
             if (fragmentId > 0)
             {
                 _transmitTime.Restart();
@@ -371,31 +350,60 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             return true;
         }
 
-        private bool Write(ushort toNode, TransmitTypes directTo)
+        private bool WriteToFrameBufferAndSend(INetworkHeader networkHeader, byte[] message, uint length, ushort writeDirect)
+        {
+            // Fill out the header
+            networkHeader.FromNode = Addressing.NodeAddress;
+
+            // Build the full frame to send
+            Array.Copy(networkHeader.ToBytes(), _frameBuffer, Configuration.NetworkHeaderSize);
+            _logger.TraceFormat("NETWORK: Sending {0}", networkHeader);
+
+            if (length > 0)
+            {
+                Array.Copy(message, 0, _frameBuffer, Configuration.NetworkHeaderSize, (int)length);
+                _logger.TraceFormat("NETWORK: message {0}", message.GetHexString());
+            }
+
+            if (writeDirect != Configuration.WriteDirectUnicast)
+            {
+                TransmitTypes transmitType = TransmitTypes.UserTransmitToLogicalAddress;
+                if (networkHeader.ToNode == Configuration.MulticastNode)
+                    transmitType = TransmitTypes.UserTransmitMulticast;
+                else if (networkHeader.ToNode == writeDirect)
+                    transmitType = TransmitTypes.UserTransmitToPhysicalAddress;
+
+                return Send(writeDirect, transmitType);
+            }
+
+            return Send(networkHeader.ToNode, TransmitTypes.TransmitNormal);
+        }
+
+        private bool Send(ushort toNode, TransmitTypes directTo)
         {
             bool ok = false,
-                isAckType = FrameBuffer[Configuration.HeaderIndexType] > Configuration.HeaderTypeAcknowledgementStart
-                    && FrameBuffer[Configuration.HeaderIndexType] < Configuration.HeaderTypeAcknowledgementEnd;
+                isAckType = _frameBuffer[Configuration.HeaderIndexType] > Configuration.HeaderTypeAcknowledgementStart
+                    && _frameBuffer[Configuration.HeaderIndexType] < Configuration.HeaderTypeAcknowledgementEnd;
 
             // Throw it away if it's not a valid address
             if (!Addressing.IsValidAddress(toNode))
                 return ok;
 
-            //Load info into our conversion structure, and get the converted address info
+            // Load info into our conversion structure, and get the converted address info
             INodeAddressInfo nodeAddressInfo = new NodeAddressInfo { SendNode = toNode, MultiCast = false, SendPipe = (byte)directTo};
             nodeAddressInfo = Addressing.ConvertLogicalToPhysicalAddress(nodeAddressInfo);
 
-            _logger.TraceFormat("MAC Sending to {0} via {1} on pipe {2}\n\r", toNode, nodeAddressInfo.SendNode, nodeAddressInfo.SendPipe);
+            _logger.DebugFormat("ROUTING: Sending to {0} via {1} on pipe {2}", toNode, nodeAddressInfo.SendNode, nodeAddressInfo.SendPipe);
 
-            ok = WriteToPipe(nodeAddressInfo);
+            ok = WriteFrameBufferToPipe(nodeAddressInfo);
             if(!ok)
-                _logger.DebugFormat("MAC Send fail to {0} via {1} on pipe {2}\n\r", toNode, nodeAddressInfo.SendNode, nodeAddressInfo.SendPipe);
+                _logger.WarnFormat("ROUTING: Send fail to {0} via {1} on pipe {2}", toNode, nodeAddressInfo.SendNode, nodeAddressInfo.SendPipe);
 
             if (ok && isAckType
                 && nodeAddressInfo.SendNode == toNode
                 && directTo == TransmitTypes.TransmitRouted)
             {
-                INetworkHeader header = new NetworkHeader(FrameBuffer);
+                INetworkHeader header = new NetworkHeader(_frameBuffer);
                 header.Type = (byte)NetworkHeaderTypes.NetworkAck;
                 header.ToNode = header.FromNode;
 
@@ -404,11 +412,11 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 nodeAddressInfo.MultiCast = false;
                 nodeAddressInfo = Addressing.ConvertLogicalToPhysicalAddress(nodeAddressInfo);
 
-                //Write the data using the resulting physical address
-                _frameSize = Configuration.FrameHeaderSize;
-                WriteToPipe(nodeAddressInfo);
+                // Write the data using the resulting physical address
+                _frameSize = Configuration.NetworkHeaderSize;
+                WriteFrameBufferToPipe(nodeAddressInfo);
 
-                _logger.TraceFormat("MAC: Route OK to {0} ACK sent to {1}\r\n", toNode, header.FromNode);
+                _logger.DebugFormat("ROUTING: Route OK to {0} Acknowledgement sent to {1}", toNode, header.FromNode);
             }
 
             if (ok && isAckType
@@ -439,41 +447,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             if (ok)
                 NumberOfSuccessful++;
             else
-                NumberOfFails++;
+                NumberOfFailures++;
 
             return ok;
         }
 
-        private bool _Write(INetworkHeader networkHeader, byte[] message, uint length, ushort writeDirect)
-        {
-            // Fill out the header
-            networkHeader.FromNode = Addressing.NodeAddress;
-
-            // Build the full frame to send
-            Array.Copy(networkHeader.ToBytes(), FrameBuffer, Configuration.FrameHeaderSize);
-            _logger.TraceFormat("NET Sending {0}\r\n", networkHeader);
-
-            if (length > 0)
-            {
-                Array.Copy(message, 0, FrameBuffer, Configuration.FrameHeaderSize, (int)length);
-                _logger.TraceFormat("NET message {0}\r\n", message.GetHexString());
-            }
-
-            if (writeDirect != Configuration.WriteDirectUnicast)
-            {
-                TransmitTypes transmitType = TransmitTypes.UserTransmitToLogicalAddress;
-                if (networkHeader.ToNode == Configuration.MulticastNode)
-                    transmitType = TransmitTypes.UserTransmitMulticast;
-                else if (networkHeader.ToNode == writeDirect)
-                    transmitType = TransmitTypes.UserTransmitToPhysicalAddress;
-
-                return Write(writeDirect, transmitType);
-            }
-
-            return Write(networkHeader.ToNode, TransmitTypes.TransmitNormal);
-        }
-
-        private bool WriteToPipe(INodeAddressInfo nodeAddressInfo)
+        private bool WriteFrameBufferToPipe(INodeAddressInfo nodeAddressInfo)
         {
             bool ok = false;
             byte[] outPipe = Addressing.PhysicalPipeAddress(nodeAddressInfo.SendNode, nodeAddressInfo.SendPipe);
@@ -482,7 +461,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             _radio.TransmitPipe.AutoAcknowledgementEnabled = !nodeAddressInfo.MultiCast;
             _radio.TransmitPipe.Address = outPipe;
             _radio.OperatingMode = OperatingModes.TransmitMode;
-            ok = _radio.TransmitPipe.Write(FrameBuffer, nodeAddressInfo.MultiCast);
+            ok = _radio.TransmitPipe.Write(_frameBuffer, nodeAddressInfo.MultiCast);
 
             if (!NetworkFlags.HasFlag(NetworkFlags.FastFrag))
             {
@@ -490,7 +469,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 _radio.TransmitPipe.AutoAcknowledgementEnabled = false;
             }
 
-            _logger.TraceFormat("MAC Sent on {0} {1}\r\n", BitConverter.ToInt32(outPipe, 0), ok ? "ok" : "failed");
+            _logger.DebugFormat("ROUTING: Sent on {0} {1}", BitConverter.ToInt32(outPipe, 0), ok ? "ok" : "failed");
 
             return ok;
         }
@@ -501,9 +480,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             INetworkFrame networkFrame = new NetworkFrame
             {
                 Header = networkHeader,
-                MessageSize = Configuration.FrameHeaderSize
+                MessageSize = Configuration.NetworkHeaderSize
             };
-            Array.Copy(FrameBuffer, Configuration.FrameHeaderSize, networkFrame.MessageBuffer, 0, _frameSize - Configuration.FrameHeaderSize);
+            Array.Copy(_frameBuffer, Configuration.NetworkHeaderSize, networkFrame.MessageBuffer, 0, _frameSize - Configuration.NetworkHeaderSize);
             bool isFragment = networkHeader.Type == (byte)NetworkHeaderTypes.NetworkFirstFragment ||
                               networkHeader.Type == (byte)NetworkHeaderTypes.NetworkMoreFragments ||
                               networkHeader.Type == (byte)NetworkHeaderTypes.NetworkLastFragment ||
@@ -514,7 +493,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             {
                 if (isFragment)
                 {
-                    _logger.Warn("Cannot enqueue multi-payload frames to self");
+                    _logger.Warn("ROUTING: Cannot enqueue multi-payload frames to self");
                     result = 0;
                 }
                 else
@@ -529,7 +508,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 {
                     // The received frame contains the a fragmented payload
                     // Set the more fragments flag to indicate a fragmented frame
-                    _logger.TraceFormat("FRG Payload type {0} of size {1} Bytes with fragmentID '{2}' received.",
+                    _logger.TraceFormat("FRAGMENTATION: Payload type {0} of size {1} Bytes with fragmentId '{2}' received.",
                         networkFrame.Header.Type, networkFrame.MessageSize, networkFrame.Header.Reserved);
 
                     // Append payload
@@ -538,8 +517,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                     // The Header.Reserved contains the actual Header.Type on the last fragment
                     if (result == 1 && networkFrame.Header.Type == (byte) NetworkHeaderTypes.NetworkLastFragment)
                     {
-                        _logger.Trace("FRG Last fragment received.");
-                        _logger.TraceFormat("NET Enqueue assembled frame @{0}", _frameQueue.Count);
+                        _logger.Trace("FRAGMENTATION: Last fragment received.");
+                        _logger.TraceFormat("NETWORK: Enqueue assembled frame @{0}", _frameQueue.Count);
 
                         INetworkFrame cacheFrame = _frameFragmentsCache[networkFrame.Header.FromNode];
                         result = (byte) ((cacheFrame.Header.Type == (byte) NetworkHeaderTypes.ExternalDataType) ? 2 : 1);
@@ -556,10 +535,10 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 else
                 {
                     // This is not a fragmented payload but a whole frame.
-                    _logger.TraceFormat("NET Enqueue @{0}", _frameQueue.Count);
+                    _logger.TraceFormat("NETWORK: Enqueue @{0}", _frameQueue.Count);
                     // Copy the current frame into the frame queue
                     result = (byte) ((networkFrame.Header.Type == (byte) NetworkHeaderTypes.ExternalDataType) ? 2 : 1);
-                    //Load external payloads into a separate queue on linux
+                    // Load external payloads into a separate queue on linux
                     if (result == 2)
                         ExternalQueue.Enqueue(networkFrame);
                     else
@@ -568,9 +547,9 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             }
 
             if (result == 1)
-                _logger.Debug("Enqueue succeeded");
+                _logger.Debug("NETWORK: Enqueue succeeded");
             else
-                _logger.Warn("Enqueue failed");
+                _logger.Warn("NETWORK: Enqueue failed");
 
             return result;
         }
@@ -580,16 +559,15 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
 
             if (frame.Header.Type == (byte)NetworkHeaderTypes.NetworkFirstFragment)
             {
-                if (_frameFragmentsCache.Any(f => f.Value.Header.FromNode == frame.Header.FromNode))
+                if (_frameFragmentsCache.ContainsKey(frame.Header.FromNode))
                 {
-                    //Already rcvd first fragment
+                    // Already rcvd first fragment
                     if (_frameFragmentsCache[frame.Header.FromNode].Header.Id == frame.Header.Id)
                         return false;
                 }
                 if (frame.Header.Reserved > (Configuration.MaxPayloadSize / 24) + 1)
                 {
-                    _logger.WarnFormat("FRG Too many fragments in payload {0}, dropping...\r\n", frame.Header.Reserved); 
-                    // If there are more fragments than we can possibly handle, return
+                    _logger.WarnFormat("FRAGMENTATION: Too many fragments in payload {0}, dropping...", frame.Header.Reserved); 
                     return false;
                 }
                 _frameFragmentsCache[frame.Header.FromNode] = frame;
@@ -599,41 +577,41 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                     frame.Header.Type == (byte)NetworkHeaderTypes.NetworkMoreFragmentsNack)
             {
 
-                if (!_frameFragmentsCache.Any(f => f.Value.Header.FromNode == frame.Header.FromNode))
+                if (!_frameFragmentsCache.ContainsKey(frame.Header.FromNode))
                     return false;
+
                 INetworkFrame cacheFrame = _frameFragmentsCache[frame.Header.FromNode];
                 if (cacheFrame.Header.Reserved - 1 == frame.Header.Reserved && cacheFrame.Header.Id == frame.Header.Id)
                 {
                     // Cache the fragment
                     Array.Copy(frame.MessageBuffer, 0, cacheFrame.MessageBuffer, cacheFrame.MessageSize, frame.MessageSize);
-                    cacheFrame.MessageSize += frame.MessageSize;  //Increment message size
-                    cacheFrame.Header = frame.Header; //Update header
+                    cacheFrame.MessageSize += frame.MessageSize;  
+                    cacheFrame.Header = frame.Header;
                     return true;
                 }
                 else
                 {
-                    _logger.WarnFormat("FRG Dropping fragment for frame with header id:{0}, out of order fragment(s).\r\n", frame.Header.Id);
+                    _logger.WarnFormat("FRAGMENTATION: Dropping fragment for frame with header id:{0}, out of order fragment(s).", frame.Header.Id);
                     return false;
                 }
             }
             else if (frame.Header.Type == (byte)NetworkHeaderTypes.NetworkLastFragment)
             {
                 // We have received the last fragment
-                if (!_frameFragmentsCache.Any(f1 => f1.Value.Header.FromNode == frame.Header.FromNode))
+                if (!_frameFragmentsCache.ContainsKey(frame.Header.FromNode))
                     return false;
 
-                // Create a reference to the cached frame
                 INetworkFrame cacheFrame = _frameFragmentsCache[frame.Header.FromNode];
                 if (cacheFrame.MessageSize + frame.MessageSize > Configuration.MaxPayloadSize)
                 {
-                    _logger.WarnFormat("FRG Frame of size {0} plus enqueued frame of size {1} exceeds max payload size \r\n", frame.MessageSize, cacheFrame.MessageSize);
+                    _logger.WarnFormat("FRAGMENTATION: Frame of size {0} plus enqueued frame of size {1} exceeds max payload size ", frame.MessageSize, cacheFrame.MessageSize);
                     return false;
                 }
 
                 // Error checking for missed fragments and payload size
                 if (cacheFrame.Header.Reserved - 1 != 1 || cacheFrame.Header.Id != frame.Header.Id)
                 {
-                    _logger.WarnFormat("FRG Duplicate or out of sequence frame {0}, expected {1}. Cleared.\r\n", frame.Header.Reserved, cacheFrame.Header.Reserved);
+                    _logger.WarnFormat("FRAGMENTATION: Duplicate or out of sequence frame {0}, expected {1}. Cleared.", frame.Header.Reserved, cacheFrame.Header.Reserved);
                     return false;
                 }
 

@@ -6,10 +6,13 @@
         // Sizes
         /*********************************************************************************/
         /** Size of individual radio frames*/
-        public const int MaxFrameSize = 32; 
+        public const int MaxFrameSize = 32;
 
-        /** Size of RF24Network frames - data*/
-        public const int FrameHeaderSize = 10; 
+        /** Size of NetworkHeader*/
+        public const int NetworkHeaderSize = 8;
+
+        /** Size of Complete Header Information (NetworkHeader + MessageSize)*/
+        public const int FrameHeaderSize = NetworkHeaderSize + 2; 
 
         /** Use current radio channel when setting up the network*/
         public const int UseCurrentChannel = 255;
@@ -17,12 +20,12 @@
         /** The size of the main buffer. This is the user-cache, where incoming data is stored.
          Data is stored using Frames: Header (8-bytes) + Frame_Size (2-bytes) + Data (?-bytes)
          @note The MAX_PAYLOAD_SIZE is (MAIN_BUFFER_SIZE - 10), and the result must be divisible by 24. */
-        public const int MainBufferSize = 144 + 10;
+        public const int MainBufferSize = 144 + FrameHeaderSize;
 
         /** Maximum size of fragmented network frames and fragmentation cache. This MUST BE divisible by 24.
          @note: Must be a multiple of 24.
          @note: If used with RF24Ethernet, this value is used to set the buffer sizes.*/
-        public const int MaxPayloadSize = MainBufferSize - 10;
+        public const int MaxPayloadSize = MainBufferSize - FrameHeaderSize;
 
         /**This is the number of 24-byte payloads the network layer will cache for the user. 
          If using fragmentation, this number * 24 must be larger than MAX_PAYLOAD_SIZE |*/
@@ -32,12 +35,21 @@
         // Nodes
         /*********************************************************************************/
         public const ushort RequesterNode = 04444;
-
         public const ushort MulticastNode = 0100;
-
         public const ushort WriteDirectUnicast = 0100;
 
+        /*********************************************************************************/
+        // Header Array Indexes
+        /*********************************************************************************/
+        public const int HeaderIndexFromNode = 0;
+        public const int HeaderIndexToNode = 2;
+        public const int HeaderIndexId = 4;
         public const int HeaderIndexType = 6;
+        public const int HeaderIndexReserved = 7;
+
+        /*********************************************************************************/
+        // Header Types
+        /*********************************************************************************/
         public const int HeaderTypeAcknowledgementStart = 64;
         public const int HeaderTypeAcknowledgementEnd = 192;
 

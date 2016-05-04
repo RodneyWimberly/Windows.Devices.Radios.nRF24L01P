@@ -144,10 +144,6 @@
       <Project>{ad5fa32d-41c6-4949-a33c-067b033842c4}</Project>
       <Name>nRF24L01P.Simple</Name>
     </ProjectReference>
-    <ProjectReference Include="..\nRF24L01P\nRF24L01P.csproj">
-      <Project>{d134678e-33d7-4f4c-b30f-96d795d86e95}</Project>
-      <Name>nRF24L01P</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <SDKReference Include="WindowsIoT, Version=10.0.10586.0">
