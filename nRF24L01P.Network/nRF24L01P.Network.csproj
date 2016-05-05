@@ -110,12 +110,14 @@
     <Compile Include="Configuration.cs" />
     <Compile Include="Enums\NetworkFlags.cs" />
     <Compile Include="Enums\TransmitTypes.cs" />
+    <Compile Include="Interfaces\INetworkSync.cs" />
     <Compile Include="Interfaces\INodeAddressInfo.cs" />
     <Compile Include="Interfaces\INetwork.cs" />
     <Compile Include="Interfaces\INetworkAddressing.cs" />
     <Compile Include="Interfaces\INetworkFrame.cs" />
     <Compile Include="Interfaces\INetworkHeader.cs" />
     <Compile Include="Network.cs" />
+    <Compile Include="NetworkSync.cs" />
     <Compile Include="NodeAddressInfo.cs" />
     <Compile Include="NetworkAddressing.cs" />
     <Compile Include="NetworkFrame.cs" />

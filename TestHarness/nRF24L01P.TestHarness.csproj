@@ -101,9 +101,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GpioExtensions.cs" />
+    <Compile Include="HeaderTypes.cs" />
     <Compile Include="IReadAndWriteProcess.cs" />
     <Compile Include="ReadAndWriteToRadio.cs" />
     <Compile Include="BackgroundServer.cs" />
+    <Compile Include="NetworkReadAndWriteToRoomExtender.cs" />
     <Compile Include="ReadAndWriteToRoomExtender.cs" />
     <Compile Include="StartupTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -140,6 +142,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\nRF24L01P.Network\nRF24L01P.Network.csproj">
+      <Project>{7b97daa9-500e-45c6-9cb4-c60f103ab20b}</Project>
+      <Name>nRF24L01P.Network</Name>
+    </ProjectReference>
     <ProjectReference Include="..\nRF24L01P.Simple\nRF24L01P.Simple.csproj">
       <Project>{ad5fa32d-41c6-4949-a33c-067b033842c4}</Project>
       <Name>nRF24L01P.Simple</Name>

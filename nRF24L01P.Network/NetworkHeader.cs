@@ -13,6 +13,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
 
         public NetworkHeader() { }
 
+        public NetworkHeader(ushort toNode, byte type) : this()
+        {
+            ToNode = toNode;
+            Type = type;
+        }
+
         public NetworkHeader(byte[] bytes) : this()
         {
             FromBytes(bytes);

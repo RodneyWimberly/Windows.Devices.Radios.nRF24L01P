@@ -56,7 +56,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             _maxFramePayloadSize = Configuration.MaxFrameSize - Configuration.NetworkHeaderSize;
             _transmitTime = new Stopwatch();
             _frameQueue = new Queue<INetworkFrame>();
-            _frameFragmentsCache= new Dictionary<ushort, INetworkFrame>();
+            _frameFragmentsCache = new Dictionary<ushort, INetworkFrame>();
             Addressing = new NetworkAddressing(loggerFactoryAdapter);
             TransmitTimeout = 25;
             RouteTimeout = TransmitTimeout * 3;
@@ -225,7 +225,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 INetworkFrame networkFrame = _frameQueue.Dequeue();
                 networkHeader = networkFrame.Header;
                 bufferSize = networkFrame.MessageSize;
-                
+
                 if (maxLength > 0)
                 {
                     bufferSize = Math.Min(bufferSize, maxLength);
@@ -240,19 +240,19 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             return bufferSize;
         }
 
-        public bool MultiCast(INetworkHeader networkHeader, byte[] message, ushort length, byte level)
+        public bool MultiCast(INetworkHeader networkHeader, byte[] message, int length, byte level)
         {
             networkHeader.ToNode = Configuration.MulticastNode;
             networkHeader.FromNode = Addressing.NodeAddress;
             return Write(networkHeader, message, length, Addressing.LevelToAddress(level));
         }
 
-        public bool Write(INetworkHeader networkHeader, byte[] message, ushort length)
+        public bool Write(INetworkHeader networkHeader, byte[] message, int length)
         {
             return Write(networkHeader, message, length, Configuration.WriteDirectUnicast);
         }
 
-        public bool Write(INetworkHeader networkHeader, byte[] message, ushort length, ushort writeDirect)
+        public bool Write(INetworkHeader networkHeader, byte[] message, int length, ushort writeDirect)
         {
             // Allows time for requests (RF24Mesh) to get through between failed writes on busy nodes
             while (_transmitTime.ElapsedMilliseconds < 25)
@@ -294,12 +294,12 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             {
                 if (fragmentId == 1)
                 {
-                    networkHeader.Type = (byte) NetworkHeaderTypes.NetworkLastFragment;
+                    networkHeader.Type = (byte)NetworkHeaderTypes.NetworkLastFragment;
                     networkHeader.Reserved = type;
                 }
                 else
                 {
-                    networkHeader.Type =(byte)(messageCount == 0 ? NetworkHeaderTypes.NetworkFirstFragment : NetworkHeaderTypes.NetworkMoreFragments);
+                    networkHeader.Type = (byte)(messageCount == 0 ? NetworkHeaderTypes.NetworkFirstFragment : NetworkHeaderTypes.NetworkMoreFragments);
                     networkHeader.Reserved = fragmentId;
                 }
 
@@ -337,7 +337,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 _radio.OperatingMode = OperatingModes.StandBy;
                 _radio.OperatingMode = OperatingModes.ReceiveMode;
                 _radio.TransmitPipe.AutoAcknowledgementEnabled = false;
-            } 
+            }
             NetworkFlags &= ~NetworkFlags.FastFrag;
             if (!ok)
                 return false;
@@ -350,7 +350,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
             return true;
         }
 
-        private bool WriteToFrameBufferAndSend(INetworkHeader networkHeader, byte[] message, uint length, ushort writeDirect)
+        private bool WriteToFrameBufferAndSend(INetworkHeader networkHeader, byte[] message, int length, ushort writeDirect)
         {
             // Fill out the header
             networkHeader.FromNode = Addressing.NodeAddress;
@@ -390,13 +390,13 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 return ok;
 
             // Load info into our conversion structure, and get the converted address info
-            INodeAddressInfo nodeAddressInfo = new NodeAddressInfo { SendNode = toNode, MultiCast = false, SendPipe = (byte)directTo};
+            INodeAddressInfo nodeAddressInfo = new NodeAddressInfo { SendNode = toNode, MultiCast = false, SendPipe = (byte)directTo };
             nodeAddressInfo = Addressing.ConvertLogicalToPhysicalAddress(nodeAddressInfo);
 
             _logger.DebugFormat("ROUTING: Sending to {0} via {1} on pipe {2}", toNode, nodeAddressInfo.SendNode, nodeAddressInfo.SendPipe);
 
             ok = WriteFrameBufferToPipe(nodeAddressInfo);
-            if(!ok)
+            if (!ok)
                 _logger.WarnFormat("ROUTING: Send fail to {0} via {1} on pipe {2}", toNode, nodeAddressInfo.SendNode, nodeAddressInfo.SendPipe);
 
             if (ok && isAckType
@@ -431,7 +431,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 }
                 _radio.OperatingMode = OperatingModes.ReceiveMode;
                 Stopwatch stopwatch = Stopwatch.StartNew();
-                while (Update() != (byte) NetworkHeaderTypes.NetworkAck)
+                while (Update() != (byte)NetworkHeaderTypes.NetworkAck)
                 {
                     if (stopwatch.ElapsedMilliseconds > RouteTimeout)
                     {
@@ -441,7 +441,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 }
             }
 
-            if(!NetworkFlags.HasFlag(NetworkFlags.FastFrag))
+            if (!NetworkFlags.HasFlag(NetworkFlags.FastFrag))
                 _radio.OperatingMode = OperatingModes.ReceiveMode;
 
             if (ok)
@@ -487,7 +487,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                               networkHeader.Type == (byte)NetworkHeaderTypes.NetworkMoreFragments ||
                               networkHeader.Type == (byte)NetworkHeaderTypes.NetworkLastFragment ||
                               networkHeader.Type == (byte)NetworkHeaderTypes.NetworkMoreFragmentsNack;
-            
+
             // This is sent to itself
             if (networkFrame.Header.FromNode == Addressing.NodeAddress)
             {
@@ -512,16 +512,16 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                         networkFrame.Header.Type, networkFrame.MessageSize, networkFrame.Header.Reserved);
 
                     // Append payload
-                    result = (byte) (AppendFragmentToFrame(networkFrame) ? 1 : 0);
+                    result = (byte)(AppendFragmentToFrame(networkFrame) ? 1 : 0);
 
                     // The Header.Reserved contains the actual Header.Type on the last fragment
-                    if (result == 1 && networkFrame.Header.Type == (byte) NetworkHeaderTypes.NetworkLastFragment)
+                    if (result == 1 && networkFrame.Header.Type == (byte)NetworkHeaderTypes.NetworkLastFragment)
                     {
                         _logger.Trace("FRAGMENTATION: Last fragment received.");
                         _logger.TraceFormat("NETWORK: Enqueue assembled frame @{0}", _frameQueue.Count);
 
                         INetworkFrame cacheFrame = _frameFragmentsCache[networkFrame.Header.FromNode];
-                        result = (byte) ((cacheFrame.Header.Type == (byte) NetworkHeaderTypes.ExternalDataType) ? 2 : 1);
+                        result = (byte)((cacheFrame.Header.Type == (byte)NetworkHeaderTypes.ExternalDataType) ? 2 : 1);
 
                         // Load external payloads into a separate queue on linux
                         if (result == 2)
@@ -537,7 +537,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                     // This is not a fragmented payload but a whole frame.
                     _logger.TraceFormat("NETWORK: Enqueue @{0}", _frameQueue.Count);
                     // Copy the current frame into the frame queue
-                    result = (byte) ((networkFrame.Header.Type == (byte) NetworkHeaderTypes.ExternalDataType) ? 2 : 1);
+                    result = (byte)((networkFrame.Header.Type == (byte)NetworkHeaderTypes.ExternalDataType) ? 2 : 1);
                     // Load external payloads into a separate queue on linux
                     if (result == 2)
                         ExternalQueue.Enqueue(networkFrame);
@@ -567,13 +567,13 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 }
                 if (frame.Header.Reserved > (Configuration.MaxPayloadSize / 24) + 1)
                 {
-                    _logger.WarnFormat("FRAGMENTATION: Too many fragments in payload {0}, dropping...", frame.Header.Reserved); 
+                    _logger.WarnFormat("FRAGMENTATION: Too many fragments in payload {0}, dropping...", frame.Header.Reserved);
                     return false;
                 }
                 _frameFragmentsCache[frame.Header.FromNode] = frame;
                 return true;
             }
-            else if (frame.Header.Type == (byte)NetworkHeaderTypes.NetworkMoreFragments || 
+            else if (frame.Header.Type == (byte)NetworkHeaderTypes.NetworkMoreFragments ||
                     frame.Header.Type == (byte)NetworkHeaderTypes.NetworkMoreFragmentsNack)
             {
 
@@ -585,7 +585,7 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
                 {
                     // Cache the fragment
                     Array.Copy(frame.MessageBuffer, 0, cacheFrame.MessageBuffer, cacheFrame.MessageSize, frame.MessageSize);
-                    cacheFrame.MessageSize += frame.MessageSize;  
+                    cacheFrame.MessageSize += frame.MessageSize;
                     cacheFrame.Header = frame.Header;
                     return true;
                 }
@@ -621,8 +621,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Network
 
                 // Append the received fragment to the cached frame
                 Array.Copy(frame.MessageBuffer, 0, cacheFrame.MessageBuffer, cacheFrame.MessageSize, frame.MessageSize);
-                cacheFrame.MessageSize += frame.MessageSize; 
-                cacheFrame.Header = frame.Header; 
+                cacheFrame.MessageSize += frame.MessageSize;
+                cacheFrame.Header = frame.Header;
                 return true;
             }
 

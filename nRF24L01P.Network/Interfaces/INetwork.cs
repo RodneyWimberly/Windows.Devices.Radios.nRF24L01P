@@ -22,8 +22,8 @@ namespace Windows.Devices.Radios.nRF24L01P.Network.Interfaces
         bool Available();
         ushort Peek(ref INetworkHeader networkHeader);
         ushort Read(ref INetworkHeader networkHeader, ref byte[] message, ushort maxLength);
-        bool Write(INetworkHeader networkHeader, byte[] message, ushort length);
-        bool Write(INetworkHeader networkHeader, byte[] message, ushort length, ushort writeDirect);
-        bool MultiCast(INetworkHeader networkHeader, byte[] message, ushort length, byte level);
+        bool Write(INetworkHeader networkHeader, byte[] message, int length);
+        bool Write(INetworkHeader networkHeader, byte[] message, int length, ushort writeDirect);
+        bool MultiCast(INetworkHeader networkHeader, byte[] message, int length, byte level);
     }
 }

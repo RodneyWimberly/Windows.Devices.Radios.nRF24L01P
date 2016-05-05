@@ -205,7 +205,7 @@ namespace Windows.Devices.Radios.nRF24L01P
 
         public string GetArduinoDetails()
         {
-            return new ArduinoDetails(this,_loggerFactoryAdapter, Configuration, _commandProcessor, RegisterContainer).ToString();
+            return new ArduinoDetails(this, _loggerFactoryAdapter, Configuration, _commandProcessor, RegisterContainer).ToString();
         }
 
         public override string ToString()
@@ -236,11 +236,11 @@ namespace Windows.Devices.Radios.nRF24L01P
             if (OperatingMode == OperatingModes.PowerDown)
                 OperatingMode = OperatingModes.PowerOff;
 
-            _commandProcessor?.Dispose();
-            _cePin?.Dispose();
-            _irqPin?.Dispose();
+            //_commandProcessor?.Dispose();
+            //_cePin?.Dispose();
+            //_irqPin?.Dispose();
         }
 
-      
+
     }
 }

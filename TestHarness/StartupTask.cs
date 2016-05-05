@@ -6,7 +6,7 @@ namespace nRF24L01P.TestHarness
     {
         public void Run(IBackgroundTaskInstance taskInstance)
         {
-            new BackgroundServer(new ReadAndWriteToRoomExtender()).RunAsync(taskInstance);
+            new BackgroundServer(new NetworkReadAndWriteToRoomExtender()).RunAsync(taskInstance);
         }
     }
 }
